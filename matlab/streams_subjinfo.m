@@ -14,6 +14,7 @@ subject.montage.labelnew = {'EOGh';  'EOGv';  'ECG'};
 subject.montage.tra      = eye(3);
 
 subject.datadir   = '/home/language/jansch/MEG/3011044.02';
+subject.mridir    = '/home/language/jansch/MRI/3011044.02';
 subject.audiodir  = '/home/language/jansch/projects/streams/audio/';
     
 
@@ -70,6 +71,7 @@ switch name
       fullfile(subject.audiodir, 'fn001294.wav');
       fullfile(subject.audiodir, 'fn001443.wav');
       fullfile(subject.audiodir, 'fn001481.wav')};
+    % subject JM
   case 's02'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130502_01.ds']);
     %subject.trl       = [   9094  278263 0  1;
@@ -86,6 +88,7 @@ switch name
       fullfile(subject.audiodir, 'fn001443.wav');
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav')};
+    subject.id = '43513';
   case 's03'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130516_01.ds']);
     %subject.trl       = [  17197  286367 0  1;
@@ -104,6 +107,7 @@ switch name
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
+    subject.id = '78310';
     
   case 's04'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130517_01.ds']);
@@ -114,7 +118,8 @@ switch name
       fullfile(subject.audiodir, 'fn001443.wav');
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav')};
-  
+    subject.id = '55066';
+
   case 's05'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130521_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
@@ -125,6 +130,7 @@ switch name
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
+    subject.id = '47143';
    
   case 's07'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130522_01.ds']);
@@ -135,7 +141,8 @@ switch name
       fullfile(subject.audiodir, 'fn001443.wav');
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav')};
-  
+    subject.id = '79969';
+
   case 's08'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130522_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
@@ -145,6 +152,8 @@ switch name
       fullfile(subject.audiodir, 'fn001443.wav');
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav')};
+    subject.id = '46726';
+
   case 's09'
     subject.dataset   = {fullfile(subject.datadir, [name, '_1200hz_20130523_01.ds']);
       fullfile(subject.datadir, [name, '_1200hz_20130523_02.ds'])};
@@ -156,6 +165,21 @@ switch name
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
+    subject.id = '71926';
+
+  case 's10'
+    subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130606_01.ds']);
+    subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
+      fullfile(subject.audiodir, 'fn001155.wav');
+      fullfile(subject.audiodir, 'fn001293.wav');
+      fullfile(subject.audiodir, 'fn001294.wav');
+      fullfile(subject.audiodir, 'fn001443.wav');
+      fullfile(subject.audiodir, 'fn001481.wav');
+      fullfile(subject.audiodir, 'fn001498.wav');
+      fullfile(subject.audiodir, 'fn001172.wav')};
+    subject.id = '78250';
+    subject.montage.labelorg = {'EEG058';'EEG057';'EEG059'};
+
 end
 
 if ~strcmp(name, 's01')

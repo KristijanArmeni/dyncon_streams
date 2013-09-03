@@ -1,74 +1,34 @@
 %% get subject info
 subject = streams_subjinfo(subjectid);
 
-%% reject artifacts
-cfg = [];
-cfg.dataset = subject.dataset;
-cfg.trl     = subject.trl;
-cfg.artfctdef = subject.artfctdef;
-cfg.artfctdef.reject = 'partial';
-cfg = ft_rejectartifact(cfg);
-cfg.trl(:,3) = 0; % re-offset time axis; irrelevant for the time being, saves memory when downsampling
+%% compute the necessary anatomical objects
+if 0%do_anatomy
+  [mri, sourcemodel, headmodel, shape, shapemri] = streams_anatomy(subject);
+  pathname = fullfile(subject.mridir, subject.id);
+  
+  save(fullfile(pathname, [subject.name, '_shape']),          'shape');
+  save(fullfile(pathname, [subject.name, '_shapemri']),       'shapemri');
+  save(fullfile(pathname, [subject.name, '_sourcemodel8mm']), 'sourcemodel');
+  save(fullfile(pathname, [subject.name, '_headmodel']),      'headmodel');
+  
+  cfg           = [];
+  cfg.filename  = fullfile(pathname, [subject.name, '_mri.nii']);
+  cfg.filetype  = 'nifti';
+  cfg.parameter = 'anatomy';
+  ft_volumewrite(cfg, mri);
+end
 
-%% read in data
-cfg.continuous = 'yes';
-cfg.channel    = 'MEG';
-cfg.demean     = 'yes';
-data           = ft_preprocessing(cfg);
-cfg.channel    = 'UADC004';
-cfg.hpfilter   = 'yes';
-cfg.hpfreq     = 10;
-cfg.rectify    = 'yes';
-cfg.boxcar     = 0.025;
-audio          = ft_preprocessing(cfg);
+%% compute cortico-audio coherence
+if 0%do_cac
+  [coh, trials] = streams_corticoaudiocoherence(subject);
+  pathname = '/home/language/jansch/projects/streams/data';
+  save(fullfile(pathname, [subject.name, '_corticoaudiocoherence']), 'coh', 'trials');
+end
 
-%% downsample data
-cfg = [];
-cfg.detrend    = 'no';
-cfg.demean     = 'yes';
-cfg.resamplefs = 300;
-data  = ft_resampledata(cfg, data);
-audio = ft_resampledata(cfg, audio);
-
-%% append
-data = ft_appenddata([], data, audio);
-
-%% do coherence analysis
-cfg = [];
-cfg.length = 4;
-tmp = ft_redefinetrial(cfg, data);
-
-% P = eye(273)-subject.eogv.mixing(:,1:3)*subject.eogv.unmixing(1:3,:);
-% for k = 1:numel(tmp.trial)
-%   tmp.trial{k}(1:273,:) = P*tmp.trial{k}(1:273,:);
-% end
-cfg = [];
-cfg.method = 'summary';
-tmp = ft_rejectvisual(cfg, tmp);
-
-
-cfg = [];
-cfg.method = 'mtmfft';
-cfg.output = 'powandcsd';
-cfg.channelcmb = {'UADC004' 'MEG'};
-cfg.tapsmofrq = 0.5;
-cfg.foilim = [0 80];
-freq = ft_freqanalysis(cfg, tmp);
-clear tmp;
-
-cfg            = [];
-cfg.method     = 'coh';
-cfg.channelcmb = {'UADC004', 'MEG'};
-coh = ft_connectivityanalysis(cfg, freq);
-
-
-% %% zscore
-% data = ft_channelnormalise([], data);
-% 
-% %% do cca analysis
-% cfg = [];
-% cfg.refchannel = 'UADC004';
-% cfg.channel    = 'MEG';
-% cfg.lags       = [-20:4:20];
-% cfg.feedback   = 'text';
-% dataout        = ft_denoise_cca(cfg, data);
+%% compute cortico_audio coherence at source level
+if 1%do_cac_source
+  pathname = '/home/language/jansch/projects/streams/data';
+  load(fullfile(pathname, [subject.name, '_corticoaudiocoherence']), 'coh', 'trials');
+  
+  [coh] = streams_corticoaudiocoherence_bf(subject, 'trials', trials, 'frequency', 5);
+end

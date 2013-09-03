@@ -21,7 +21,7 @@ else
   cfg1.trl(:,3)   = 0;
   
   cfg2            = cfg1;
-  cfg2.channel    = {'EOGv' 'EEG058'};
+  cfg2.channel    = subject.montage.labelorg(subject.montage.tra(strcmp(subject.montage.labelnew,'EOGv'),:)==1);
   cfg2.boxcar     = 0.2;
   cfg2.bpfilter   = 'yes';
   cfg2.bpfreq     = [1 10];
