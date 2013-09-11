@@ -11,9 +11,8 @@ function [data] = read_awd(filename)
 %     words = Nx1 cell-array with the words
 %     times = Nx2 matrix with the corresponding begin and end times
 %
-% info about the file format has been taken from:
-% http://lands.let.ru.nl/cgn/doc_English/topics/version_1.0/formats/text/ort.htm
-% also see: http://lands.let.ru.nl/cgn/doc_English/topics/version_1.0/formats/text/ort.htm
+% info about the .AWD file format has been taken from:
+% http://lands.let.ru.nl/cgn/doc_English/topics/version_1.0/formats/text/awd.htm
 
 fid = fopen(filename);
 
@@ -37,7 +36,7 @@ ntier = str2double(fgetl(fid));
 % loop over the tiers
 data = struct('speaker', '', 'time_beg', nan, 'time_end', nan, 'ninterval', nan, 'times', [], 'words', {});
 for k = 1:ntier
-  fgetl(fid);               %reads the line saying "IntervalTier", does nothing.
+  fgetl(fid);               % reads the line saying "IntervalTier", does nothing.
   tmp = fgetl(fid);         
   data(k).speaker   = tmp(2:end-1);
   data(k).time_beg  = str2double(fgetl(fid));
@@ -45,8 +44,8 @@ for k = 1:ntier
   data(k).ninterval = str2double(fgetl(fid));
 
   % read the text for this tier
-  times = zeros(data(k).ninterval,2);
-  words = cell(data(k).ninterval,1);
+  times = zeros(data(k).ninterval,2);       % create 2 columns for start and end times
+  words = cell(data(k).ninterval,1);        % create 1 column for the word
   for m = 1:data(k).ninterval
     times(m,1) = str2double(fgetl(fid));
     times(m,2) = str2double(fgetl(fid));

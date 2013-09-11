@@ -15,85 +15,51 @@ function [data] = read_donders(filename)
 
 fid   = fopen(filename);
 fseek(fid, 0, 1);  
-fpend = ftell(fid);
+end_of_file = ftell(fid);
 frewind(fid);
 
 data = struct([]);
   
 row = 0;
-while 1,
-  
-  % increase the row counter by 1
+while 1
   row = row+1;
   
-  t   = fgetl(fid);
-  fp  = ftell(fid);
-  if fp==fpend
+  line   = fgetl(fid);              % get a single line from file
+  file_position  = ftell(fid);      
+  
+  if file_position == end_of_file   % break if end of file
     break;
   end
   
-  if row==1
-    % determine the fields
-    col = 0;
-    while numel(t)>0
-      col = col+1;
-      % columns can be either separated by space or tab (=ascii code 9)
-      [a1,b1] = strtok(t, ' ');
-      [a2,b2] = strtok(t, 9);
-    
-      a1(strfind(a1,'#')) = '_';
-      a2(strfind(a2,'#')) = '_';
-      a1(strfind(a1,'-')) = '_';
-      a2(strfind(a2,'-')) = '_';
-      
-      if numel(a1)<numel(a2) && numel(a1)>0
-        % space occurred earlier than tab
-        t    = b1;
-        fname{1,col} = a1;
-        continue;
-      end
-      if numel(a2)<numel(a1) && numel(a2)>0
-        % tab occurred earlier than space
-        t    = b2;
-        fname{1,col} = a2;
-        continue;
-      end
-    end
-    continue;
-  end
+  % determine the entries in a single row using regex
+  % columns can be either separated by space or tab
+  exp = '[ \t]';
+  entries_in_row = regexp(line, exp, 'split');
   
-  col = 0;
-  while numel(t)>0
-    % increase the column counter by 1
-    col = col+1;
-    % columns can be either separated by space or tab (=ascii code 9)
-    [a1,b1] = strtok(t, ' ');
-    [a2,b2] = strtok(t, 9);
-    
-    if numel(a1)<numel(a2) && numel(a1)>0
-      % space occurred earlier than tab
-      t    = b1;
-      val  = a1;
-      data = assignoutput(data, row-1, fname{col}, val);
-      continue;
+  % on the first iteration (first row) get the names of the fields
+  if row == 1  
+    for i = 1:length(entries_in_row)
+      % replace '#' and/or '-' with underscores
+      field_name{1, i} = regexprep(entries_in_row(i), '[#-]', '_'); 
     end
-    if numel(a2)<numel(a1) && numel(a2)>0
-      % tab occurred earlier than space
-      t    = b2;
-      val  = a2;
-      data = assignoutput(data, row-1, fname{col}, val);
-      continue;
+  
+  % get every entry for the row and store in the 'data' array
+  else
+    for i = 1:length(entries_in_row)
+      data = assignoutput(data, row, field_name{1, i}{1}, entries_in_row(i));  
+      % TO FIX subscripting field_name with {1} cos its a cell...
     end
   end
 end
 
-function data = assignoutput(data, row, fname, val)
 
-switch fname
+function data = assignoutput(data, row, field_name, val)
+
+switch field_name
   case {'word' 'POS' 'lemma' 'deprel' 'prediction'}
-    data(row,1).(fname) = val;
+    data(row,1).(field_name) = val;
   case {'sent_' 'word_' 'depind' 'logprob' 'entropy' 'perplexity' 'gra_perpl' 'pho_perpl'}
-    data(row,1).(fname) = str2double(val);
+    data(row,1).(field_name) = str2double(val);
   otherwise
     error('invalid fieldname');
 end
