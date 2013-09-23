@@ -1,13 +1,30 @@
 
-% read_donders does not seem to work - needs a simpler way of parsing the
-% text
 
-f = 'fn000249.donders';
-path = strcat('/home/language/jansch/projects/streams/audio/20120709/fn000249_dialogue2/', f);
 
-data = read_donders(path);
+donders_path = '/home/language/miccza/INTERNSHIP/fn001078/fn001078.donders';
+textgrid_path = '/home/language/miccza/INTERNSHIP/fn001078/fn001078shorttext.TextGrid';
 
-disp(data)
+
+textgrid_data = read_textgrid(textgrid_path);
+donders_data = read_donders(donders_path);
+
+combined_data = combine_donders_textgrid(donders_data, textgrid_data)
+
+% switch extension
+%   case 'shorttext.TextGrid' 
+%     textgrid_data = read_textgrid(path);
+%     data = textgrid_data;
+%   case '.donders'
+%     donders_data = read_donders(path);
+%     data = donders_data;
+%   case '.awd'
+%     awd_data = read_awd(path);
+%     data = awd_data;
+%   case '.ort'
+%     ort_data = read_ort(path);
+%     data = ort_data;
+% end
+
 
 % 
 % for i = 1:5

@@ -1,7 +1,9 @@
-function [data] = read_donders(filename)
+function [donders_data] = read_donders(filename)
 
-% READ_DONDERS reads a textfile with the extension .donders,
-% assuming the first line to contain the info about the fields
+
+
+% READ_DONDERS reads a textfile with the extension .donders, assuming the
+% first line to contain the info about the fields
 %
 % Use as
 %   data = read_donderstest(filename)
@@ -11,18 +13,19 @@ function [data] = read_donders(filename)
 %   
 % Output argument:
 %   data     = structure array containing the data represented in the text
-%              file, containing the fields as named in the first line of the file
+%              file, containing the fields as named in the first line of
+%              the file
+
 
 fid   = fopen(filename);
 fseek(fid, 0, 1);  
 end_of_file = ftell(fid);
 frewind(fid);
 
-data = struct([]);
+donders_data = struct([]);
   
 row = 0;
 while 1
-  row = row+1;
   
   line   = fgetl(fid);              % get a single line from file
   file_position  = ftell(fid);      
@@ -37,29 +40,37 @@ while 1
   entries_in_row = regexp(line, exp, 'split');
   
   % on the first iteration (first row) get the names of the fields
-  if row == 1  
+  if row == 0  
     for i = 1:length(entries_in_row)
       % replace '#' and/or '-' with underscores
       field_name{1, i} = regexprep(entries_in_row(i), '[#-]', '_'); 
     end
   
-  % get every entry for the row and store in the 'data' array
+  % Check if the line is empty - if so, get to the next line in the file
+  elseif strcmp(line, '')
+    continue;
+    
+  % get every entry for the row and store the values in the appropriate 
+  % field in structure array "data"
   else
     for i = 1:length(entries_in_row)
-      data = assignoutput(data, row, field_name{1, i}{1}, entries_in_row(i));  
+      donders_data = assignoutput(donders_data, row, field_name{1, i}{1}, entries_in_row(i));  
       % TO FIX subscripting field_name with {1} cos its a cell...
     end
   end
+  
+  row = row+1;
+  
 end
 
 
-function data = assignoutput(data, row, field_name, val)
+function donders_data = assignoutput(donders_data, row, field_name, val)
 
 switch field_name
   case {'word' 'POS' 'lemma' 'deprel' 'prediction'}
-    data(row,1).(field_name) = val;
+    donders_data(row,1).(field_name) = val;
   case {'sent_' 'word_' 'depind' 'logprob' 'entropy' 'perplexity' 'gra_perpl' 'pho_perpl'}
-    data(row,1).(field_name) = str2double(val);
+    donders_data(row,1).(field_name) = str2double(val);
   otherwise
     error('invalid fieldname');
 end
