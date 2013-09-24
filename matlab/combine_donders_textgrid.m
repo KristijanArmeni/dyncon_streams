@@ -1,4 +1,5 @@
 function [ combined_data ] = combine_donders_textgrid( donders_data, textgrid_data )
+
 %COMBINE_DONDERS_TEXTGRID combines the data from the .donders file, which
 %contains the outputs of linguistic parsers with the timing information
 %from the 
@@ -16,6 +17,7 @@ end
 for i=1:numel(textgrid_data(1).times(:, 2))
   combined_data(i).end_time = textgrid_data(1).times(i, 2);
 end
+
 
 
 end
