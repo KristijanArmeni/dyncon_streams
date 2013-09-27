@@ -5,7 +5,7 @@ function [ time , feature_value_vector] = get_time_series( combined_data, featur
 
 
 end_time_point = combined_data(end).end_time;     % the length of the 
-time = linspace(0, end_time_point, end_time_point * sampling_rate);
+time = linspace(0, end_time_point, end_time_point * sampling_rate + 1); 
 feature_value_vector = zeros(1, numel(time));
 
 % the index keeps track of which word we are currently on
@@ -27,11 +27,13 @@ for i=1:numel(time)
   % value of the feature for that word.
   if combined_data(feature_index).start_time < time(i) < combined_data(feature_index).end_time
     switch feature
-      case 'perplexity'
-        feature_value_vector(i) = combined_data(feature_index).perplexity;
       case 'logprob'
         feature_value_vector(i) = combined_data(feature_index).logprob;
-      % Add other cases for each field in combined_data
+      case 'entropy'
+        feature_value_vector(i) = combined_data(feature_index).entropy;
+      case 'perplexity'
+        feature_value_vector(i) = combined_data(feature_index).perplexity;
+      % TO DO ... Add other cases for each relevant field in combined_data
     end
     
   end

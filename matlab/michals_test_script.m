@@ -1,7 +1,7 @@
 
 
 donders_path = '/home/language/jansch/projects/streams/audio/fn001078/fn001078.donders';
-textgrid_path = '/home/language/jansch/projects/streams/audio/fn001078/fn001078short.TextGrid';
+textgrid_path = '/home/language/jansch/projects/streams/audio/fn001078/fn001078.TextGrid';
 
 
 textgrid_data = read_textgrid(textgrid_path);
