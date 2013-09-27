@@ -13,6 +13,9 @@ combined_data = combine_donders_textgrid(donders_data, textgrid_data);
 [ time, feature_value_vector ] = get_time_series( combined_data, 'perplexity', 1200 );
 
 
+audio_file = '/home/language/jansch/projects/streams/audio/';
+
+
 % switch extension
 %   case 'shorttext.TextGrid' 
 %     textgrid_data = read_textgrid(path);
