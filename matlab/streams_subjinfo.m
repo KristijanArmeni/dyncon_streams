@@ -15,7 +15,7 @@ subject.montage.tra      = eye(3);
 
 subject.datadir   = '/home/language/jansch/MEG/3011044.02';
 subject.mridir    = '/home/language/jansch/MRI/3011044.02';
-subject.audiodir  = '/home/language/jansch/projects/streams/audio/';
+subject.audiodir  = '/home/language/jansch/projects/streams/audio/audio_stories';
     
 
 switch name
@@ -56,6 +56,7 @@ switch name
     subject.audiofile = {fullfile(subject.audiodir, 'fn000606_dialog1.wav');
       fullfile(subject.audiodir, 'fn001100_lit1.wav');
       fullfile(subject.audiodir, 'fn000249_dialog2.wav')};
+
     
   case 's01'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130429_01.ds']);
@@ -140,7 +141,8 @@ switch name
       fullfile(subject.audiodir, 'fn001294.wav');
       fullfile(subject.audiodir, 'fn001443.wav');
       fullfile(subject.audiodir, 'fn001481.wav');
-      fullfile(subject.audiodir, 'fn001498.wav')};
+      fullfile(subject.audiodir, 'fn001498.wav');
+      fullfile(subject.audiodir, 'fn001172.wav')};
     subject.id = '79969';
 
   case 's08'
