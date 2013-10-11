@@ -14,26 +14,18 @@ subject = streams_subjinfo(subject_num);
 % combine them.
 combined_data = combine_donders_textgrid(donders_data, textgrid_data);
 
-% create a time series representation of it. 
-% the time vector is discarded for now 
-[ ~, feature_value_vector ] = get_time_series(combined_data, feature, sampling_rate);
   
 
 %% Find the row in the subject.trl matrix that corresponds with the specified audio file.
-row_index = 1;
-for i=1:length(subj.audiofile)
-  if strcmp(audiofile, subj.audiofile);
-    break
-  else
-    row_index = row_index+1;
-  end
-end
-
-
-%% Zero pad the features_vector 
-%(cos there is silence in the audio that we got rid of)
-interval = subj.trl(row_index, 2) - subj.trl(row_index, 1);
-feature_value_vector(end+interval) = 0;
+% row_index = 1;
+% for i=1:length(subject.audiofile)
+%   if strcmp(audiofile, subject.audiofile);
+%     break
+%   else
+%     row_index = row_index+1;
+%   end
+% end
+row_index = find(~cellfun('isempty',strfind(subject.audiofile, audiofile)));
 
 
 %% read in MEG and audio data
@@ -51,15 +43,6 @@ cfg.rectify    = 'yes';
 cfg.boxcar     = 0.025;
 audio_data     = ft_preprocessing(cfg);
 
-% Step 4: add the feature vector
-% create a FieldTrip style data structure for the feature vector
-
-featuredata.time = data.time;
-featuredata.trial{1} = zeros(1,numel(data.time{1}));
-featuredata.trial{1}(1:numel(feature_value_vector)) = feature_value_vector;
-featuredata.label{1} = feature;
-
-
 %% downsample data
 cfg = [];
 cfg.detrend    = 'no';
@@ -67,6 +50,23 @@ cfg.demean     = 'yes';
 cfg.resamplefs = 300;
 data  = ft_resampledata(cfg, data);
 audio_data = ft_resampledata(cfg, audio_data);
+
+% create a time series representation of it. 
+% the time vector is discarded for now 
+[ ~, feature_value_vector ] = get_time_series(combined_data, feature, sampling_rate);
+
+%% Zero pad the features_vector 
+%(cos there is silence in the audio that we got rid of)
+%interval = subject.trl(row_index, 2) - subject.trl(row_index, 1);
+%feature_value_vector(end+interval) = 0;
+feature_value_vector(numel(data.time{1})) = 0;
+
+% Step 4: add the feature vector
+% create a FieldTrip style data structure for the feature vector
+featuredata.time = data.time;
+featuredata.trial{1} = zeros(1,numel(data.time{1}));
+featuredata.trial{1}(1:numel(feature_value_vector)) = feature_value_vector;
+featuredata.label{1} = feature;
 
 %% append
 data = ft_appenddata([], data, featuredata, audio_data);
