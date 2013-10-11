@@ -1,12 +1,25 @@
 function [ time , feature_value_vector] = get_time_series( combined_data, feature, sampling_rate )
 
-%GET_STREAMS_TIME_SERIES
-% convert the data into a time-series representation
+% GET_STREAMS_TIME_SERIES creates a vector and time axis of a specified
+% feature from the computational model output, at a specified sampling
+% rate.
+%
+% Use as:
+%   [time, data] = get_time_series(combined_data, feature, sampling_rate)
+%
+% Input arguments:
+%   combined_data = struct_array, the output of COMBINE_DONDERS_TEXTGRID
+%   feature       = string, specifying which feature to use
+%   sampling_rate = integer scalar, specifying the sampling rate
+%
+% Output arguments:
+%   time = vector, specifying the time axis
+%   data = vector, specifying the feature values as a 'block regressor'
+%            (one value per word). missing data are represented as NaN.
 
-
-end_time_point = combined_data(end).end_time;     % the length of the 
+end_time_point = max([combined_data.end_time]);     % the length of the 
 time = linspace(0, end_time_point, end_time_point * sampling_rate + 1); 
-feature_value_vector = zeros(1, numel(time));
+feature_value_vector = zeros(1, numel(time))+nan; % initialize as NaN so that missing data takes this value
 
 % the index keeps track of which word we are currently on
 feature_index = 1;
