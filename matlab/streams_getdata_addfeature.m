@@ -24,7 +24,7 @@ combined_data = combine_donders_textgrid(donders_data, textgrid_data);
   
 
 %% Find the row in the subject.trl matrix that corresponds with the specified audio file.
-row_index = 1
+row_index = 1;
 for i=1:numel(subject.audiofile)
   if strcmp(audiofile, subject.audiofile{1});
     break
@@ -32,14 +32,6 @@ for i=1:numel(subject.audiofile)
     row_index = row_index+1;
   end
 end
-
-
-%% Zero pad the features_vector 
-% (cos there is silence in the audio that we dont represent in the feature
-% vector)
-interval = subject.trl(row_index, 2) - subject.trl(row_index, 1);
-feature_value_vector(end+interval) = 0;
-
 
 %% read in MEG and audio data
 cfg = [];
@@ -57,22 +49,24 @@ cfg.boxcar     = 0.025;
 audio_data     = ft_preprocessing(cfg);
 
 
+% %% downsample data
+% cfg = [];
+% cfg.detrend    = 'no';
+% cfg.demean     = 'yes';
+% cfg.resamplefs = sampling_rate;
+% data  = ft_resampledata(cfg, data);
+% audio_data = ft_resampledata(cfg, audio_data);
+% %cfg.method  = 'nearest'; %to avoid resampling artifacts
+% %featuredata = ft_resampledata(cfg, featuredata);
+
+
 %% Add the feature vector
 % create a FieldTrip style data structure for the feature vector
 featuredata.time = data.time;
 featuredata.trial{1} = zeros(1,numel(data.time{1}));
 featuredata.trial{1}(1:numel(feature_value_vector)) = feature_value_vector;
 featuredata.label{1} = feature;
-
-
-%% downsample data
-cfg = [];
-cfg.detrend    = 'no';
-cfg.demean     = 'yes';
-cfg.resamplefs = 300;
-data  = ft_resampledata(cfg, data);
-audio_data = ft_resampledata(cfg, audio_data);
-
+featuredata.sampleinfo = data.sampleinfo;
 
 %% append
 data = ft_appenddata([], data, featuredata, audio_data);

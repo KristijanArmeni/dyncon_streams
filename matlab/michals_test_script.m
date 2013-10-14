@@ -15,7 +15,16 @@
 % 
 
 audio_file = '/home/language/jansch/projects/streams/audio/audio_stories/fn001078.wav';
-streams_getdata_addfeature('s02', audio_file, 'perplexity', 1200)
+data = streams_getdata_addfeature('s02', audio_file, 'perplexity', 1200)
+
+
+subject = streams_subjinfo('s02');
+cfg = [];
+cfg.dataset = subject.dataset;
+cfg.trl     = subject.trl;
+cfg.artfctdef = subject.artfctdef;
+cfg.artfctdef.reject = 'partial';
+data2 = ft_rejectartifact(cfg, data);
 
 
 % switch extension
