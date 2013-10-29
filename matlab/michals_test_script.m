@@ -4,16 +4,17 @@ donders_path = '/home/language/jansch/projects/streams/audio/fn001078/fn001078.d
 textgrid_path = '/home/language/jansch/projects/streams/audio/fn001078/fn001078.TextGrid';
 
 
-textgrid_data = read_textgrid(textgrid_path);
-donders_data = read_donders(donders_path);
+%textgrid_data = read_textgrid(textgrid_path);
+
+%donders_data = read_donders(donders_path);
 
 combined_data = combine_donders_textgrid(donders_data, textgrid_data);
 
 
-[ time, feature_value_vector ] = get_time_series( combined_data, 'perplexity', 1200 );
+%[ time, feature_value_vector ] = get_time_series( combined_data, 'perplexity', 1200 );
 
 
-audio_file = '/home/language/jansch/projects/streams/audio/';
+%audio_file = '/home/language/jansch/projects/streams/audio/';
 
 
 % switch extension
