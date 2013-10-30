@@ -17,11 +17,14 @@ function [ combined_data ] = combine_donders_textgrid( donders_data, textgrid_da
 %                    donders-file based struct-array with the timing
 %                    information added.
 
-% [p,f1,e] = fileparts(textgrid_path);
-% [p,f2,e] = fileparts(donders_path);
-% if ~strcmp(f1,f2)
-%   error('the filenames of the textgrid data and the donders data are different, and probably refer to different audio files');
-% end
+textgrid_path
+donders_path
+
+[p,f1,e] = fileparts(textgrid_path);
+[p,f2,e] = fileparts(donders_path);
+if ~strcmp(f1,f2)
+  error('the filenames of the textgrid data and the donders data are different, and probably refer to different audio files');
+end
 
 combined_data = donders_data;
 
