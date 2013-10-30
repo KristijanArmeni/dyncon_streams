@@ -1,4 +1,4 @@
-function [data, featuredata, c, lag] = streams_blp_feature(subject, varargin)
+function [varargout] = streams_blp_feature(subject, varargin)
 
 % STREAMS_BLP_FEATURE computes a measure of correlation between a
 % particular feature and the time series of band-limited power at the MEG
@@ -52,6 +52,7 @@ feature     = ft_getopt(varargin, 'feature');
 bpfreq      = ft_getopt(varargin, 'bpfreq');
 audiofile   = ft_getopt(varargin, 'audiofile', 'all');
 lag         = ft_getopt(varargin, 'lag',(-100:100)); % this corresponds to [-0.5 0.5] at 200 Hz
+savefile    = ft_getopt(varargin, 'savefile');
 
 % check whether all required user specified input is there
 if isempty(feature), error('no feature specified'); end
@@ -161,6 +162,19 @@ end
 cfg     = [];
 cfg.lag = lag;
 c       = statfun_xcorr(cfg, dat, featuredat);
+
+stat.label = data.label;
+stat.time  = lag./200;
+stat.stat  = c;
+stat.dimord = 'chan_time';
+
+if ~isempty(savefile)
+  save(savefile, 'stat');
+else
+  varargout{1} = data;
+  varargout{2} = featuredata;
+  varargout{3} = stat;
+end  
 
 % the following part is meant to estimate the cross-correlation functions
 % after shuffling the values in the feature vector: use the same on and
