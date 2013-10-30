@@ -1,4 +1,4 @@
-function [data, featuredata, c, lag] = streams_blp_feature(subject, varargin)
+function [data, featuredata, stat] = streams_blp_feature(subject, varargin)
 
 % STREAMS_BLP_FEATURE computes a measure of correlation between a
 % particular feature and the time series of band-limited power at the MEG
@@ -6,7 +6,7 @@ function [data, featuredata, c, lag] = streams_blp_feature(subject, varargin)
 % function.
 %
 % Use as 
-%   [data, featuredata, c, lag] = streams_blp_feature(subject, 'key1',
+%   [data, featuredata, stat] = streams_blp_feature(subject, 'key1',
 %      'value1', 'key2', 'value2', ...)
 %
 % Input arguments:
@@ -161,6 +161,11 @@ end
 cfg     = [];
 cfg.lag = lag;
 c       = statfun_xcorr(cfg, dat, featuredat);
+
+stat.label  = data.label;
+stat.dimord = 'chan_time';
+stat.time   = lag./200;
+stat.stat   = c;
 
 % the following part is meant to estimate the cross-correlation functions
 % after shuffling the values in the feature vector: use the same on and
