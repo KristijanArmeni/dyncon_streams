@@ -43,6 +43,11 @@ function [varargout] = streams_blp_feature(subject, varargin)
 % combined planar gradient
 % TO DO: compute confidence intervals by means of shuffling
 
+% !!!!!!!!!!!!!!!!!
+% TO DO: update documentation
+% !!!!!!!!!!!!!!!
+
+
 if ischar(subject)
   subject = streams_subjinfo(subject);
 end
@@ -141,6 +146,7 @@ for k = 1:numel(seltrl)
   tmpdataf{k} = featuredata;
   clear data audio featuredata;
 end
+
 if numel(tmpdata)>1,
   data        = ft_appenddata([], tmpdata{:});
   featuredata = ft_appenddata([], tmpdataf{:});

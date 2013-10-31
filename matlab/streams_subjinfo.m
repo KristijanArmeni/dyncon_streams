@@ -6,6 +6,13 @@ function [subject] = streams_subjinfo(name)
 %   subject = streams_subjinfo(name), where name is a string representing the subject
 %   name
 
+if iscell(name)
+  for k = 1:numel(name)
+    subject(k,1) = streams_subjinfo(name{k});
+  end
+  return;
+end
+
 subject.name = name;
 
 subject.montage          = [];
