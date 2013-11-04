@@ -150,6 +150,20 @@ else
 end
 clear tmpdata tmpdataf
 
+% convert to synthetic planar gradient representation
+load('/home/common/matlab/fieldtrip/template/neighbours/ctf275_neighb');
+cfg              = [];
+cfg.neighbours   = neighbours;
+cfg.planarmethod = 'sincos';
+data = ft_megplanar(cfg, data);
+data = ft_combineplanar([], data);
+
+% mean subtract
+cfg        = [];
+cfg.demean = 'yes';
+data        = ft_preprocessing(cfg, data);
+featuredata = ft_preprocessing(cfg, featuredata);
+
 nnans   = numel(lag)+1;
 dat     = data.trial{1};
 featuredat = featuredata.trial{1};

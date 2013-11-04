@@ -1,3 +1,4 @@
+%% run it
 clear all;
 
 subjects = streams_subjinfo({'s02' 's03' 's04' 's05' 's07' 's10'});
@@ -27,7 +28,8 @@ for j = 1:numel(subjects)
         audiolist{end+1}   = audiofile;
         bplist{end+1}      = bpfreq;
         featurelist{end+1} = feature;
-        savelist{end+1}    = fullfile('/home/language/jansch/projects/streams/data',[subject.name,'_',audiofile,'_',feature,'_xcorr','_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d')]);
+        %savelist{end+1}    = fullfile('/home/language/jansch/projects/streams/data',[subject.name,'_',audiofile,'_',feature,'_xcorr','_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d')]);
+        savelist{end+1}    = fullfile('/home/language/jansch/projects/streams/data',[subject.name,'_',audiofile,'_',feature,'_xcorr','_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d'),'_planar']);
       end
     end
   end
