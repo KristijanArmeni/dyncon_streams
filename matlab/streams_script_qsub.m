@@ -40,8 +40,8 @@ bpfreqkey  = repmat({'bpfreq'},    [njob 1]);
 featurekey = repmat({'feature'},   [njob 1]);   
 savekey    = repmat({'savefile'},  [njob 1]);   
 
-memreq = 4*1024^3;
-timreq = 5*60;
+memreq = 6*1024^3;
+timreq = 10*60;
 qsubcellfun('streams_blp_feature', subjectlist, audiokey, audiolist, bpfreqkey, bplist, featurekey, featurelist, savekey, savelist, 'memreq', memreq, 'timreq', timreq);
 
 
