@@ -118,6 +118,7 @@ for k = 1:numel(seltrl)
     grad      = ft_apply_montage(data.grad, montage);
     data      = ft_apply_montage(data, montage);
     data.grad = grad;
+    audio.grad = grad; % fool ft_appenddata
   end
   
   cfg  = [];
