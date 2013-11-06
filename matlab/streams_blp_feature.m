@@ -38,8 +38,8 @@ function [varargout] = streams_blp_feature(subject, varargin)
 %                           'fn001078', 'bpfreq', [16 20], 'feature',
 %                           'entropy');
 
-% TO DO: additional cleaning of MEG data (eye + cardiac)
-% TO DO: compute planar gradient and do computation of correlation on
+% TO DO: additional cleaning of MEG data (eye + cardiac): eye = done
+% TO DO: compute planar gradient and do computation of correlation on: done
 % combined planar gradient
 % TO DO: compute confidence intervals by means of shuffling
 
@@ -113,12 +113,29 @@ for k = 1:numel(seltrl)
   data        = ft_rejectartifact(cfg, data);
   audio       = ft_rejectartifact(cfg, audio);
 
+  % remove blink components
+  badcomps = subject.eogv.badcomps;
+  if ~isempty(badcomps)
+    P        = eye(numel(data.label)) - subject.eogv.mixing(:,badcomps)*subject.eogv.unmixing(badcomps,:);
+    montage.tra = P;
+    montage.labelorg = data.label;
+    montage.labelnew = data.label;
+    grad      = ft_apply_montage(data.grad, montage);
+    data      = ft_apply_montage(data, montage);
+    data.grad = grad;
+    audio.grad = grad; % fool ft_appenddata
+  end
+  
+  cfg  = [];
+  cfg.demean = 'yes';
+  data = ft_preprocessing(cfg, data);
+  
   % rectify the MEG data to get an amplitude envelope estimate
   cfg         = [];
   cfg.hilbert = 'abs';
   data        = ft_preprocessing(cfg, data);
   
-  % downsample to 300 Hz
+  % downsample to 200 Hz
   
   % subtract first time point for memory purposes
   for kk = 1:numel(data.trial)
@@ -127,7 +144,7 @@ for k = 1:numel(seltrl)
     audio.time{kk}       = audio.time{kk}-audio.time{kk}(1);
   end
   cfg = [];
-  cfg.demean  = 'no';
+  cfg.demean  = 'yes';
   cfg.detrend = 'no';
   cfg.resamplefs = 200;
   data  = ft_resampledata(cfg, data);
@@ -155,6 +172,20 @@ else
   featuredata = tmpdataf{1};
 end
 clear tmpdata tmpdataf
+
+% convert to synthetic planar gradient representation
+load('/home/common/matlab/fieldtrip/template/neighbours/ctf275_neighb');
+cfg              = [];
+cfg.neighbours   = neighbours;
+cfg.planarmethod = 'sincos';
+data = ft_megplanar(cfg, data);
+data = ft_combineplanar([], data);
+
+% mean subtract
+cfg        = [];
+cfg.demean = 'yes';
+data        = ft_preprocessing(cfg, data);
+featuredata = ft_preprocessing(cfg, featuredata);
 
 nnans   = numel(lag)+1;
 dat     = data.trial{1};

@@ -79,6 +79,7 @@ switch name
       fullfile(subject.audiodir, 'fn001294.wav');
       fullfile(subject.audiodir, 'fn001443.wav');
       fullfile(subject.audiodir, 'fn001481.wav')};
+    subject.eogv.badcomps = [];
     % subject JM
   case 's02'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130502_01.ds']);
@@ -97,6 +98,7 @@ switch name
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '43513';
+    subject.eogv.badcomps = [1 2];
   case 's03'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130516_01.ds']);
     %subject.trl       = [  17197  286367 0  1;
@@ -116,7 +118,7 @@ switch name
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
     subject.id = '78310';
-    
+    subject.eogv.badcomps = [1 2 3 4];
   case 's04'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130517_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
@@ -127,7 +129,7 @@ switch name
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '55066';
-
+    subject.eogv.badcomps = [1 2];
   case 's05'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130521_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
@@ -139,7 +141,7 @@ switch name
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
     subject.id = '47143';
-   
+    subject.eogv.badcomps = [1 2 3];
   case 's07'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130522_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
@@ -151,7 +153,7 @@ switch name
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
     subject.id = '79969';
-
+    subject.eogv.badcomps = [1 2];
   case 's08'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130522_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
@@ -162,7 +164,7 @@ switch name
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '46726';
-
+    subject.eogv.badcomps = [1 2];
   case 's09'
     subject.dataset   = {fullfile(subject.datadir, [name, '_1200hz_20130523_01.ds']);
       fullfile(subject.datadir, [name, '_1200hz_20130523_02.ds'])};
@@ -175,7 +177,7 @@ switch name
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
     subject.id = '71926';
-
+    %subject.eogv.badcomps = [1 2];
   case 's10'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130606_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
@@ -187,8 +189,8 @@ switch name
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
     subject.id = '78250';
+    subject.eogv.badcomps = [1];
     subject.montage.labelorg = {'EEG058';'EEG057';'EEG059'};
-
 end
 
 if ~strcmp(name, 's01')
@@ -223,4 +225,5 @@ subject.eogv.unmixing = unmixing;
 subject.eogv.avgcomp  = avgcomp;
 subject.eogv.avgpre   = avgpre;
 subject.eogv.avgeog   = avgeog;
+
 
