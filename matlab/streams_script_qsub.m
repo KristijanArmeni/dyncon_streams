@@ -51,7 +51,7 @@ qsubcellfun('streams_blp_feature', subjectlist, audiokey, audiolist, bpfreqkey, 
 %   audiofiles = subject.audiofile;
 %   for m = 1:numel(audiofiles)
 %     audiofile = audiofiles{m};
-%     tmp = strfind(audiofile, 'fn');
+%     tmp = strfind(audiofile, 'fn'); 
 %     audiofile = audiofile(tmp+(0:7));
 %     for p = 1:size(bpfreqs,1)
 %       bpfreq    = bpfreqs(p,:);
