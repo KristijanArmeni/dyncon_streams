@@ -5,12 +5,12 @@ index = 1;
 for i = 1:numel(features)
   for j = 1:numel(bpfreqs)
     %run and save stats for the demeaned 
-    stats_demeaned{index} = streams_stats_test(features{i}, bpfreqs{j}, 'demeaned');
-    save(sprintf('/home/language/miccza/INTERNSHIP/streams/matfiles/stats_%s_%s_demeaned', features{i}, bpfreqs{j}), 'stats_demeaned');
+    stats = streams_stats_test(features{i}, bpfreqs{j}, 'demeaned');
+    save(sprintf('/home/language/miccza/INTERNSHIP/matfiles_stats/stats_%s_%s_demeaned', features{i}, bpfreqs{j}), 'stats');
 
     %run and save stats for the demeaned 
-    stats{index} = streams_stats_test(features{i}, bpfreqs{j});
-    save(sprintf('/home/language/miccza/INTERNSHIP/streams/matfiles/stats_%s_%s', features{i}, bpfreqs{j}), 'stats');
+    stats = streams_stats_test(features{i}, bpfreqs{j});
+    save(sprintf('/home/language/miccza/INTERNSHIP/matfiles_stats/stats_%s_%s', features{i}, bpfreqs{j}), 'stats');
 
     index = index + 1;
   end
