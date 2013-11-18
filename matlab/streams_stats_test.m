@@ -36,6 +36,8 @@ for k = 1:numel(s)
 end
 N = numel(s);
 
+load('/home/common/matlab/fieldtrip/template/neighbours/ctf275_neighb');
+
 % do the statistical test
 cfg = [];
 cfg.method = 'montecarlo';
@@ -45,6 +47,8 @@ cfg.statistic = 'depsamplesT';
 cfg.design = [ones(1,N) ones(1,N)*2;1:N 1:N];
 cfg.ivar   = 1;
 cfg.uvar   = 2;
+cfg.correctm = 'cluster';
+cfg.neighbours = neighbours;
 stat = ft_timelockstatistics(cfg, s{:}, s2{:});
 
 % if ismember(varargin, 'demeaned')
