@@ -19,6 +19,9 @@ path = '/home/language/jansch/projects/streams/data/crosscorrelation_planar/';
 % list the files
 d = dir(fullfile(path, sprintf('*%s*%s*', feature, freqband)));
 
+% init the array (needs to be
+%s = cell(1, numel(d));
+
 % load the xcorrelations for a particular feature and frequency and store
 % it in a cell-array
 for k = 1:numel(d)
@@ -28,6 +31,8 @@ for k = 1:numel(d)
   end
   s{k} = stat;
 end
+
+%s2 = cell(numel(s));
 
 % duplicate the data, but replace the xcorr values with 0's
 for k = 1:numel(s)

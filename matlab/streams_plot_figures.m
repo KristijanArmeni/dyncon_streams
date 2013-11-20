@@ -1,7 +1,8 @@
-path = '/home/language/miccza/INTERNSHIP/matfiles_stats/';
-data = dir('/home/language/miccza/INTERNSHIP/matfiles_stats/*');
 
-steps = [-.5:.1:.5];
+path = '/home/language/miccza/INTERNSHIP/matfiles_stats_corrected/';
+data = dir(sprintf(path, '*'));
+
+steps = [-0.5:0.1:0.5];
 
 cfgp = [];
 cfgp.layout = 'CTF275.lay';
@@ -13,8 +14,8 @@ for i=3:numel(data)
   load(fullfile(path, file));
 
   % remove .mat from filenames, set up the path
-  filepathprob = strcat('../figures/prob2/', strrep(strrep(file, '.mat', ''), 'stats', ''));
-  filepathstat = strcat('../figures/stat2/', strrep(strrep(file, '.mat', ''), 'stats', ''));
+  filepathprob = strcat('../figures/prob_corrected/', strrep(strrep(file, '.mat', ''), 'stats', ''));
+  filepathstat = strcat('../figures/stat_corrected/', strrep(strrep(file, '.mat', ''), 'stats', ''));
   
   for i=1:numel(steps)-1
     
