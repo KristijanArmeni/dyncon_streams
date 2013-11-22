@@ -67,19 +67,21 @@ switch name
     
   case 's01'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130429_01.ds']);
-    subject.trl       = [  28757  297926 0  1;
-      311914  597034 0  2;
-      771421 1058574 0 31;
-      1068018 1637770 0 32;
-      1657392 2235306 0  4;
-      2243405 2534693 0  5];
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
       fullfile(subject.audiodir, 'fn001155.wav');
       fullfile(subject.audiodir, 'fn001293.wav');
       fullfile(subject.audiodir, 'fn001294.wav');
       fullfile(subject.audiodir, 'fn001443.wav');
       fullfile(subject.audiodir, 'fn001481.wav')};
+    subject.id        = 'jansch';
     subject.eogv.badcomps = [];
+    subject.trl       = [  28757  297926 0  1;
+      311914  597034 0  2;
+      771421 1058574 0 31;
+      1068018 1637770 0 32;
+      1657392 2235306 0  4;
+      2243405 2534693 0  5];
+    
     % subject JM
   case 's02'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130502_01.ds']);
