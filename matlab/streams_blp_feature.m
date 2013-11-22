@@ -205,8 +205,10 @@ stat.time  = lag./200;
 stat.stat  = c;
 stat.dimord = 'chan_time';
 
-if ~isempty(savefile)
-  save(savefile, 'stat');
+if nargout==0 
+  if ~isempty(savefile)
+    save(savefile, 'stat');
+  end
 else
   varargout{1} = data;
   varargout{2} = featuredata;
