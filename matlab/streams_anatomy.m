@@ -1,5 +1,9 @@
 function [mri, sourcemodel, headmodel, shape, shapemri] = streams_anatomy(subject)
 
+if ischar(subject)
+  subject = streams_subjinfo(subject);
+end
+
 % coregister to CTF coordinate system
 
 % grab a dicomfile
@@ -15,13 +19,18 @@ cfg.interactive = 'yes';
 mri             = ft_volumerealign(cfg, mri);
 
 % do a refined coregistration
-cfg           = [];
-cfg.method    = 'headshape';
-cfg.headshape = fullfile(subject.dataset,[subject.name,'.pos']);
-mri           = ft_volumerealign(cfg, mri);
+try,
+  cfg           = [];
+  cfg.method    = 'headshape';
+  cfg.headshape = fullfile(subject.dataset,[subject.name,'.pos']);
+  mri           = ft_volumerealign(cfg, mri);
 
-shape    = mri.cfg.headshape;
-shapemri = mri.cfg.headshapemri;
+  shape    = mri.cfg.headshape;
+  shapemri = mri.cfg.headshapemri;
+catch
+  shape    = [];
+  shapemri = [];
+end
 
 % segment the mri
 thr = 0.3;
@@ -39,7 +48,7 @@ headmodel  = ft_convert_units(headmodel, 'cm');
 % create the sourcemodel
 cfg                 = [];
 cfg.grid.warpmni    = 'yes';
-cfg.grid.resolution = 8;
+cfg.grid.resolution = 6;
 cfg.grid.nonlinear  = 'yes';
 cfg.mri             = mri;
 sourcemodel         = ft_prepare_sourcemodel(cfg);

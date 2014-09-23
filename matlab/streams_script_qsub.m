@@ -1,10 +1,13 @@
 %% run it
 clear all;
 
-%subjects = streams_subjinfo({'s01' 's02' 's03' 's04' 's05' 's07' 's08' 's10'});
-subjects = streams_subjinfo({'s08'});
-bpfreqs  = [4 8;8 12;12 18;18 24;24 40;40 60;70 90];
-features = {'perplexity' 'entropy' 'depind' 'gra_perpl' 'pho_perpl'}; % fill in the other ones here
+%subjects = streams_subjinfo({'s01'});% 's02' 's03' 's04' 's05' 's07' 's08' 's10'});
+subjects = streams_subjinfo({'s01' 's02' 's03' 's04' 's05' 's07' 's08' 's10'});
+%subjects = streams_subjinfo({'s09'});
+%bpfreqs  = [4 8;8 12;12 18;18 24;24 40;40 60;70 90];
+%features = {'perplexity' 'entropy' 'depind' 'gra_perpl' 'pho_perpl'}; % fill in the other ones here
+bpfreqs = [12 18];
+features = {'depind'};
 
 subjectlist = cell(0,1);
 audiolist   = cell(0,1);
@@ -30,7 +33,9 @@ for j = 1:numel(subjects)
         bplist{end+1}      = bpfreq;
         featurelist{end+1} = feature;
         %savelist{end+1}    = fullfile('/home/language/jansch/projects/streams/data',[subject.name,'_',audiofile,'_',feature,'_xcorr','_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d')]);
-        savelist{end+1}    = fullfile('/home/language/jansch/projects/streams/data/crosscorrelation_planar/',[subject.name,'_',audiofile,'_',feature,'_xcorr','_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d'),'_planar']);
+        %savelist{end+1}    = fullfile('/home/language/jansch/projects/streams/data/crosscorrelation_planar/',[subject.name,'_',audiofile,'_',feature,'_xcorr','_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d'),'_planar']);
+        savelist{end+1}    = fullfile('/home/language/jansch/projects/streams/data/crosscorrelation_lag1_planar/',[subject.name,'_',audiofile,'_',feature,'_xcorr','_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d'),'_planar']);
+      
       end
     end
   end
@@ -55,26 +60,3 @@ savekey    = repmat({'savefile'},  [njob 1]);
 memreq = 12*1024^3;
 timreq = 15*60;
 qsubcellfun('streams_blp_feature', subjectlist, audiokey, audiolist, bpfreqkey, bplist, featurekey, featurelist, savekey, savelist, 'memreq', memreq, 'timreq', timreq);
-
-
-
-% for k = 1:numel(subjects)
-%   subject    = subjects(k);
-%   audiofiles = subject.audiofile;
-%   for m = 1:numel(audiofiles)
-%     audiofile = audiofiles{m};
-%     tmp = strfind(audiofile, 'fn'); 
-%     audiofile = audiofile(tmp+(0:7));
-%     for p = 1:size(bpfreqs,1)
-%       bpfreq    = bpfreqs(p,:);
-%       feature   = 'entropy';
-%       try,
-%         fprintf('computing cross-correlation for bandlimited power at %d-%dHz, for audio fragment %s in subject %s\n',bpfreq(1),bpfreq(2),audiofile,subject.name);
-%         [~, ~, stat] = streams_blp_feature(subject, 'audiofile', audiofile, 'bpfreq', bpfreq, 'feature', feature);
-%         fname = fullfile('/home/language/jansch/projects/streams/data',[subject.name,'_',audiofile,'_',feature,'_xcorr','_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d')]);
-%         save(fname, 'stat');
-%       end
-%     end
-%   end
-% end
-

@@ -171,15 +171,17 @@ switch name
     subject.dataset   = {fullfile(subject.datadir, [name, '_1200hz_20130523_01.ds']);
       fullfile(subject.datadir, [name, '_1200hz_20130523_02.ds'])};
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-      fullfile(subject.audiodir, 'fn001155.wav');
       fullfile(subject.audiodir, 'fn001293.wav');
       fullfile(subject.audiodir, 'fn001294.wav');
       fullfile(subject.audiodir, 'fn001443.wav');
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
+      
+    % this one was lost due to a dsq error? : fullfile(subject.audiodir, 'fn001155.wav');
+    
     subject.id = '71926';
-    %subject.eogv.badcomps = [1 2];
+    subject.eogv.badcomps = {[1 2] [1 2]};
   case 's10'
     subject.dataset   = fullfile(subject.datadir, [name, '_1200hz_20130606_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');

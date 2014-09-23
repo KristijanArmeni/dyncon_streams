@@ -1,219 +1,170 @@
-function [varargout] = streams_blp_feature(subject, varargin)
+function [stat] = streams_blp_feature(data, featuredata, varargin)
 
 % STREAMS_BLP_FEATURE computes a measure of correlation between a
 % particular feature and the time series of band-limited power at the MEG
-% channel level. Currently the only measure returned is a cross-corrlation
-% function.
+% channel level.
 %
 % Use as 
-%   [data, featuredata, c, lag] = streams_blp_feature(subject, 'key1',
+%   [stat] = streams_blp_feature(data, featuredata, 'key1',
 %      'value1', 'key2', 'value2', ...)
 %
 % Input arguments:
-%   subject = string identifying the subject, or struct obtained with
-%               streams_subjinfo.
+%   data
+%   featuredata
 %
 %   The rest of the input arguments are key-value pairs.
 %   Required are:
 %   feature = string, specifying the feature from the computational model 
-%   bpfreq  = bandpass filter frequency for the MEG data
-%
-%   Optional are:
-%   audiofile = string or cell-array of strings, specifying the audiofiles
-%               to use (default = 'all')
 %   lag     = vector with lags over which to compute the cross correlation
-%             function (default = -100:100, corresponding with [-0.5 0.5]
+%             function (default = -200:5:200, corresponding with [-0.5 0.5]
 %             at 200 Hz sampling rate. the latter is the default
 %             downsampling frequency)
 %
+%   Optional are:
+%   length  = scalar, length of segment to re-epoch data
+%   overlap = scalar, amount of overlap, see FT_REDEFINETRIAL
+%
 % Output arguments:
-%   data = fieldtrip data structure containing the MEG data
-%   featuredata = fieldtrip data structure containing the feature data
-%   c    = cross-correlation function Nchannel x Nlag
-%   lag  = vector with time lags in samples (divide by 200 to get time
-%          in seconds)
+%   stat
 %
 % Example use:
-%   [data, fdata, c, lag] = streams_blp_feature('s04', 'audiofile',
-%                           'fn001078', 'bpfreq', [16 20], 'feature',
-%                           'entropy');
-
-% TO DO: additional cleaning of MEG data (eye + cardiac): eye = done
-% TO DO: compute planar gradient and do computation of correlation on: done
-% combined planar gradient
-% TO DO: compute confidence intervals by means of shuffling
-
-% !!!!!!!!!!!!!!!!!
-% TO DO: update documentation
-% !!!!!!!!!!!!!!!
-
-
-if ischar(subject)
-  subject = streams_subjinfo(subject);
-end
+%   [stat] = streams_blp_feature(data, featuredata, 'feature', 'entropy');
 
 % make a local version of the variable input arguments
+method      = ft_getopt(varargin, 'method', 'mi');
 feature     = ft_getopt(varargin, 'feature');
-bpfreq      = ft_getopt(varargin, 'bpfreq');
-audiofile   = ft_getopt(varargin, 'audiofile', 'all');
-lag         = ft_getopt(varargin, 'lag',(-100:100)); % this corresponds to [-0.5 0.5] at 200 Hz
+lag         = ft_getopt(varargin, 'lag',(-200:10:200)); % this corresponds to [-1 1] at 200 Hz
 savefile    = ft_getopt(varargin, 'savefile');
+length      = ft_getopt(varargin, 'length');
+overlap     = ft_getopt(varargin, 'overlap');
+nshuffle    = ft_getopt(varargin, 'nshuffle', 10);
+chunk       = ft_getopt(varargin, 'chunk', []);
+dosource    = ft_getopt(varargin, 'dosource', 0);
+randstate   = ft_getopt(varargin, 'randstate', randomseed([]));
+subject     = ft_getopt(varargin, 'subject', []);
+
+% set the random number generator to the specified state
+randomseed(randstate);
+
+% load data if needed
+if ischar(data)
+  [p,f,e] = fileparts(data);
+  subject = f(1:3);
+  load(data);
+end
+if ischar(featuredata)
+  load(featuredata);
+end
+if dosource
+  [source, data] = streams_lcmv(subject, data);
+end
+
+if any(imag(data.trial{1}(:))~=0)
+  for k = 1:numel(data.trial)
+    data.trial{k} = abs(data.trial{k});
+  end
+end
+
+if ~isempty(chunk)
+  div = [0:chunk:numel(data.label) numel(data.label)];
+  for k = 1:(numel(div)-1)
+    k
+    sel = (div(k)+1):div(k+1);
+    tmp = ft_selectdata(data, 'channel', data.label(sel));
+    tmpstat(k) = streams_blp_feature(tmp, featuredata, 'feature', feature, 'lag', lag, 'nshuffle', nshuffle);
+  end
+  stat       = tmpstat(1);
+  stat.stat  = cat(1, tmpstat.stat);
+  stat.statshuf = cat(1, tmpstat.statshuf);
+  stat.label = data.label;
+  if ~isempty(savefile)
+    save(savefile, 'stat');
+  end
+  return;
+end
+
+if ~isempty(length)
+  tmpcfg         = [];
+  tmpcfg.length  = length;
+  tmpcfg.overlap = overlap;
+  data           = ft_redefinetrial(tmpcfg,data);
+  featuredata    = ft_redefinetrial(tmpcfg,featuredata);
+  for k = 1:numel(data.trial)
+    k
+    tmp     = ft_selectdata(data,        'rpt', k);
+    tmp2    = ft_selectdata(featuredata, 'rpt', k);
+    stat(k) = streams_blp_feature(tmp, tmp2, 'feature', feature, 'lag', lag, 'method', method);
+  end
+  
+  if ~isempty(savefile)
+    save(savefile, 'stat');
+  end
+  return;
+end
 
 % check whether all required user specified input is there
 if isempty(feature), error('no feature specified'); end
-if isempty(bpfreq),  error('no bpfreq specified');  end
+selfeature = match_str(featuredata.label, feature);
 
-% determine which audiofile(s) to use
-if ischar(audiofile) && strcmp(audiofile, 'all')
-  % use all 
-  audiofile = subject.audiofile;
-elseif ischar(audiofile)
-  audiofile = {audiofile};
-end
+% for k = 1:numel(data.trial)
+%   data.trial{k} = ft_preproc_smooth(data.trial{k}, 25);
+% end
 
-% determine the trials with which the audiofiles correspond
-seltrl   = zeros(0,1);
-selaudio = cell(0,1);
-for k = 1:numel(audiofile)
-  tmp = ~cellfun('isempty', strfind(subject.audiofile, audiofile{k}));
-  if sum(tmp)==1
-    seltrl   = cat(1,seltrl,find(tmp));
-    selaudio = cat(1,selaudio,audiofile(k)); 
-  else
-    % file is not there
-  end
-end
-
-% do the basic processing per audiofile
-for k = 1:numel(seltrl)
-  dondersfile  = fullfile('/home/language/jansch/projects/streams/audio/',selaudio{k},[selaudio{k},'.donders']);
-  textgridfile = fullfile('/home/language/jansch/projects/streams/audio/',selaudio{k},[selaudio{k},'.TextGrid']);
-  combineddata = combine_donders_textgrid(dondersfile, textgridfile);
-
-  cfg         = [];
-  cfg.dataset = subject.dataset;
-  cfg.trl     = subject.trl(seltrl(k),:);
-  cfg.trl(1,1) = cfg.trl(1,1) - 1200; % read in an extra second of data at the beginning
-  cfg.trl(1,2) = cfg.trl(1,2) + 1200; % read in an extra second of data at the end
-  cfg.trl(1,3) = -1200; % update the offset, to account for the padding
-  cfg.channel  = 'MEG';
-  cfg.continuous = 'yes';
-  cfg.demean     = 'yes';
-  cfg.bpfilter = 'yes';
-  cfg.bpfreq   = bpfreq;
-  data           = ft_preprocessing(cfg); % read in the MEG data
-  cfg.bpfilter = 'no';
-  cfg.channel  = 'UADC004';
-  audio        = ft_preprocessing(cfg); % read in the audio data
-    
-  % reject artifacts
-  cfg                  = [];
-  cfg.artfctdef        = subject.artfctdef;
-  cfg.artfctdef.reject = 'partial';
-  data        = ft_rejectartifact(cfg, data);
-  audio       = ft_rejectartifact(cfg, audio);
-
-  % remove blink components
-  badcomps = subject.eogv.badcomps;
-  if ~isempty(badcomps)
-    P        = eye(numel(data.label)) - subject.eogv.mixing(:,badcomps)*subject.eogv.unmixing(badcomps,:);
-    montage.tra = P;
-    montage.labelorg = data.label;
-    montage.labelnew = data.label;
-    grad      = ft_apply_montage(data.grad, montage);
-    data      = ft_apply_montage(data, montage);
-    data.grad = grad;
-    audio.grad = grad; % fool ft_appenddata
-  end
-  
-  cfg  = [];
-  cfg.demean = 'yes';
-  data = ft_preprocessing(cfg, data);
-  
-  % rectify the MEG data to get an amplitude envelope estimate
-  cfg         = [];
-  cfg.hilbert = 'abs';
-  data        = ft_preprocessing(cfg, data);
-  
-  % downsample to 200 Hz
-  
-  % subtract first time point for memory purposes
-  for kk = 1:numel(data.trial)
-    firsttimepoint(kk,1) = data.time{kk}(1);
-    data.time{kk}        = data.time{kk}-data.time{kk}(1);
-    audio.time{kk}       = audio.time{kk}-audio.time{kk}(1);
-  end
-  cfg = [];
-  cfg.demean  = 'yes';
-  cfg.detrend = 'no';
-  cfg.resamplefs = 200;
-  data  = ft_resampledata(cfg, data);
-  audio = ft_resampledata(cfg, audio);
-  
-  % add back the first time point, so that the relative time axis
-  % corresponds again with the timing in combineddata
-  for kk = 1:numel(data.trial)
-    data.time{kk}  = data.time{kk}  + firsttimepoint(kk);
-    audio.time{kk} = audio.time{kk} + firsttimepoint(kk);
-  end
-  featuredata = create_featuredata(combineddata, feature, data);
-  
-  % append into 1 data structure
-  tmpdata{k}  = ft_appenddata([], data, audio);
-  tmpdataf{k} = featuredata;
-  clear data audio featuredata;
-end
-
-if numel(tmpdata)>1,
-  data        = ft_appenddata([], tmpdata{:});
-  featuredata = ft_appenddata([], tmpdataf{:});
-else
-  data        = tmpdata{1};
-  featuredata = tmpdataf{1};
-end
-clear tmpdata tmpdataf
-
-% convert to synthetic planar gradient representation
-load('/home/common/matlab/fieldtrip/template/neighbours/ctf275_neighb');
-cfg              = [];
-cfg.neighbours   = neighbours;
-cfg.planarmethod = 'sincos';
-data = ft_megplanar(cfg, data);
-data = ft_combineplanar([], data);
-
-% mean subtract
-cfg        = [];
-cfg.demean = 'yes';
-data        = ft_preprocessing(cfg, data);
-featuredata = ft_preprocessing(cfg, featuredata);
-
-nnans   = numel(lag)+1;
+nnans   = max(abs(lag))+1;
 dat     = data.trial{1};
-featuredat = featuredata.trial{1};
+featuredat = featuredata.trial{1}(selfeature,:);
 if numel(data.trial)>1
   for k = 2:numel(data.trial)
     dat        = [dat        nan+zeros(numel(data.label),nnans) data.trial{k}];
-    featuredat = [featuredat nan+zeros(1,nnans)                 featuredata.trial{k}];
+    featuredat = [featuredat nan+zeros(1,nnans)                 featuredata.trial{k}(selfeature,:)];
   end
 end
 cfg     = [];
 cfg.lag = lag;
-c       = statfun_xcorr(cfg, dat, featuredat);
+cfg.ivar = 1;
+%cfg.uvar = 2;
+%[indx]   = streams_featuredat2wordindx(featuredat);
+%design   = [featuredat; indx];
+design = featuredat;
 
+design(design>1e7) = nan;
+switch method
+  case 'xcorr'
+    c       = statfun_xcorr(cfg, dat, design);
+  case 'mi'
+    cfg.mi  = [];
+    cfg.mi.nbin = 10;
+    %cfg.mi.btsp = 1;
+    %cfg.mi.bindesign = 1;
+    %cfg.mi.cmbindx = [(1:273)' (274:546)'];
+    cfg.mi.remapdesign = 1;
+    cfg.mi.bindesign = 0;
+    c  = statfun_mutualinformation_shift(cfg, dat, design);
+    
+    if nshuffle>0
+      shuff = streams_shufflefeature(design(1,:), nshuffle);
+      for m = 1:nshuffle
+        cshuf(:,:,m) = statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
+      end
+    else
+      cshuf = [];
+    end
+  case 'xcorr_spearman'
+    c = statfun_xcorr_spearman_adjusted(cfg, dat, design(1,:));
+    c = c.stat;
+    cshuf = [];
+  otherwise
+end
 stat.label = data.label;
-stat.time  = lag./200;
+stat.time  = lag./data.fsample;
 stat.stat  = c;
+stat.statshuf = cshuf;
 stat.dimord = 'chan_time';
 
-if nargout==0 
-  if ~isempty(savefile)
-    save(savefile, 'stat');
-  end
-else
-  varargout{1} = data;
-  varargout{2} = featuredata;
-  varargout{3} = stat;
-end  
+if ~isempty(savefile)
+  save(savefile, 'stat');
+end
+
 
 % the following part is meant to estimate the cross-correlation functions
 % after shuffling the values in the feature vector: use the same on and
@@ -223,6 +174,15 @@ end
 
 % subfunction
 function [featuredata] = create_featuredata(combineddata, feature, data)
+
+if iscell(feature)
+  for k = 1:numel(feature)
+    featuredata(k) = create_featuredata(combineddata, feature{k}, data);
+  end
+  return;
+else
+  % normal behavior
+end
 
 % create FT-datastructure with the feature as a channel
 [time, featurevector] = get_time_series(combineddata, feature, data.fsample);
