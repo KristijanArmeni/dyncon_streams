@@ -30,6 +30,50 @@ if 0%do_cac
   save(fullfile(pathname, [subject.name, '_corticoaudiocoherence']), 'coh', 'trials', 'data');
 end
 
+if 1%do_cac_with logprob
+  [coh, trials, freq, data] = streams_corticoaudiocoherence(subject, 'resamplefs', 200,'epochlength',3,'tapsmofrq',1,'refchannel','audio_avg');
+  T = streams_expand_trialinfo(data, 'feature', 'logprob');
+  T = T(:,3:end);
+  m = zeros(size(T,1),1)+nan;
+  for k = 1:size(T,1)
+    m(k) = nanmedian(T(k,T(k,:)~=0&isfinite(T(k,:))));
+  end
+  [srt,srtix] = sort(m); % from less probable to more probable
+  srtix(~isfinite(srt)) = [];
+  offset      = 0:50:(numel(srtix)-250);
+  chanindx    = match_str(data.label, 'audio_avg');
+  dat         = zeros(numel(data.label),numel(coh.freq),numel(offset));
+  for k = 1:numel(offset)
+    x = sort(srtix(offset(k)+(1:250)));
+    [tmp, freq] = streams_coherence_sensorlevel(data,'trials',x,'tapsmofrq',1);
+    dat(:,:,k)  = squeeze(tmp.cohspctrm(chanindx,:,:));
+  end
+  dat_avg = mean(dat,3);
+  dat_std = std(dat,[],3);
+  for k = 1:numel(offset)
+    dat(:,:,k) = (dat(:,:,k)-dat_avg);%./dat_std;
+  end
+  design = 1:numel(offset);
+  design = design - mean(design);
+  
+  cfg = [];
+  cfg.glm.contrast  = 1;
+  cfg.glm.statistic = 'T';
+  stat = statfun_glm(cfg, reshape(dat,[],numel(offset)), design);
+  
+  design(2,:) = (1:numel(offset)).^2;
+  design(2,:) = design(2,:) - mean(design(2,:));
+  cfg.glm.contrast = [1 0];
+  stat(2) = statfun_glm(cfg, reshape(dat,[],numel(offset)), design);
+  cfg.glm.contrast = [0 1];
+  stat(3) = statfun_glm(cfg, reshape(dat,[],numel(offset)), design);
+  
+  data = ft_struct2single(data);
+  
+  pathname = '/home/language/jansch/projects/streams/data/corticoaudiocoherence';
+  save(fullfile(pathname, [subject.name, '_corticoaudiocoherence']), 'coh', 'trials', 'data', 'dat', 'stat', 'dat_avg');
+end
+
 %% compute cortico_audio coherence at source level
 if 0%do_cac_source
   pathname = '/home/language/jansch/projects/streams/data/corticoaudiocoherence';
@@ -69,7 +113,7 @@ if 0%do_cac_lcmv
   end
 end
 
-if 1%compile cross frequency results
+if 0%compile cross frequency results
   pathname = '/home/language/jansch/projects/streams/data/corticoaudiocoherence';
   cd(pathname);
   
