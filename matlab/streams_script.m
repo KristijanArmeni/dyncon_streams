@@ -15,7 +15,7 @@ for k = 1:numel(subjects)
       feature   = 'entropy';
       try
         fprintf('computing cross-correlation for bandlimited power at %d-%dHz, for audio fragment %s in subject %s\n',bpfreq(1),bpfreq(2),audiofile,subject.name);
-        [~, ~, c, lag] = streams_blp_feature(subject, 'audiofile', audiofile, 'bpfreq', bpfreq, 'feature', feature);
+        [stat] = streams_blp_feature(subject, 'audiofile', audiofile, 'bpfreq', bpfreq, 'feature', feature);
         fname = fullfile('/home/language/jansch/projects/streams/data',[subject.name,'_',audiofile,'_',feature,'_xcorr','_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d')]);
         save(fname, 'c', 'lag');
       end
