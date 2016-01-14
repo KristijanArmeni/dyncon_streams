@@ -37,7 +37,7 @@ lag         = ft_getopt(varargin, 'lag',(-200:10:200)); % this corresponds to [-
 savefile    = ft_getopt(varargin, 'savefile');
 length      = ft_getopt(varargin, 'length');
 overlap     = ft_getopt(varargin, 'overlap');
-nshuffle    = ft_getopt(varargin, 'nshuffle', 10);
+nshuffle    = ft_getopt(varargin, 'nshuffle', 0);
 chunk       = ft_getopt(varargin, 'chunk', []);
 dosource    = ft_getopt(varargin, 'dosource', 0);
 randstate   = ft_getopt(varargin, 'randstate', randomseed([]));
@@ -139,12 +139,12 @@ switch method
     %cfg.mi.cmbindx = [(1:273)' (274:546)'];
     cfg.mi.remapdesign = 1;
     cfg.mi.bindesign = 0;
-    c  = statfun_mutualinformation_shift(cfg, dat, design);
+    c  = streams_mutualinformation_shift(cfg, dat, design);
     
     if nshuffle>0
       shuff = streams_shufflefeature(design(1,:), nshuffle);
       for m = 1:nshuffle
-        cshuf(:,:,m) = statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
+        cshuf(:,:,m) = streams_mutualinformation_shift(cfg, dat, shuff(m,:));
       end
     else
       cshuf = [];
