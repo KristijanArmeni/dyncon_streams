@@ -48,9 +48,11 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 %                   chunk         =   scalar, ?
 %                   nshuffle      =   integer, specifies number of random
 %                                     permutations to perform on the
-%                                     feature vector (featuredata) to
-%                                     construct the null condition (default
-%                                     is 0)
+%                                     feature vector (featuredata) to construct the null condition (default
+%                                     = 0)
+%                   avgwords     =    integer, specifying whether or not to
+%                                     average the feature vector values over all word sample
+%                                     points (default = 0)
 % 
 % CUSTUM SUBFUNCTIONS CALLED WITHIN THIS SCRIPT
 % streams_lcmv()
@@ -75,6 +77,7 @@ paths           = ft_getopt(varargin, 'paths');
 overlap         = ft_getopt(varargin, 'overlap');
 nshuffle        = ft_getopt(varargin, 'nshuffle', 0);
 lpfreq          = ft_getopt(varargin, 'lpfreq', []);
+avgwords        = ft_getopt(varargin, 'avgwords', 0);
 
 
 %% loading data
@@ -248,7 +251,7 @@ switch method
     %cfg.mi.cmbindx = [(1:273)' (274:546)'];
     cfg.mi.remapdesign = 0;
     cfg.mi.bindesign = 1;
-    cfg.avgwords = 0; % or 1
+    cfg.avgwords = avgwords; % or 1
     c  = streams_statfun_mutualinformation_shift(cfg, dat, design);
     
     if nshuffle>0
