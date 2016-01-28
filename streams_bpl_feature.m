@@ -20,8 +20,21 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 % varargin      =   key-value pairs providing additional arguments
 %                   as follows:
 % 
+%                   paths         =   1 x 3 cell array, specifying
+%                                     destinations to directories for
+%                                     saving and loading the data. First
+%                                     element specifies where the data is
+%                                     located if not provided to the
+%                                     function. Second element specifies
+%                                     the dir for saving the final output.
+%                                     third element points to dir for
+%                                     loading .mat auditory components
+%                                    
 %                   feature       =   string, specifying the model output to use
 %                                     for the analysis
+%                   lpfreq        =   integer array, specifying the lower
+%                                     and upper bound of the frequency band
+%                                     for filtering after hilbert-transform
 %                   reject        =   1x2 cell array: first cell is a scalar specifying whether or not to do
 %                                     component analysis via ft_rejectcomponent, the second cell containts
 %                                     a list of components to reject (default is {0, []})
@@ -111,8 +124,8 @@ if doreject
 end
 
 if ~isempty(savedataclean)
-    cd(paths{1});
-    save(savedataclean, 'data');
+    savedss = fullfile(paths{1}, savedataclean);
+    save(savedss, 'data');
 end
 
 %% source reconstruction
