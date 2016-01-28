@@ -1,5 +1,5 @@
 function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
-%streams_bpl_feature computes blabla ....
+%streams_bpl_feature computes mutual information between MEG data (data) and specific model output (featuredata) ....
 % 
 % USE AS
 % [stat] = streams_bpl_feature(subject, data, featuredata, ...
@@ -33,6 +33,11 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 %                   dosource      =   boolean value, specifying whether or not to
 %                                     perform source reconstruction using streams_lcmv
 %                   chunk         =   scalar, ?
+%                   nshuffle      =   integer, specifies number of random
+%                                     permutations to perform on the
+%                                     feature vector (featuredata) to
+%                                     construct the null condition (default
+%                                     is 0)
 % 
 % CUSTUM SUBFUNCTIONS CALLED WITHIN THIS SCRIPT
 % streams_lcmv()
