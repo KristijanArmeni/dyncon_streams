@@ -82,8 +82,6 @@ avgwords        = ft_getopt(varargin, 'avgwords', 0);
 
 %% loading data
 
-cd(paths{1})
-
 % Get subject name (must be the same three character string for all files)
 if ischar(data)
   subject_name = data(1:3);
