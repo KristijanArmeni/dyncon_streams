@@ -2,14 +2,13 @@ function [subject, data, audio] = streams_preproc(subject, varargin)
 
 % streams_preproc performs basic preprocessing of the MEG & the corresponding audiodata
 % 
-
 % example use:
 %   
 % [subject, data, audio] = streams_preproc('s01', 'key1', 'value1' etc.)
 % 
 % necessary input arguments:
 % 
-%         subject        = string or matlab data structure containing the MEG & audio data
+%         subject       = string or matlab data structure containing the MEG & audio data
 %                       if string it is passed to streams_subjinfo() to load the corresponding
 %                       subject data structure, subject name
 % 
@@ -28,7 +27,6 @@ function [subject, data, audio] = streams_preproc(subject, varargin)
 %                         (default is 0)
 %         audiofile       = string or cell array of strings, specifies audiofile
 %                         names to use
-%         savefile        = character,sub
 % 
 % 
 % The following custom functions are called within this function:
@@ -37,7 +35,6 @@ function [subject, data, audio] = streams_preproc(subject, varargin)
 %   -mous_wav2mat()
 
 
-%%q
 % Get subject ID
 if ischar(subject)
   subject = streams_subjinfo(subject);
@@ -57,7 +54,6 @@ hpfreq      = ft_getopt(varargin, 'hpfreq');
 dftfreq     = ft_getopt(varargin, 'dftfreq');
 audiofile   = ft_getopt(varargin, 'audiofile', 'all');
 fsample     = ft_getopt(varargin, 'fsample', 300);
-savefile    = ft_getopt(varargin, 'savefile');
 docomp      = ft_getopt(varargin, 'docomp', 0);
 dosns       = ft_getopt(varargin, 'dosns', 0);
 append      = ft_getopt(varargin, 'append', 0);
@@ -301,12 +297,9 @@ for k = 1:numel(seltrl)
   
 end
 
+% add audio channels to the data structure if specified
 if append
     data = ft_appenddata([], data, audio);
-end
-
-if ~isempty(savefile)
-  save(savefile, 'data');
 end
 
 fprintf('\nPreprocessed %d stories cut into %d trials.\n', numel(seltrl), numel(data.trial));
