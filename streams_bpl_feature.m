@@ -34,7 +34,7 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 %                                     for the analysis
 %                   lpfreq        =   integer array, specifying the lower
 %                                     and upper bound of the frequency band
-%                                     for filtering after hilbert-transform
+%                                     for low-pass filtering after hilbert-transform
 %                   reject        =   1x2 cell array: first cell is a scalar specifying whether or not to do
 %                                     component analysis via ft_rejectcomponent, the second cell containts
 %                                     a list of components to reject (default is {0, []})
@@ -78,7 +78,7 @@ overlap         = ft_getopt(varargin, 'overlap');
 nshuffle        = ft_getopt(varargin, 'nshuffle', 0);
 lpfreq          = ft_getopt(varargin, 'lpfreq', []);
 avgwords        = ft_getopt(varargin, 'avgwords', 0);
-
+opts                 = ft_getopt(varargin, 'opts', []); % optional arguments to influence the behaviour of the mi-computation
 
 %% loading data
 
@@ -150,20 +150,24 @@ end
 %   end
 % end
 
-% computing the envelope by taking the hilbert transform
-fprintf('\nComputing hilbert-transform (abs) of the data...\n');
-fprintf('=========================================\n\n')
 
-cfg = [];
-cfg.hilbert = 'abs';
-data = ft_preprocessing(cfg, data);
+if all(data.trial{1}(:)>=0),
+  % assume that the data does already contain envelopes
+else
+  % computing the envelope by taking the hilbert transform
+  fprintf('\nComputing hilbert-transform (abs) of the data...\n');
+  fprintf('=========================================\n\n')
+
+  cfg = [];
+  cfg.hilbert = 'abs';
+  data = ft_preprocessing(cfg, data);
+end
 
 if ~isempty(lpfreq)
     cfg = [];
     cfg.lpfilter    = 'yes';
     cfg.lpfreq      = lpfreq;
     cfg.lpfilttype  = 'firws';
-    
     data = ft_preprocessing(cfg, data);
 end
 
@@ -242,20 +246,24 @@ switch method
   case 'xcorr'
     c       = statfun_xcorr(cfg, dat, design);
   case 'mi'
-    cfg.mi  = [];
-    cfg.mi.nbin = 10;
+    cfg.mi  = opts;
+    cfg.mi.nbin = ft_getopt(cfg.mi, 'nbin', 5);
     %cfg.mi.btsp = 1;
     %cfg.mi.bindesign = 1;
     %cfg.mi.cmbindx = [(1:273)' (274:546)'];
-    cfg.mi.remapdesign = 0;
-    cfg.mi.bindesign = 1;
+    cfg.mi.remapdesign = ft_getopt(cfg.mi, 'remapdesign', 0);
+    cfg.mi.bindesign = ft_getopt(cfg.mi, 'bindesign', 1);
+    cfg.mi.method  = ft_getopt(cfg.mi, 'method', 'gs');
+    cfg.mi.bias = ft_getopt(cfg.mi, 'bias', 'naive');
+    cfg.mi.binmethod = ft_getopt(cfg.mi, 'binmethod', 'eqpop');
     cfg.avgwords = avgwords; % or 1
-    c  = streams_statfun_mutualinformation_shift(cfg, dat, design);
+    
+    [c, cfg]  = statfun_mutualinformation_shift(cfg, dat, design);
     
     if nshuffle>0
       shuff = streams_shufflefeature(design(1,:), nshuffle);
       for m = 1:nshuffle
-        cshuf(:,:,m) = streams_statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
+        cshuf(:,:,m) = statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
       end
     else
       cshuf = [];
