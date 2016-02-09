@@ -258,12 +258,12 @@ switch method
     cfg.mi.binmethod = ft_getopt(cfg.mi, 'binmethod', 'eqpop');
     cfg.avgwords = avgwords; % or 1
     
-    [c, cfg]  = statfun_mutualinformation_shift(cfg, dat, design);
+    [c, cfg]  = streams_statfun_mutualinformation_shift(cfg, dat, design);
     
     if nshuffle>0
       shuff = streams_shufflefeature(design(1,:), nshuffle);
       for m = 1:nshuffle
-        cshuf(:,:,m) = statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
+        cshuf(:,:,m) = streams_statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
       end
     else
       cshuf = [];
