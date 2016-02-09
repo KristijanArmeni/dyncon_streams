@@ -48,7 +48,7 @@ end
 %% INPUT ARGUMENT MANAGMENT
 
 % make a local version of the variable input arguments
-ramp        = ft_getopt(varargin, 'ramp');
+ramp        = ft_getopt(varargin, 'ramp', 'up');
 bpfreq      = ft_getopt(varargin, 'bpfreq');
 hpfreq      = ft_getopt(varargin, 'hpfreq');
 dftfreq     = ft_getopt(varargin, 'dftfreq');
@@ -186,7 +186,7 @@ for k = 1:numel(seltrl)
   
   % now we get the audio signal from the wavfile, at the same Fs as the
   % MEG, and for now we are going to use the 'audio_avg signal'
-  audio2       = mous_wav2mat(selaudio{k});
+  audio2       = streams_wav2mat(selaudio{k});
   
   % first we are going to shift the time axis as bit, as specified in the
   % precomputed delays.
