@@ -8,8 +8,8 @@ function [ combined_data ] = combine_donders_textgrid( donders_path, textgrid_pa
 %   [combined_data] = combine_donders_textgrid(filename_d, filename_t)
 %
 % Input arguments:
-%   filenamed = string, filename pointing to a *.donders file
-%   filenamet = string, filename pointing to the corresponding *.textgrid
+%   filename_d = string, filename pointing to a *.donders file
+%   filename_t = string, filename pointing to the corresponding *.textgrid
 %                 file
 %
 % Output argument:
@@ -17,6 +17,17 @@ function [ combined_data ] = combine_donders_textgrid( donders_path, textgrid_pa
 %                    donders-file based struct-array with the timing
 %                    information added.
 
+if nargin<2,
+  % only a 'fnXXXXX' is given, make a smart guess
+  [p,f,e] = fileparts(donders_path);
+  if isempty(p)
+    p = fullfile('/home/language/jansch/projects/streams/audio',f);
+  end
+  
+  textgrid_path = fullfile(p,[f,'.TextGrid']);
+  donders_path  = fullfile(p,[f,'.donders']);
+end
+  
 [~,f1,e] = fileparts(textgrid_path);
 [~,f2,e] = fileparts(donders_path);
 if ~strcmp(f1,f2)
