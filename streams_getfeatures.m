@@ -4,7 +4,7 @@ function [featuredata] = streams_getfeatures(subject, varargin)
 % structure contaning the feature as a time series.
 %
 % Use as 
-%   [featuredata] = streams_extract_feature(subject, 'key1',
+%   [featuredata] = streams_getfeature(subject, 'key1',
 %      'value1', 'key2', 'value2', ...)
 %
 % Input arguments:
@@ -103,10 +103,12 @@ end
 
 %% PREPROCESSING
 
-% do the basic processing per audiofile
+% do the basic processing per audiofile, which amounts to doing some stuff
+% for a single MEG channel, to get a time axis consistent with what will be
+% extracted when processing all data (w.r.t. artifacts and downsampling) 
 for k = 1:numel(seltrl)
   
-  fprintf('\nStarting preprocessing MEG data for trial Nr. %d for subject %s ...\n', k, subject.name);
+  fprintf('\nStarting preprocessing of a single channel MEG data for trial Nr. %d for subject %s ...\n', k, subject.name);
   
   [p,f,e] = fileparts(selaudio{k});
   
@@ -138,29 +140,6 @@ for k = 1:numel(seltrl)
   cfg.artfctdef.reject = 'partial';
   data       = ft_rejectartifact(cfg, data);
 
-%   % remove blink components
-%   if docomp && ~isempty(badcomps{k})
-%     fprintf('removing blink components\n');
-%     P        = eye(numel(data.label)) - mixing{k}(:,badcomps{k})*unmixing{k}(badcomps{k},:);
-%     montage.tra = P;
-%     montage.labelorg = data.label;
-%     montage.labelnew = data.label;
-%     grad      = ft_apply_montage(data.grad, montage);
-%     data     = ft_apply_montage(data, montage);
-%     data.grad = grad;
-%   end
-%   
-%   % do sensor noise suppression if specified in the input arguments
-%   if dosns
-%     fprintf('Doing sensor noise suppression...\n');
-%   
-%     addpath('/home/language/jansch/matlab/fieldtrip/denoise_functions');
-%     cfg             = [];
-%     cfg.nneighbours = 50;
-%     cfg.truncate    = 40;
-%     data           = ft_denoise_sns(cfg, data);
-%   end
-  
   % Perform downsampling
   fprintf('\nDownsampling to %d Hz ...\n', fsample);
   fprintf('=========================================\n\n')
@@ -178,7 +157,7 @@ for k = 1:numel(seltrl)
     data  = ft_resampledata(cfg, data);
     
     % add back the first time point, so that the relative time axis
-    % corresponds again with the timing in combineddata
+    % corresponds again with the timing in the original data
     for kk = 1:numel(data.trial)
       data.time{kk}  = data.time{kk}  + firsttimepoint(kk);
     end
