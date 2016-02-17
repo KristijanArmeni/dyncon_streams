@@ -1,4 +1,4 @@
-function [stat, cfg] = statfun_mutualinformation(cfg, dat, design)
+function [stat, cfg] = streams_statfun_mutualinformation(cfg, dat, design)
 
 % computes mutual information using the information breakdown toolbox
 
@@ -11,17 +11,19 @@ if ~isempty(cfg.uvar)
 end
 design = design(cfg.ivar,:);
 
-opts           = ft_getopt(cfg,  'mi', []);
-opts.output    = ft_getopt(opts, 'output', 'I');
-opts.bindesign = ft_getopt(opts, 'bindesign', ~isequalwithequalnans(design(cfg.ivar,:),round(design(cfg.ivar,:))));
-opts.remapdesign = ft_getopt(opts, 'remapdesign', isequalwithequalnans(design(cfg.ivar,:),round(design(cfg.ivar,:))));
-opts.cmbindx   = ft_getopt(opts, 'cmbindx');
-opts.edges   = ft_getopt(opts, 'edges', []);
+opts             = ft_getopt(cfg,  'mi',          []);
+opts.output      = ft_getopt(opts, 'output',      'I');
+opts.bindesign   = ft_getopt(opts, 'bindesign',   ~isequaln(design(cfg.ivar,:), round(design(cfg.ivar,:))));
+opts.remapdesign = ft_getopt(opts, 'remapdesign',  isequaln(design(cfg.ivar,:), round(design(cfg.ivar,:))));
+opts.cmbindx     = ft_getopt(opts, 'cmbindx');
+opts.edges       = ft_getopt(opts, 'edges',        []);
+
 output         = opts.output;
 bindesign      = opts.bindesign;
 remapdesign    = opts.remapdesign;
 cmbindx        = opts.cmbindx;
-edges         = opts.edges;
+edges          = opts.edges;
+
 opts           = rmfield(opts, {'output' 'bindesign' 'remapdesign' 'cmbindx' 'edges'}); % this argument is not needed by ibtb code
 opts.nt        = ft_getopt(opts, 'nt', []);
 opts.method    = ft_getopt(opts, 'method', 'dr');

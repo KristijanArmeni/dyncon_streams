@@ -32,6 +32,10 @@ function [data] = streams_extract_data(subject, varargin)
 % combined planar gradient
 
 
+% try whether this solves the problems with finding fftfilt when running it
+% in a torque job
+addpath('/opt/matlab/R2014b/toolbox/signal/signal');
+
 
 if ischar(subject)
   subject = streams_subjinfo(subject);
@@ -40,12 +44,13 @@ end
 % make a local version of the variable input arguments
 bpfreq      = ft_getopt(varargin, 'bpfreq');
 hpfreq      = ft_getopt(varargin, 'hpfreq');
+lpfreq       = ft_getopt(varargin, 'lpfreq'); % before the post-envelope computation downsampling
 dftfreq     = ft_getopt(varargin, 'dftfreq');
 audiofile   = ft_getopt(varargin, 'audiofile', 'all');
 %fsample     = ft_getopt(varargin, 'fsample', 200);
-fsample     = ft_getopt(varargin, 'fsample', 100);
+fsample     = ft_getopt(varargin, 'fsample', 30);
 savefile    = ft_getopt(varargin, 'savefile');
-docomp      = ft_getopt(varargin, 'docomp', 1);
+docomp      = ft_getopt(varargin, 'docomp', 0);
 dosns       = ft_getopt(varargin, 'dosns', 0);
 boxcar      = ft_getopt(varargin, 'boxcar');
 
@@ -138,12 +143,14 @@ for k = 1:numel(seltrl)
     cfg.bpfilter = 'yes';
     cfg.bpfreq   = bpfreq;
     cfg.bpfilttype = 'firws';
+    cfg.usefftfilt = 'yes';
     %cfg.bpfiltord  = 300;
   end
   if usehpfilter
     cfg.hpfilter = 'yes';
     cfg.hpfreq   = hpfreq;
     cfg.hpfilttype = 'firws';
+    cfg.usefftfilt = 'yes';
   end
   data           = ft_preprocessing(cfg); % read in the MEG data
   cfg.bpfilter = 'no';
@@ -164,6 +171,7 @@ for k = 1:numel(seltrl)
   cfg                  = [];
   cfg.artfctdef        = subject.artfctdef;
   cfg.artfctdef.reject = 'partial';
+	cfg.artfctdef.minaccepttim = 2;
   data        = ft_rejectartifact(cfg, data);
   audio       = ft_rejectartifact(cfg, audio);
 
@@ -190,19 +198,24 @@ for k = 1:numel(seltrl)
     data            = ft_denoise_sns(cfg, data);
   end
   
-  % convert to synthetic planar gradient representation
-  load('/home/common/matlab/fieldtrip/template/neighbours/ctf275_neighb');
-  cfg              = [];
-  cfg.neighbours   = neighbours;
-  cfg.planarmethod = 'sincos';
-  data = ft_megplanar(cfg, data);
-
+%   % convert to synthetic planar gradient representation
+%   load('/home/common/matlab/fieldtrip/template/neighbours/ctf275_neighb');
+%   cfg              = [];
+%   cfg.neighbours   = neighbours;
+%   cfg.planarmethod = 'sincos';
+%   data = ft_megplanar(cfg, data);
+% 
+   cfg = [];
+   cfg.hilbert = 'complex';
+   data = ft_preprocessing(cfg, data);
+%   cfg = [];
+%   cfg.method = 'svd';
+%   data = ft_combineplanar(cfg, data);
+%   
   cfg = [];
-  cfg.hilbert = 'complex';
-  data = ft_preprocessing(cfg, data);
-  cfg = [];
-  cfg.combinemethod = 'svd';
-  data = ft_combineplanar(cfg, data);
+  cfg.operation = 'abs';
+  cfg.parameter = 'trial';
+  data = ft_math(cfg, data);
   
   if ~isempty(boxcar),
     cfg = [];
@@ -210,6 +223,15 @@ for k = 1:numel(seltrl)
     data = ft_preprocessing(cfg, data);
   end
   
+  if ~isempty(lpfreq)
+    cfg = [];
+    cfg.lpfreq = lpfreq;
+    cfg.lpfilter = 'yes';
+    cfg.lpfilttype = 'firws';
+    cfg.usefftfilt = 'yes';
+    data = ft_preprocessing(cfg, data);
+  end
+    
   if fsample<1200,
     % subtract first time point for memory purposes
     for kk = 1:numel(data.trial)

@@ -73,7 +73,7 @@ dosource        = ft_getopt(varargin, 'dosource', 0);
 savefile        = ft_getopt(varargin, 'savefile');
 savedataclean   = ft_getopt(varargin, 'savedataclean');
 length          = ft_getopt(varargin, 'length');
-paths           = ft_getopt(varargin, 'paths');
+paths           = ft_getopt(varargin, 'paths',{'' '' ''});
 overlap         = ft_getopt(varargin, 'overlap');
 nshuffle        = ft_getopt(varargin, 'nshuffle', 0);
 lpfreq          = ft_getopt(varargin, 'lpfreq', []);
@@ -150,10 +150,10 @@ end
 %   end
 % end
 
-
+dohilbert = 0;
 if all(data.trial{1}(:)>=0),
   % assume that the data does already contain envelopes
-else
+elseif dohilbert
   % computing the envelope by taking the hilbert transform
   fprintf('\nComputing hilbert-transform (abs) of the data...\n');
   fprintf('=========================================\n\n')

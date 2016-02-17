@@ -29,6 +29,10 @@ function [featuredata] = streams_extract_feature(subject, varargin)
 %                           'fn001078', 'feature',
 %                           'entropy');
 
+% try whether this solves the problems with finding fftfilt when running it
+% in a torque job
+addpath('/opt/matlab/R2014b/toolbox/signal/signal');
+
 
 if ischar(subject)
   subject = streams_subjinfo(subject);
@@ -38,7 +42,7 @@ end
 feature     = ft_getopt(varargin, 'feature');
 audiofile   = ft_getopt(varargin, 'audiofile', 'all');
 %fsample     = ft_getopt(varargin, 'fsample', 200);
-fsample     = ft_getopt(varargin, 'fsample', 100);
+fsample     = ft_getopt(varargin, 'fsample', 30);
 savefile    = ft_getopt(varargin, 'savefile', '');
 
 % check whether all required user specified input is there
@@ -117,6 +121,8 @@ for k = 1:numel(seltrl)
   cfg                  = [];
   cfg.artfctdef        = subject.artfctdef;
   cfg.artfctdef.reject = 'partial';
+	cfg.artfctdef.minaccepttim = 2;
+
   data        = ft_rejectartifact(cfg, data);
    
   % subtract first time point for memory purposes
