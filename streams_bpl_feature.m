@@ -279,6 +279,7 @@ stat.label = data.label;
 stat.time  = lag./data.fsample;
 stat.stat  = c;
 stat.statshuf = cshuf;
+stat.statdif = stat.stat - mean(stat.statshuf, 3); % difference real-surrogate
 stat.dimord = 'chan_time';
 
 if ~isempty(savefile)
