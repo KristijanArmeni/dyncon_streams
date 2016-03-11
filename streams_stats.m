@@ -49,30 +49,6 @@ cfg.parameter = 'stat';
 ga_Real       = ft_timelockgrandaverage(cfg, miReal{:});  
 ga_Shuf       = ft_timelockgrandaverage(cfg, miShuf{:});
 
-
-%% PLOTS (if needed)
-
-% Plot for all subjects
-for isub = 1:length(miReal)
-    
-    subplot(3,4,isub)
-    
-%   plot the lines in front of the rectangle
-%     plot(miReal{isub}.time,miReal{isub}.stat(:,:));
-%     hold on;
-%     plot(miShuf{isub}.time,miShuf{isub}.stat(:,:), 'r');
-%     hold on;
-     plot(miReal{isub}.time, mean(miReal{isub}.stat, 1), 'b');
-     hold on;
-     plot(miShuf{isub}.time, mean(miShuf{isub}.stat, 1), 'r');
-     title(strcat('subject_ ', num2str(isub)))
-
-end
-
-subplot(3,4,11);
-text(0.5,0.5,'Real','color','b') ;text(0.5,0.3,'Shuffle','color','r')
-axis off
-
 %% PERMUTATION TEST
 
 load('/home/language/jansch/projects/streams/data/preproc/s01_fn001078_data_12-18_30Hz.mat');
