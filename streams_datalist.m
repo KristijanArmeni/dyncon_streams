@@ -1,11 +1,11 @@
 function [data_files, feature_files] = streams_datalist(freq)
-% STREAMS_DATALIST List datafiles and corresponding featuredata from JM directory
+% STREAMS_DATALIST Lists datafiles and corresponding featuredata from JM directory
 % There should be 65 datafiles (one less than featurefiles)
 % 
 % Input argument:
-
-% freq        =          string, specifying frequency band from the file
-%                        name
+%   
+%         freq        =    string, specifying the frequency band from the file
+%                          name
 % Example use:
 % 
 % [data_files, feature_files] = streams_datalist('12-18')
