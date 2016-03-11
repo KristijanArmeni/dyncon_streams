@@ -88,7 +88,6 @@ cfg.highlightchannel = find(stat.mask);
 cfg.comment   = 'no';
 figure; ft_topoplotER(cfg, stat)
 
-title('Nonparametric: significant without multiple comparison correction')
 
 %% Plots
 
