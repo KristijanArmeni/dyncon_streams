@@ -1,44 +1,17 @@
 %% Create structures for statistics
 
 stories = {'fn001078', 'fn001155', 'fn001293', 'fn001294', 'fn001443', 'fn001481', 'fn001498'};
-subjects = {'s01', 's02', 's03', 's04', 's05', 's07', 's08', 's09', 's10'};
 feat_band = {'entr_12-18', 'perp_12-18', 'entr_04-08', 'perp_04-08'};
 
 
-% Create structures for stats
-save_dir = '/home/language/kriarm/matlab/streams_output/stats/meg_model_MI_noDss/MI_combined';
-
 for i = 1:numel(feat_band)
-    getdata = fullfile('/home/language/kriarm/matlab/streams_output/stats/meg_model_MI_noDss', ...
-                       ['*' feat_band{i} '*']);
-
-    files = dir(getdata);
-    files = {files.name}';
     
-    miReal = cell(numel(files), 1);
-    miShuf = cell(numel(files), 1);
-
-    for k = 1 : numel(files)
-
-        filename = files{k};
-        load(filename);
-        
-        % real MI condition
-        miReal{k} = stat;
-        miReal{k} = rmfield(miReal{k}, 'statshuf');    % remove the statshuf timecourse
-        
-        % surrogate MI
-        miShuf{k} = stat;
-        miShuf{k} = rmfield(miShuf{k}, {'statshuf', 'stat'});   % remove old .statshuf & .stat field
-        miShuf{k}.stat = mean(stat.statshuf, 3);                % add .statshuf timecourse as .stat field
-        miShuf{k} = orderfields(miShuf{k}, miReal{k});          % order fields as in miReal
-
-    end    
-
-    saveMi = fullfile(save_dir, ['mi_' filename(14:23)] );
-    save(saveMi, 'miReal', 'miShuf');
-
+    fband = feat_band{i};
+    
+    streams_statstruct(fband)
+    
 end
+
 
 %% Grand averages for plots
 
@@ -63,11 +36,13 @@ cfg.channel     = 'MEG';
 cfg.parameter   = 'stat';
 cfg.method      = 'montecarlo';
 cfg.statistic   = 'ft_statfun_depsamplesT';
+cfg.tail        = -1;
 cfg.alpha       = 0.05;
 cfg.clusterstatistic = 'maxsum';
 cfg.minnbchan = 2;
 cfg.neighbours  =   neighbours;
 cfg.correctm    = 'cluster';
+cfg.clustertail = -1;
 cfg.numrandomization = 1000;
  
 Nsub = numel(miReal);
@@ -105,11 +80,11 @@ timestep = 0.1;      %(in seconds)
 sampling_rate = data.fsample;
 sample_count = length(stat.time);
 
-j = [-0.2:timestep:0.2];   % Temporal endpoints (in seconds) of the ERP average computed in each subplot
+j = [-1:timestep:1];   % Temporal endpoints (in seconds) of the ERP average computed in each subplot
 m = [1:timestep*sampling_rate:sample_count];  % temporal endpoints in MEEG samples
 
 % get relevant (significant) values
-pos_cluster_pvals = [stat.posclusters(:).prob];
+negs_cluster_pvals = [stat.negclusters(:).prob];
 
 % In case you have downloaded and loaded the data, ensure stat.cfg.alpha exists:
 if ~isfield(stat.cfg,'alpha'); stat.cfg.alpha = 0.025; end; % stat.cfg.alpha was moved as the downloaded data was processed by an additional fieldtrip function to anonymize the data.
@@ -118,16 +93,18 @@ pos_signif_clust = find(pos_cluster_pvals < stat.cfg.alpha);
 pos = ismember(stat.posclusterslabelmat, pos_signif_clust);
 
 % plot
-for k = 1:numel(j)-1;
+for k = 1:numel(j);
+     
      subplot(4,5,k);   
      cfg = [];   
      cfg.xlim=[j(k) j(k+1)];    
-%      pos_int = all(pos(:, m(k):m(k+1)), 2);
-%      cfg.highlight = 'on';
-%      cfg.highlightchannel = find(pos_int);       
+     pos_int = all(pos(:, m(k):m(k+1)), 2);
+     cfg.highlight = 'on';
+     cfg.highlightchannel = find(pos_int);       
      cfg.comment = 'xlim';   
      cfg.commentpos = 'title';   
      cfg.layout = 'CTF275_helmet.mat';
      ft_topoplotER(cfg, ga_dif);
+     
 end  
 
