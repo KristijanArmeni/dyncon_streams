@@ -53,6 +53,12 @@ savefile    = ft_getopt(varargin, 'savefile');
 docomp      = ft_getopt(varargin, 'docomp', 0);
 dosns       = ft_getopt(varargin, 'dosns', 0);
 boxcar      = ft_getopt(varargin, 'boxcar');
+hilbert_transf = ft_getopt(varargin, 'hilbert', 'abs');
+filter_audio   = ft_getopt(varargin, 'filter_audio', 'no');
+
+if ~strcmp(hilbert_transf, 'abs') && ~isempty(lpfreq)
+  error('not taking the absolute of the hilbert transform in combination with lowpassfiltering is not allowed');
+end
 
 % check whether all required user specified input is there
 if isempty(bpfreq) && isempty(hpfreq),  
@@ -153,8 +159,11 @@ for k = 1:numel(seltrl)
     cfg.usefftfilt = 'yes';
   end
   data           = ft_preprocessing(cfg); % read in the MEG data
-  cfg.bpfilter = 'no';
-  cfg.hpfilter = 'no';
+  
+  if strcmp('filter_audio', 'no'),
+    cfg.bpfilter = 'no';
+    cfg.hpfilter = 'no';
+  end
   cfg.channel  = 'UADC004';
   audio        = ft_preprocessing(cfg); % read in the audio data
   
@@ -208,15 +217,20 @@ for k = 1:numel(seltrl)
    cfg = [];
    cfg.hilbert = 'complex';
    data = ft_preprocessing(cfg, data);
+   if ~strcmp(filter_audio,'no')
+     audio = ft_preprocessing(cfg, audio);
+   end
+   
 %   cfg = [];
 %   cfg.method = 'svd';
 %   data = ft_combineplanar(cfg, data);
 %   
+  if strcmp(hilbert_transf, 'abs'),
   cfg = [];
   cfg.operation = 'abs';
   cfg.parameter = 'trial';
   data = ft_math(cfg, data);
-  
+  end
   if ~isempty(boxcar),
     cfg = [];
     cfg.boxcar = boxcar;

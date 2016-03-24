@@ -18,18 +18,20 @@ for j = 1:numel(subjects)
 		audiofile = audiofiles{k};
 		tmp       = strfind(audiofile, 'fn');
 		audiofile = audiofile(tmp+(0:7));
-% 		for m = 1:size(bpfreqs,1)
-% 			bpfreq   = bpfreqs(m,:);
-% 			lpfreq   = lpfreqs(m);
-% 			savefile = fullfile('/home/language/jansch/projects/streams/data/preproc/',[subject.name,'_',audiofile,'_data_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d'),'_30Hz']);
-% 			qsubfeval('streams_extract_data',subject,'audiofile',audiofile,'bpfreq',bpfreq,'savefile',savefile,...
-% 				'lpfreq',lpfreq,'memreq',memreq,'timreq',timreq);
-% 			
-% 			
-% 		end
-		savefile = fullfile('/home/language/jansch/projects/streams/data/featuredata/',[subject.name,'_',audiofile,'_featuredata_30Hz']);
-		qsubfeval('streams_extract_feature',subject,'audiofile',audiofile,'feature',features,'savefile',savefile,...
-			'memreq',memreq,'timreq',timreq);
+ 		for m = 1:size(bpfreqs,1)
+ 			bpfreq   = bpfreqs(m,:);
+ 			lpfreq   = lpfreqs(m);
+%  			savefile = fullfile('/home/language/jansch/projects/streams/data/preproc/',[subject.name,'_',audiofile,'_data_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d'),'_30Hz']);
+%  			qsubfeval('streams_extract_data',subject,'audiofile',audiofile,'bpfreq',bpfreq,'savefile',savefile,...
+%  				'lpfreq',lpfreq,'memreq',memreq,'timreq',timreq);
+ 			
+ 			savefile = fullfile('/home/language/jansch/projects/streams/data/preproc/',[subject.name,'_',audiofile,'_data_',num2str(bpfreq(1),'%02d'),'-',num2str(bpfreq(2),'%02d'),'_30Hz_complex']);
+ 			qsubfeval('streams_extract_data',subject,'audiofile',audiofile,'bpfreq',bpfreq,'savefile',savefile,...
+ 				'hilbert','complex','filter_audio','yes','memreq',memreq,'timreq',timreq);
+ 		end
+% 		savefile = fullfile('/home/language/jansch/projects/streams/data/featuredata/',[subject.name,'_',audiofile,'_featuredata_30Hz']);
+% 		qsubfeval('streams_extract_feature',subject,'audiofile',audiofile,'feature',features,'savefile',savefile,...
+% 			'memreq',memreq,'timreq',timreq);
 		
 	end
 end
