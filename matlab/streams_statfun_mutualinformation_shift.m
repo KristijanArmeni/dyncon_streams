@@ -63,10 +63,10 @@ for k = 1:numel(lag)
   tmpdat = tmpdat(:, finite_both);
   tmpdes = tmpdes(:, finite_both);
   
-  randsel    = sort(randperm(size(tmpdat,2),Noverlap));
-  
-  tmpdat = tmpdat(:,randsel);
-  tmpdes = tmpdes(:,randsel);
+%   randsel    = sort(randperm(size(tmpdat,2),Noverlap));
+%   
+%   tmpdat = tmpdat(:,randsel);
+%   tmpdes = tmpdes(:,randsel);
 
   
   %disp(shift)
