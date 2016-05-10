@@ -215,6 +215,19 @@ switch name
     subject.montage.labelorg = {'EEG058';'EEG057';'EEG059'};
     %subject.cac  = [1 4.5 10];
     subject.cac = [0.8 3.6 6 11.2];
+  
+  case 's11' % This is the first subject in the newly acquired dataset. Behavioral Presentation log for this subject was s01-streams.log
+    subject.dataset   = fullfile(subject.datadir, ['301104402kriarms01' '_1200hz_20160510_01.ds']);
+    subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
+        fullfile(subject.audiodir, 'fn001055.wav')
+        fullfile(subject.audiodir, 'fn001293.wav')
+        fullfile(subject.audiodir, 'fn001443.wav')
+        fullfile(subject.audiodir, 'fn001498.wav')};
+    subject.id = '105445';
+    subject.eogv.badcomps = [];
+    subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
+    subject.montage.labelnew = {'ECG';  'EOGh';  'EOGv'};
+        
 end
 
 if ~strcmp(name, 's01')
