@@ -24,6 +24,8 @@ else
     end
     fprintf('creating temporary trl containing %d epochs\n', size(trl,1));
     
+    trl = trl(1:20,:);
+    
     % SQUID jumps
     cfg                              = [];
     cfg.trl                          = trl;
@@ -51,7 +53,7 @@ else
     cfg = cfg{1};
   end
   
-  filename = fullfile('/home/language/jansch/projects/streams/data/', [subject.name,'_squidjumps.mat']);
+  filename = fullfile('/home/language/jansch/projects/streams/data/general', [subject.name,'_squidjumps.mat']);
   save(filename, 'cfg');
 end
 
