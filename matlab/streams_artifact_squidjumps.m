@@ -24,8 +24,6 @@ else
     end
     fprintf('creating temporary trl containing %d epochs\n', size(trl,1));
     
-    trl = trl(1:20,:);
-    
     % SQUID jumps
     cfg                              = [];
     cfg.trl                          = trl;
