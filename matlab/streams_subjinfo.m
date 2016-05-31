@@ -219,7 +219,7 @@ switch name
   case 's11' % This is the first subject in the newly acquired dataset. Behavioral Presentation log for this subject was s01-streams.log
     subject.dataset   = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160510_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001055.wav')
+        fullfile(subject.audiodir, 'fn001155.wav')
         fullfile(subject.audiodir, 'fn001293.wav')
         fullfile(subject.audiodir, 'fn001443.wav')
         fullfile(subject.audiodir, 'fn001498.wav')};
@@ -231,7 +231,7 @@ switch name
   case 's12'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160525_01.ds']);
         subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001055.wav')
+        fullfile(subject.audiodir, 'fn001155.wav')
         fullfile(subject.audiodir, 'fn001293.wav')
         fullfile(subject.audiodir, 'fn001443.wav')
         fullfile(subject.audiodir, 'fn001498.wav')};
@@ -243,7 +243,7 @@ switch name
   case 's13'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160527_01']);
         subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001055.wav')
+        fullfile(subject.audiodir, 'fn001155.wav')
         fullfile(subject.audiodir, 'fn001293.wav')
         fullfile(subject.audiodir, 'fn001443.wav')
         fullfile(subject.audiodir, 'fn001498.wav')};
@@ -255,7 +255,7 @@ switch name
     case 's14'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160530_01.ds']);
         subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001055.wav')
+        fullfile(subject.audiodir, 'fn001155.wav')
         fullfile(subject.audiodir, 'fn001293.wav')
         fullfile(subject.audiodir, 'fn001443.wav')
         fullfile(subject.audiodir, 'fn001498.wav')};
@@ -267,7 +267,7 @@ switch name
     case 's15'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160530_01.ds']);
         subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001055.wav')
+        fullfile(subject.audiodir, 'fn001155.wav')
         fullfile(subject.audiodir, 'fn001293.wav')
         fullfile(subject.audiodir, 'fn001443.wav')
         fullfile(subject.audiodir, 'fn001498.wav')};
