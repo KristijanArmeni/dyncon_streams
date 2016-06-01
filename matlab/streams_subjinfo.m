@@ -238,7 +238,7 @@ switch name
     subject.id = '79819';
     subject.eogv.badcomps = [];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
-    subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
+    subject.montage.labelnew = {'ECG';  'EOGh';  'EOGv'};
    
   case 's13'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160527_01']);
