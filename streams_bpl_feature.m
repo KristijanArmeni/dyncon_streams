@@ -32,6 +32,9 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 %                                    
 %                   feature       =   string, specifying the model output to use
 %                                     for the analysis
+%                   trim_feature  =   logical, indicating whether to
+%                                     discard the entropy values for word
+%                                     positions 0, 1, 2 when computing MI
 %                   lpfreq        =   integer array, specifying the lower
 %                                     and upper bound of the frequency band
 %                                     for low-pass filtering after hilbert-transform
@@ -65,13 +68,12 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 %% input argument handling
 
 feature         = ft_getopt(varargin, 'feature');
+trim_feature    = ft_getopt(varargin, 'trim_feature', 0);
 method          = ft_getopt(varargin, 'method', 'mi');
 lag             = ft_getopt(varargin, 'lag',(-200:10:200)); % this corresponds to [-1 1] at 200 Hz
 chunk           = ft_getopt(varargin, 'chunk', []);
 reject          = ft_getopt(varargin, 'reject', {0, []});
 dosource        = ft_getopt(varargin, 'dosource', 0);
-savefile        = ft_getopt(varargin, 'savefile');
-savedataclean   = ft_getopt(varargin, 'savedataclean');
 length          = ft_getopt(varargin, 'length');
 paths           = ft_getopt(varargin, 'paths',{'' '' ''});
 overlap         = ft_getopt(varargin, 'overlap');
@@ -102,6 +104,17 @@ if ischar(featuredata)
   load(featuredata);
 end
 
+% change the entropy values at word positions 0, 1, 2 and > 15 as NaN's
+if trim_feature
+    
+    for k = 1:numel(featuredata.trial);
+        featuredata.trial{k}(1, featuredata.trial{k}(3,:) == 0| ...
+                                featuredata.trial{k}(3,:) == 1| ...
+                                featuredata.trial{k}(3,:) == 2| ...
+                                featuredata.trial{k}(3,:) > 15) = nan;
+    end
+    
+end
 % choose the user-specified metric/feature
 selfeature = match_str(featuredata.label, feature);
 
@@ -124,10 +137,6 @@ if doreject
 
 end
 
-if ~isempty(savedataclean)
-    savedss = fullfile(paths{1}, savedataclean);
-    save(savedss, 'data');
-end
 
 %% source reconstruction
 
@@ -265,6 +274,17 @@ switch method
       for m = 1:nshuffle
         cshuf(:,:,m) = streams_statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
       end
+      
+%       rnd = zeros(nshuffle, numel(design));
+%       for k = 1:nshuffle
+%         rnd(k,:) = (max(design)-min(design)).*rand(1,size(design,2)); % vector of random numbers in the range of design
+%       end
+%       
+%       crnd = zeros(size(dat, 1), numel(cfg.lag), nshuffle); % prepare the matrix for the MI values
+%       for j = 1:nshuffle
+%         crnd(:,:,j) = streams_statfun_mutualinformation_shift(cfg, dat, rnd(j,:));
+%       end
+      
     else
       cshuf = [];
     end
@@ -281,10 +301,5 @@ stat.stat  = c;
 stat.statshuf = cshuf;
 stat.statdif = stat.stat - mean(stat.statshuf, 3); % difference real-surrogate
 stat.dimord = 'chan_time';
-
-if ~isempty(savefile)
-  filename = fullfile(paths{2}, savefile);
-  save(filename, 'stat');
-end
 
 fprintf('\n###streams_bpl_feature: DONE! ...###\n');
