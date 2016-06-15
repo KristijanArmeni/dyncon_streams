@@ -44,9 +44,9 @@ cfg.resamplefs = 1200;
 data = ft_resampledata(cfg, data);
 
 % Deal with the features
-[p,f,e]      = fileparts(filename);
-dondersfile  = fullfile(p,[f,'.donders']);
-textgridfile = fullfile(p,[f,'.TextGrid']);
+[~,f,~]      = fileparts(filename);
+dondersfile  = fullfile('/home/language/jansch/projects/streams/audio/', f, [f, '.donders']);  % will look for .donders file in streams/audio/fn00XXXX
+textgridfile = fullfile('/home/language/jansch/projects/streams/audio/', f, [f, '.TextGrid']); % will look for .TextGrid file in streams/audio/fn00XXXX
 combineddata = combine_donders_textgrid(dondersfile, textgridfile);
 
 fnames = {'sent_';'word_';'depind';'logprob';'entropy';'perplexity';'gra_perpl';'pho_perpl'};
