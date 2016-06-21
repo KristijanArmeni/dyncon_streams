@@ -20,16 +20,11 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 % varargin      =   key-value pairs providing additional arguments
 %                   as follows:
 % 
-%                   paths         =   1 x 3 cell array, specifying
-%                                     destinations to directories for
-%                                     saving and loading the data. First
-%                                     element specifies where the data is
-%                                     located if not provided to the
-%                                     function. Second element specifies
-%                                     the dir for saving the final output.
-%                                     third element points to dir for
+%                   comp_paths    =   string, specifying the
+%                                     destination the to dir for
 %                                     loading .mat auditory components
-%                                    
+%                                     (this input argument is passed to
+%                                     streams_existfile)
 %                   feature       =   string, specifying the model output to use
 %                                     for the analysis
 %                   trim_feature  =   logical, indicating whether to
@@ -65,33 +60,27 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 % statfun_xcorr_spearman_adjusted()
 % statfun_xcorr()
 
-%% input argument handling
+%% Input argument handling
 
 feature         = ft_getopt(varargin, 'feature');
 trim_feature    = ft_getopt(varargin, 'trim_feature', 0);
 method          = ft_getopt(varargin, 'method', 'mi');
 lag             = ft_getopt(varargin, 'lag',(-200:10:200)); % this corresponds to [-1 1] at 200 Hz
 chunk           = ft_getopt(varargin, 'chunk', []);
-reject          = ft_getopt(varargin, 'reject', {0, []});
 dosource        = ft_getopt(varargin, 'dosource', 0);
 length          = ft_getopt(varargin, 'length');
-paths           = ft_getopt(varargin, 'paths',{'' '' ''});
 overlap         = ft_getopt(varargin, 'overlap');
 nshuffle        = ft_getopt(varargin, 'nshuffle', 0);
 lpfreq          = ft_getopt(varargin, 'lpfreq', []);
 avgwords        = ft_getopt(varargin, 'avgwords', 0);
-opts                 = ft_getopt(varargin, 'opts', []); % optional arguments to influence the behaviour of the mi-computation
+opts            = ft_getopt(varargin, 'opts', []); % optional arguments to influence the behaviour of the mi-computation
 
-%% loading data
+%% Loading data
 
-% Get subject name (must be the same three character string for all files)
-if ischar(data)
-  subject_name = data(1:3);
+if ischar(data) %% exist('subject', 'var')
   load(data);
-elseif ~ischar(data) && ~exist('subject', 'var')
-  error('Unable to get subject.name variable and ''data'' not provided as string input argument.');
-else
-  subject_name = subject.name(1:3);
+elseif ~isstruct(data); %throw an error if there is no structure
+  error('Missing data input argument');
 end
 
 % make sure only MEG channels are in the data structure
@@ -118,27 +107,8 @@ end
 % choose the user-specified metric/feature
 selfeature = match_str(featuredata.label, feature);
 
-%% REJECT COMPONENTS
 
-doreject = reject{1};
-
-if doreject
-    
-    comps = reject{2};
-    
-    if isempty(comps)
-        error('No components specified in input argument list');
-    end
-    
-    fprintf('\nRejecting components. Call to streams_dss_rejectauditory ...\n');
-    fprintf('=========================================\n\n')
-    
-    data = streams_dss_rejectauditory(subject, data, comps, paths{3});
-
-end
-
-
-%% source reconstruction
+%% Source reconstruction
 
 % do source reconstruction if provided in the inputs
 if dosource
@@ -150,14 +120,7 @@ if dosource
 
 end
 
-%% reshaping the data
-
-% % take the absolute value of the data if needed
-% if any(imag(data.trial{1}(:))~=0)
-%   for k = 1:numel(data.trial)
-%     data.trial{k} = abs(data.trial{k});
-%   end
-% end
+%% Hilbert transform if not yet transformed
 
 dohilbert = 0;
 if all(data.trial{1}(:)>=0),
@@ -172,6 +135,8 @@ elseif dohilbert
   data = ft_preprocessing(cfg, data);
 end
 
+%% Low-pass filtering if needed
+
 if ~isempty(lpfreq)
     cfg = [];
     cfg.lpfilter    = 'yes';
@@ -179,6 +144,8 @@ if ~isempty(lpfreq)
     cfg.lpfilttype  = 'firws';
     data = ft_preprocessing(cfg, data);
 end
+
+%% Some extra data struct arrangements if needed
 
 % select specific channels if needed
 if ~isempty(chunk)
@@ -237,18 +204,20 @@ if numel(data.trial)>1
   end
 end
 
+
+%% Computing the chosen statistic
+
+fprintf('\nComputing %s...\n', method);
+fprintf('=========================================\n\n') 
+
 cfg     = [];
 cfg.lag = lag;
 cfg.ivar = 1;
 %cfg.uvar = 2;
 %[indx]   = streams_featuredat2wordindx(featuredat);
 %design   = [featuredat; indx];
+
 design = featuredat;
-
-%% computing the chosen statistic
-
-fprintf('\nComputing %s...\n', method);
-fprintf('=========================================\n\n') 
 
 design(design > 1e7) = nan;
 switch method
@@ -270,24 +239,20 @@ switch method
     [c, cfg]  = streams_statfun_mutualinformation_shift(cfg, dat, design);
     
     if nshuffle>0
-      shuff = streams_shufflefeature(design(1,:), nshuffle);
+      fprintf('\nComputing MI for bias estimation with %d data permutations ...\n', nshuffle);
+      fprintf('=========================================\n\n')
+      
+      shuff           = streams_shufflefeature(design(1,:), nshuffle);
+      %randfeature     = streams_randomfeature(design(1,:), nshuffle);
       for m = 1:nshuffle
+        fprintf('\nPermutation nr. %d ...\n', m);
         cshuf(:,:,m) = streams_statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
+        %crand(:,:,m) = streams_statfun_mutualinformation_shift(cfg, dat, randfeature(m,:));
       end
-      
-%       rnd = zeros(nshuffle, numel(design));
-%       for k = 1:nshuffle
-%         rnd(k,:) = (max(design)-min(design)).*rand(1,size(design,2)); % vector of random numbers in the range of design
-%       end
-%       
-%       crnd = zeros(size(dat, 1), numel(cfg.lag), nshuffle); % prepare the matrix for the MI values
-%       for j = 1:nshuffle
-%         crnd(:,:,j) = streams_statfun_mutualinformation_shift(cfg, dat, rnd(j,:));
-%       end
-      
     else
       cshuf = [];
     end
+    
   case 'xcorr_spearman'
     c = statfun_xcorr_spearman_adjusted(cfg, dat, design(1,:));
     c = c.stat;
@@ -295,10 +260,14 @@ switch method
   otherwise
 end
 
+
+%% Output stat structure
+
 stat.label = data.label;
 stat.time  = lag./data.fsample;
 stat.stat  = c;
 stat.statshuf = cshuf;
+%stat.statrand = crand;
 stat.statdif = stat.stat - mean(stat.statshuf, 3); % difference real-surrogate
 stat.dimord = 'chan_time';
 
