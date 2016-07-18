@@ -17,6 +17,7 @@ tlck.cov         = real(tlck.cov);
 cfg      = [];
 cfg.vol  = headmodel;
 cfg.grid = leadfield;
+cfg.grid.label = tlck.label;
 cfg.method = 'lcmv';
 cfg.lcmv.fixedori   = 'yes';
 cfg.lcmv.keepfilter = 'yes';
