@@ -11,7 +11,7 @@ function [data_files, feature_files] = streams_datalist(freq)
 % [data_files, feature_files] = streams_datalist('12-18')
 
 % Read directory contents
-getdata = fullfile('/home/language/jansch/projects/streams/data/preproc/', ['*data_' freq '*']);
+getdata = fullfile('/home/language/jansch/projects/streams/data/preproc/', ['*data_' freq '*' 'Hz.m' '*']);
 getfeatures = fullfile('/home/language/jansch/projects/streams/data/featuredata/', '*featuredata_30*');
 data_files = dir(getdata);
 data_files = {data_files.name}';

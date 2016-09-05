@@ -266,9 +266,11 @@ end
 stat.label = data.label;
 stat.time  = lag./data.fsample;
 stat.stat  = c;
-stat.statshuf = cshuf;
 %stat.statrand = crand;
-stat.statdif = stat.stat - mean(stat.statshuf, 3); % difference real-surrogate
+if nshuffle > 0
+  stat.statshuf = cshuf;
+  stat.statdif = stat.stat - mean(stat.statshuf, 3); % difference real-surrogate
+end
 stat.dimord = 'chan_time';
 
 fprintf('\n###streams_bpl_feature: DONE! ...###\n');

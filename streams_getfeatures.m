@@ -1,6 +1,6 @@
 function [featuredata] = streams_getfeatures(subject, varargin)
 
-% STREAMS_EXTRACT_FEATURE extracts the specified feature and creates a data
+% STREAMS_GET_FEATURES extracts the specified feature and creates a data
 % structure contaning the feature as a time series.
 %
 % Use as 
@@ -36,7 +36,7 @@ function [featuredata] = streams_getfeatures(subject, varargin)
 feature     = ft_getopt(varargin, 'feature');
 audiofile   = ft_getopt(varargin, 'audiofile', 'all');
 fsample     = ft_getopt(varargin, 'fsample', 300);
-savefile    = ft_getopt(varargin, 'savefile');
+doart       = ft_getopt(varargin, 'doart', 1);
 
 % Get subject ID
 if ischar(subject)
@@ -132,14 +132,16 @@ for k = 1:numel(seltrl)
   
   %% ARTIFACT_REJECTION
   
-  fprintf('\nStarting artifact rejection ...\n');
-  fprintf('=========================================\n\n')
-  
-  cfg                  = [];
-  cfg.artfctdef        = subject.artfctdef;
-  cfg.artfctdef.reject = 'partial';
-  data       = ft_rejectartifact(cfg, data);
+  if doart
+      fprintf('\nStarting artifact rejection ...\n');
+      fprintf('=========================================\n\n')
 
+      cfg                  = [];
+      cfg.artfctdef        = subject.artfctdef;
+      cfg.artfctdef.reject = 'partial';
+      data       = ft_rejectartifact(cfg, data);
+  end  
+      
   % Perform downsampling
   fprintf('\nDownsampling to %d Hz ...\n', fsample);
   fprintf('=========================================\n\n')
@@ -186,9 +188,7 @@ else
 end
 clear tmpdataf
 
-if ~isempty(savefile)
-    save(savefile, 'featuredata');
-end
+
 
 %%%%%%%%%%%%%%%%%%%%
 %%% SUBFUNCTION %%%%
