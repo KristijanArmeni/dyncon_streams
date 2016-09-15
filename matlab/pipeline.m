@@ -130,7 +130,7 @@ if ~ft_hastoolbox('qsub',1)
 end
 
 subjects = {'s01' 's02' 's03' 's04' 's05' 's07' 's08' 's09' 's10'};
-bpfreqs   = [04 08; 60 90];
+bpfreqs   = [04 08];
 
 for j = 1:numel(subjects)
 	subject    = streams_subjinfo(subjects{j});
