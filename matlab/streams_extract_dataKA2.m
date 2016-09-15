@@ -255,14 +255,14 @@ for k = 1:numel(seltrl)
 %   cfg.planarmethod = 'sincos';
 %   data = ft_megplanar(cfg, data);
 % 
-%% HILBERT TRANSFORM
+% HILBERT TRANSFORM
 
-%    cfg = [];
-%    cfg.hilbert = 'complex';
-%    data = ft_preprocessing(cfg, data);
-%    if ~strcmp(filter_audio,'no')
-%      audio = ft_preprocessing(cfg, audio);
-%    end
+   cfg = [];
+   cfg.hilbert = 'complex';
+   data = ft_preprocessing(cfg, data);
+   if ~strcmp(filter_audio,'no')
+     audio = ft_preprocessing(cfg, audio);
+   end
    
 %   cfg = [];
 %   cfg.method = 'svd';
