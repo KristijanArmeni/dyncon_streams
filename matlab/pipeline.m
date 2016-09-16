@@ -130,7 +130,7 @@ if ~ft_hastoolbox('qsub',1)
 end
 
 subjects = {'s01' 's02' 's03' 's04' 's05' 's07' 's08' 's09' 's10'};
-bpfreqs   = [04 08];
+bpfreqs   = [01 03; 04 08];
 
 for j = 1:numel(subjects)
 	subject    = streams_subjinfo(subjects{j});
@@ -148,7 +148,7 @@ for j = 1:numel(subjects)
     
       qsubfeval('qsub_streams_bpl_audio', subject, bpfreq, audiofile,...
                       'memreq', 1024^3 * 12,...
-                      'timreq', 25*60,...
+                      'timreq', 45*60,...
                       'batchid', 'streams_feature');
     end
     
