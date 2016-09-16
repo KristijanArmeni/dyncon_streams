@@ -84,9 +84,9 @@ elseif ~isstruct(data); %throw an error if there is no structure
 end
 
 % make sure only MEG channels are in the data structure
-cfg = [];
-cfg.channel = 'MEG';
-data = ft_selectdata(cfg, data);
+% cfg = [];
+% cfg.channel = 'MEG';
+% data = ft_selectdata(cfg, data);
 
 % load model output data
 if ischar(featuredata)
@@ -224,19 +224,26 @@ switch method
   case 'xcorr'
     c       = statfun_xcorr(cfg, dat, design);
   case 'mi'
-    cfg.mi  = opts;
-    cfg.mi.nbin = ft_getopt(cfg.mi, 'nbin', 5);
-    %cfg.mi.btsp = 1;
-    %cfg.mi.bindesign = 1;
-    %cfg.mi.cmbindx = [(1:273)' (274:546)'];
-    cfg.mi.remapdesign = ft_getopt(cfg.mi, 'remapdesign', 0);
-    cfg.mi.bindesign = ft_getopt(cfg.mi, 'bindesign', 1);
-    cfg.mi.method  = ft_getopt(cfg.mi, 'method', 'gs');
-    cfg.mi.bias = ft_getopt(cfg.mi, 'bias', 'naive');
-    cfg.mi.binmethod = ft_getopt(cfg.mi, 'binmethod', 'eqpop');
-    cfg.avgwords = avgwords; % or 1
+%     cfg.mi  = [];
+%     cfg.mi.nbin = ft_getopt(cfg.mi, 'nbin', 5);
+%     %cfg.mi.btsp = 1;
+%     %cfg.mi.bindesign = 1;
+%     %cfg.mi.cmbindx = [(1:273)' (274:546)'];
+%     cfg.mi.remapdesign = ft_getopt(cfg.mi, 'remapdesign', 0);
+%     cfg.mi.bindesign = ft_getopt(cfg.mi, 'bindesign', 1);
+%     cfg.mi.method  = ft_getopt(cfg.mi, 'method', 'gs');
+%     cfg.mi.bias = ft_getopt(cfg.mi, 'bias', 'naive');
+%     cfg.mi.binmethod = ft_getopt(cfg.mi, 'binmethod', 'eqpop');
+%     cfg.avgwords = avgwords; % or 1
+%     
+%     [c, cfg]  = streams_statfun_mutualinformation_shift(cfg, dat, design);
     
-    [c, cfg]  = streams_statfun_mutualinformation_shift(cfg, dat, design);
+    [stat]  = ft_connectivity_mutualinformation(dat,...
+                                                  'refindx', 274, ...
+                                                  'lags', -300:30:300, ...,
+                                                  'numbin', 5, ...
+                                                  'histmethod', 'eqpop', ...
+                                                  'opts', opts);
     
     if nshuffle>0
       fprintf('\nComputing MI for bias estimation with %d data permutations ...\n', nshuffle);
