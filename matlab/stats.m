@@ -84,17 +84,13 @@ end
 
 save(fullfile(datadir, 'sub_avg_04-08'), 'avg_subs');
 
-%% Create combined MEG-Audio structures
-
-freq = {'1_3', '4_8'}; 
-
-[miAd, ~, ~, ~] = streams_statstruct(pwd, ['*acLag_' freq{2} '*' 'Hz.m' '*']);
-
-savestruct = fullfile('/home/language/kriarm/matlab/streams_output/stats/meg_audio_delay_MI', ['audio_' 'MI_' freq{2} ]);
-save(savestruct,'miAd');
 
 
 %% Grand averages for plots
+
+%load in the data
+load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/ThetaAllSub');  %struct with subj-story data
+load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/DeltaAllSub');  %struct with subj-story data
 
 % MEG-model
 cfg = [];
@@ -111,7 +107,8 @@ cfg = [];
 cfg.channel   = 'MEG';
 cfg.latency   = 'all';
 cfg.parameter = 'stat';
-ga_Ad       = ft_timelockgrandaverage(cfg, miAd{:});  
+AlphaGaIBTB      = ft_timelockgrandaverage(cfg,AlphaAllSubIBTB{:});
+gaAudTheta      = ft_timelockgrandaverage(cfg, theta_audio_ibtb{:})
 
 %% SOURCE GRAND AVERAGE
 

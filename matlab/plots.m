@@ -1,21 +1,26 @@
 %% MEG~AUDIO PLOTS
 clear all
 
-savedir = '/home/language/kriarm/streams/dis/fig/res/meg_audio_MI';
+savedir = '/home/language/kriarm/streams/res/fig/mi/meg_audio';
 
 load '/home/language/jansch/projects/streams/data/preproc/s01_fn001078_data_04-08_30Hz.mat';
-load('/home/language/kriarm/streams/data/stat/mi/meg_audio/ga_bbnd_phase');  %grand-averages
-load('/home/language/kriarm/streams/data/stat/mi/meg_audio/ga_bbnd_power');  %grand-averages
+load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/ThetaGaIBTB'); 
+load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/ThetaGaGCMI'); 
+load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/DeltaGaIBTB');  
+load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/DeltaGaGCMI'); 
+load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/GammaGaIBTB'); 
+load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/BetaGaIBTB');  
 
-ga_ph = {ga_delta_ph, ga_theta_ph, ga_alpha_ph, ga_beta_ph, ga_gamma1_ph, ga_gamma2_ph};
-ga_pw = {ga_delta_pw, ga_theta_pw, ga_alpha_pw, ga_beta_pw, ga_gamma1_pw, ga_gamma2_pw};
-varnames = {'delta', 'theta', 'alpha', 'beta', 'gamma1', 'gamma2'};
+gas = {gaAudDelta, gaAudTheta, GammaGaIBTB, gaAudDeltaGCMI, gaAudThetaGCMI};
+titles = {'deltaIBTB', 'thetaIBTB', 'gammaIBTB', 'deltaGCMI', 'thetaGCMI', 'gammaGCMI: comming soon!'};
 
 % Avg Topos: Phase and power
-for k = 1:numel(ga_ph); 
+figure('Color', [1 1 1]);
+set(gcf, 'Name', 'MEG-Audio Phase MI');
+for k = 1:numel(gas); 
      
-%      subplot(2, 3, k);
-     figure('Color', [1 1 1]);
+     subplot(2, 3, k);
+
      
      cfg                    = [];   
      cfg.zlim               = 'maxmin';
@@ -25,13 +30,14 @@ for k = 1:numel(ga_ph);
      cfg.gridscale          = 150;
      cfg.layout             = 'CTF275_helmet.mat';
 
-     ft_topoplotER(cfg, ga_ph{k});
-     print(fullfile(savedir, sprintf('%s_ph_avgtopo', varnames{k})), '-depsc', '-adobecs', '-zbuffer');
-     close(gcf);
-     
-     ft_topoplotER(cfg, ga_pw{k});
-     print(fullfile(savedir, sprintf('%s_pw_avgtopo', varnames{k})), '-depsc', '-adobecs', '-zbuffer');
-     close(gcf);
+     ft_topoplotER(cfg, gas{k});
+     title(titles{k});
+%      print(fullfile(savedir, sprintf('%s_ph_avgtopo', varnames{k})), '-depsc', '-adobecs', '-zbuffer');
+%      close(gcf);
+%      
+%      ft_topoplotER(cfg, ga_pw{k});
+%      print(fullfile(savedir, sprintf('%s_pw_avgtopo', varnames{k})), '-depsc', '-adobecs', '-zbuffer');
+%      close(gcf);
      
 end
 
