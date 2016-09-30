@@ -64,7 +64,8 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 
 feature         = ft_getopt(varargin, 'feature');
 trim_feature    = ft_getopt(varargin, 'trim_feature', 0);
-method          = ft_getopt(varargin, 'method', 'mi');
+metric          = ft_getopt(varargin, 'metric', 'mi');
+method          = ft_getopt(varargin, 'method', 'ibtb');
 lag             = ft_getopt(varargin, 'lag',(-200:10:200)); % this corresponds to [-1 1] at 200 Hz
 chunk           = ft_getopt(varargin, 'chunk', []);
 dosource        = ft_getopt(varargin, 'dosource', 0);
@@ -180,7 +181,7 @@ if ~isempty(length)
   for k = 1:numel(data.trial)
     tmp     = ft_selectdata(data,        'rpt', k);
     tmp2    = ft_selectdata(featuredata, 'rpt', k);
-    stat(k) = streams_blp_feature(tmp, tmp2, 'feature', feature, 'lag', lag, 'method', method);
+    stat(k) = streams_blp_feature(tmp, tmp2, 'feature', feature, 'lag', lag, 'method', metric);
   end
   
   if ~isempty(savefile)
@@ -207,7 +208,7 @@ end
 
 %% Computing the chosen statistic
 
-fprintf('\nComputing %s...\n', method);
+fprintf('\nComputing %s...\n', metric);
 fprintf('=========================================\n\n') 
 
 cfg     = [];
@@ -219,44 +220,40 @@ cfg.ivar = 1;
 
 design = featuredat;
 
+
 design(design > 1e7) = nan;
-switch method
+switch metric
   case 'xcorr'
     c       = statfun_xcorr(cfg, dat, design);
   case 'mi'
-%     cfg.mi  = [];
-%     cfg.mi.nbin = ft_getopt(cfg.mi, 'nbin', 5);
-%     %cfg.mi.btsp = 1;
-%     %cfg.mi.bindesign = 1;
-%     %cfg.mi.cmbindx = [(1:273)' (274:546)'];
-%     cfg.mi.remapdesign = ft_getopt(cfg.mi, 'remapdesign', 0);
-%     cfg.mi.bindesign = ft_getopt(cfg.mi, 'bindesign', 1);
-%     cfg.mi.method  = ft_getopt(cfg.mi, 'method', 'gs');
-%     cfg.mi.bias = ft_getopt(cfg.mi, 'bias', 'naive');
-%     cfg.mi.binmethod = ft_getopt(cfg.mi, 'binmethod', 'eqpop');
-%     cfg.avgwords = avgwords; % or 1
-%     
-%     [c, cfg]  = streams_statfun_mutualinformation_shift(cfg, dat, design);
-    
-    [c]  = ft_connectivity_mutualinformation(dat,...
-                                              'method', 'ibtb',...
-                                              'refindx', 274, ...
-                                              'lags', -300:30:300, ...,
-                                              'numbin', 5, ...
-                                              'histmethod', 'eqpop', ...
-                                              'opts', opts);
+     cfg = [];
+     cfg.method = 'mi';
+     cfg.refindx = 274;
+     
+     cfg.mi  = [];
+     cfg.mi.lags = lag./data.fsample;
+     cfg.mi.method = method;
+     cfg.mi.complex = 'complex';
+     cfg.mi.remapdesign = ft_getopt(cfg.mi, 'remapdesign', 0);
+%    cfg.mi.bindesign = ft_getopt(cfg.mi, 'bindesign', 1);
+     
+     cfg.mi.nbin = ft_getopt(opts, 'nbin', 5);
+     cfg.mi.binmethod = ft_getopt(opts, 'binmethod', 'eqpop');
+     cfg.mi.opts = opts;
+
+    [c]  = ft_connectivityanalysis(cfg, data);
     
     if nshuffle>0
       fprintf('\nComputing MI for bias estimation with %d data permutations ...\n', nshuffle);
       fprintf('=========================================\n\n')
       
       shuff           = streams_shufflefeature(design(1,:), nshuffle);
-      %randfeature     = streams_randomfeature(design(1,:), nshuffle);
+
       for m = 1:nshuffle
         fprintf('\nPermutation nr. %d ...\n', m);
         cshuf(:,:,m) = streams_statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
-        %crand(:,:,m) = streams_statfun_mutualinformation_shift(cfg, dat, randfeature(m,:));
       end
+      
     else
       cshuf = [];
     end
@@ -271,14 +268,6 @@ end
 
 %% Output stat structure
 
-stat.label = data.label;
-stat.time  = lag./data.fsample;
-stat.stat  = c;
-%stat.statrand = crand;
-if nshuffle > 0
-  stat.statshuf = cshuf;
-  stat.statdif = stat.stat - mean(stat.statshuf, 3); % difference real-surrogate
-end
-stat.dimord = 'chan_time';
+stat = c;
 
 fprintf('\n###streams_bpl_feature: DONE! ...###\n');
