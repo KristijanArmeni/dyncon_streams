@@ -337,7 +337,7 @@ switch name
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
   case 's21'
-    subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160712_01.ds']);
+    subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160714_01.ds']);
           subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
           fullfile(subject.audiodir, 'fn001155.wav')
           fullfile(subject.audiodir, 'fn001293.wav')
