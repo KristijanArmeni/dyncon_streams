@@ -52,8 +52,9 @@ if ~ft_hastoolbox('qsub',1)
 end
 
 subjects = {'s01' 's02' 's03' 's04' 's05' 's07' 's08' 's09' 's10'};
-bpfreqs   = [13 30; 30 90];
+bpfreqs   = [01 03];
 
+%Subject, story and freq loops
 for j = 1:numel(subjects)
 	subject    = streams_subjinfo(subjects{j});
 	audiofiles = subject.audiofile;
@@ -77,7 +78,31 @@ for j = 1:numel(subjects)
   end
 
 end
+
+% Loops for computation with legacy code
+for j = 1:numel(subjects)
+	subject    = streams_subjinfo(subjects{j});
+	audiofiles = subject.audiofile;
+	
+  for k = 1:numel(audiofiles)
+		
+    audiofile = audiofiles{k};
+		tmp       = strfind(audiofile, 'fn');
+		audiofile = audiofile(tmp+(0:7));
     
+    for h = 1:size(bpfreqs, 1)
+      
+      bpfreq = bpfreqs(h,:);
+    
+      qsubfeval('qsub_streams_bpl_feature_legacy', subject, bpfreq, audiofile,...
+                      'memreq', 1024^3 * 12,...
+                      'timreq', 60*60,...
+                      'batchid', 'streams_feature');
+    end
+    
+  end
+
+end
 
 %% BAND-PASS-LIMITED DATA ~ FEATURE ANALYSIS
 
