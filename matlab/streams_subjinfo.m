@@ -219,144 +219,144 @@ switch name
   case 's11' % This is the first subject in the newly acquired dataset. Behavioral Presentation log for this subject was s01-streams.log
     subject.dataset   = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160510_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001155.wav')
-        fullfile(subject.audiodir, 'fn001293.wav')
-        fullfile(subject.audiodir, 'fn001443.wav')
-        fullfile(subject.audiodir, 'fn001498.wav')};
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '105445';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1 2];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGh';  'EOGv'};
     
   case 's12'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160525_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001155.wav')
-        fullfile(subject.audiodir, 'fn001293.wav')
-        fullfile(subject.audiodir, 'fn001443.wav')
-        fullfile(subject.audiodir, 'fn001498.wav')};
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '79819';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGh';  'EOGv'};
    
   case 's13'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160527_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001155.wav')
-        fullfile(subject.audiodir, 'fn001293.wav')
-        fullfile(subject.audiodir, 'fn001443.wav')
-        fullfile(subject.audiodir, 'fn001498.wav')};
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '116209';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1 2];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGh';  'EOGv'};
     
   case 's14'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160530_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001155.wav')
-        fullfile(subject.audiodir, 'fn001293.wav')
-        fullfile(subject.audiodir, 'fn001443.wav')
-        fullfile(subject.audiodir, 'fn001498.wav')};
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '116209';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1 2 3 4];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
   case 's15'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160530_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001155.wav')
-        fullfile(subject.audiodir, 'fn001293.wav')
-        fullfile(subject.audiodir, 'fn001443.wav')
-        fullfile(subject.audiodir, 'fn001498.wav')};
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '114196';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
   case 's16'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160602_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001155.wav')
-        fullfile(subject.audiodir, 'fn001293.wav')
-        fullfile(subject.audiodir, 'fn001443.wav')
-        fullfile(subject.audiodir, 'fn001498.wav')};
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '116533';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1 2 3];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
   case 's17'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160602_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-        fullfile(subject.audiodir, 'fn001155.wav')
-        fullfile(subject.audiodir, 'fn001293.wav')
-        fullfile(subject.audiodir, 'fn001443.wav')
-        fullfile(subject.audiodir, 'fn001498.wav')};
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '111493';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
   case 's18'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160628_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-          fullfile(subject.audiodir, 'fn001155.wav')
-          fullfile(subject.audiodir, 'fn001293.wav')
-          fullfile(subject.audiodir, 'fn001443.wav')
-          fullfile(subject.audiodir, 'fn001498.wav')};
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = 'jansch';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1 2 3];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
   case 's19'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160711_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-          fullfile(subject.audiodir, 'fn001155.wav')
-          fullfile(subject.audiodir, 'fn001293.wav')
-          fullfile(subject.audiodir, 'fn001443.wav')
-          fullfile(subject.audiodir, 'fn001498.wav')};
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '95194';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1 2 3 4];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
   case 's20'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160712_01.ds']);
-          subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-          fullfile(subject.audiodir, 'fn001155.wav')
-          fullfile(subject.audiodir, 'fn001293.wav')
-          fullfile(subject.audiodir, 'fn001443.wav')
-          fullfile(subject.audiodir, 'fn001498.wav')};
+    subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '116371';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
   case 's21'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160714_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-          fullfile(subject.audiodir, 'fn001155.wav')
-          fullfile(subject.audiodir, 'fn001293.wav')
-          fullfile(subject.audiodir, 'fn001443.wav')
-          fullfile(subject.audiodir, 'fn001498.wav')};
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '97753';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
   case 's22'
     subject.dataset = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20160718_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-          fullfile(subject.audiodir, 'fn001155.wav')
-          fullfile(subject.audiodir, 'fn001293.wav')
-          fullfile(subject.audiodir, 'fn001443.wav')
-          fullfile(subject.audiodir, 'fn001498.wav')};
+                        fullfile(subject.audiodir, 'fn001155.wav')
+                        fullfile(subject.audiodir, 'fn001293.wav')
+                        fullfile(subject.audiodir, 'fn001443.wav')
+                        fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '93829';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -368,7 +368,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav')
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '117349';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1 2];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -380,7 +380,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav')
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '84556';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1 2];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -392,7 +392,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav')
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '111865';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1 2];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -404,7 +404,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '117964';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -416,7 +416,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav')
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '111121';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1 2];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
