@@ -20,11 +20,6 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 % varargin      =   key-value pairs providing additional arguments
 %                   as follows:
 % 
-%                   comp_paths    =   string, specifying the
-%                                     destination the to dir for
-%                                     loading .mat auditory components
-%                                     (this input argument is passed to
-%                                     streams_existfile)
 %                   feature       =   string, specifying the model output to use
 %                                     for the analysis
 %                   trim_feature  =   logical, indicating whether to
@@ -52,11 +47,11 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 %                                     average the feature vector values over all word sample
 %                                     points (default = 0)
 % 
+% FieldTrip Function called in this 'script-function'
 % CUSTUM SUBFUNCTIONS CALLED WITHIN THIS SCRIPT
 % streams_lcmv()
 % streams_existfile()
 % streams_dss_rejectauditory()
-% streams_statfun_mutualinformation_shift()
 % statfun_xcorr_spearman_adjusted()
 % statfun_xcorr()
 
@@ -106,7 +101,7 @@ if trim_feature
     
 end
 % choose the user-specified metric/feature
-selfeature = match_str(featuredata.label, feature);
+% selfeature = match_str(featuredata.label, feature);
 
 
 %% Source reconstruction
@@ -191,19 +186,19 @@ if ~isempty(length)
   return;
 end
 
-nnans   = max(abs(lag))+1;
-dat     = data.trial{1};
-featuredat = featuredata.trial{1}(selfeature,:);
+% nnans   = max(abs(lag))+1;
+% dat     = data.trial{1};
+% featuredat = featuredata.trial{1}(selfeature,:);
 
 % Concatenate trials (if more trials are used) interspersed with NaN values of the lenght
 % of the lag for computing stats
 
-if numel(data.trial)>1
-  for k = 2:numel(data.trial)
-    dat        = [dat        nan+zeros(numel(data.label),nnans) data.trial{k}];
-    featuredat = [featuredat nan+zeros(1,nnans)                 featuredata.trial{k}(selfeature,:)];
-  end
-end
+% if numel(data.trial)>1
+%   for k = 2:numel(data.trial)
+%     dat        = [dat        nan+zeros(numel(data.label),nnans) data.trial{k}];
+%     featuredat = [featuredat nan+zeros(1,nnans)                 featuredata.trial{k}(selfeature,:)];
+%   end
+% end
 
 
 %% Computing the chosen statistic
@@ -218,10 +213,12 @@ cfg.ivar = 1;
 %[indx]   = streams_featuredat2wordindx(featuredat);
 %design   = [featuredat; indx];
 
-design = featuredat;
+% design = featuredat;
 
 
-design(design > 1e7) = nan;
+% design(design > 1e7) = nan;
+
+
 switch metric
   case 'xcorr'
     c       = statfun_xcorr(cfg, dat, design);
@@ -243,15 +240,41 @@ switch metric
 
     [c]  = ft_connectivityanalysis(cfg, data);
     
-    if nshuffle>0
+    if nshuffle > 0
+      
       fprintf('\nComputing MI for bias estimation with %d data permutations ...\n', nshuffle);
       fprintf('=========================================\n\n')
       
-      shuff           = streams_shufflefeature(design(1,:), nshuffle);
-
+      cfgt = [];
+      cfgt.channel = 274;
+      design = ft_selectdata(cfgt, data);
+      
+      shuff           = streams_shufflefeature(design, nshuffle);
+      
+      % Make feature_shuf ft-style struct to be used with ft_apenddata
+      feature_shuf = data;
+      
+      % Remove the empirical feature vector
+      cfgt = [];
+      cfgt.channel = {'MEG'};
+      data = ft_selectdata(cfgt, data);
+      
       for m = 1:nshuffle
         fprintf('\nPermutation nr. %d ...\n', m);
-        cshuf(:,:,m) = streams_statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
+        
+        % select current shuffle feature vector from shuff matrix
+        for j = 1:size(shuff, 2)
+          feature_shuf.trial{j} = shuff{:,j}(m,:);
+          feature_shuf.label = num2str(m);
+        end
+        
+        % append it to data (chan 274)
+        data = ft_appenddata([], data, feature_shuf);
+        
+        % compute MI
+        cshuf(:,:,m) = ft_connectivityanalysis(cfg, data);
+%       cshuf(:,:,m) = streams_statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
+      
       end
       
     else
@@ -269,5 +292,6 @@ end
 %% Output stat structure
 
 stat = c;
+stat.statshuf = cshuf;
 
 fprintf('\n###streams_bpl_feature: DONE! ...###\n');
