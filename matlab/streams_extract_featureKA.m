@@ -41,8 +41,7 @@ end
 % make a local version of the variable input arguments
 feature     = ft_getopt(varargin, 'feature');
 audiofile   = ft_getopt(varargin, 'audiofile', 'all');
-%fsample     = ft_getopt(varargin, 'fsample', 200);
-fsample     = ft_getopt(varargin, 'fsample', 30);
+fsample     = ft_getopt(varargin, 'fsample', 300);
 savefile    = ft_getopt(varargin, 'savefile', '');
 
 % check whether all required user specified input is there
