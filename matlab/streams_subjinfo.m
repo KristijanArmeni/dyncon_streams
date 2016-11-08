@@ -411,9 +411,9 @@ switch name
   case 's27'
     subject.dataset   = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20161005_01.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
-                         fullfile(subject.audiodir, 'fn001155.wav')
-                         fullfile(subject.audiodir, 'fn001293.wav')
-                         fullfile(subject.audiodir, 'fn001443.wav')
+                         fullfile(subject.audiodir, 'fn001155.wav');
+                         fullfile(subject.audiodir, 'fn001293.wav');
+                         fullfile(subject.audiodir, 'fn001443.wav');
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '111121';
     subject.eogv.badcomps = [1 2];
