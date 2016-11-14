@@ -1,6 +1,6 @@
 function sourcemodel = streams_parcellate_leadfield(sourcemodelin, parcellation, varargin)
 
-param = ft_getopt(varargin, 'parcellationparam', 'tissue');
+param = ft_getopt(varargin, 'parcellationparam', 'parcellation');
 
 nval = max(parcellation.(param));
 for k = 1:nval
@@ -9,7 +9,7 @@ for k = 1:nval
   [u,s,v] = svd(lf{k},'econ');
   S{k,1}  = diag(s);
   
-  selcomp = cumsum(S{k,1})./sum(S{k,1})<0.95;
+  selcomp = cumsum(S{k,1}.^2)./sum(S{k,1}.^2)<0.95;
   %lf{k,1} = lf{k,1}*v(:,selcomp);
   lf{k,1} = u(:,selcomp);
   pos(k,:) = mean(sourcemodelin.pos(sel,:));
@@ -20,4 +20,4 @@ sourcemodel.label     = parcellation.([param,'label']);
 sourcemodel.leadfield = lf;
 sourcemodel.S         = S;
 sourcemodel.pos       = pos;
-sourcemodel.inside    = (1:size(sourcemodel.pos,1))';
+sourcemodel.inside    = true(size(pos,1),1);
