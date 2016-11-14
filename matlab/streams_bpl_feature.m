@@ -55,7 +55,7 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 % statfun_xcorr_spearman_adjusted()
 % statfun_xcorr()
 
-%% Input argument handling
+%% Initialization
 
 feature         = ft_getopt(varargin, 'feature');
 trim_feature    = ft_getopt(varargin, 'trim_feature', 0);
@@ -70,6 +70,8 @@ nshuffle        = ft_getopt(varargin, 'nshuffle', 0);
 lpfreq          = ft_getopt(varargin, 'lpfreq', []);
 avgwords        = ft_getopt(varargin, 'avgwords', 0);
 opts            = ft_getopt(varargin, 'opts', []); % optional arguments to influence the behaviour of the mi-computation
+
+feature_channel = data.label(end);
 
 %% Loading data
 
@@ -106,15 +108,32 @@ end
 
 %% Source reconstruction
 
+% store
+cfgt = [];
+cfgt.channel = feature_channel;
+featuredata_tmp = ft_selectdata(cfgt, data);
+
 % do source reconstruction if provided in the inputs
 if dosource
     
   fprintf('\nStarting source reconstruction. Call to streams_lcmv ...\n');
   fprintf('=========================================\n\n') 
-    
-  [source, data] = streams_lcmv(subject, data);
-
+  
+   %make sure only MEG channels are in the data structure
+   cfg = [];
+   cfg.channel = 'MEG';
+   data = ft_selectdata(cfg, data);
+  
+  [source, data_source] = streams_lcmv(subject, data);
+  
+  % add feauture data as the last row to the source data structure
+  data = ft_appenddata([], data_source, featuredata_tmp);
+  
+  % data_source and featuredata_tmp are no longer needed
+  clear data_source featuredata_tmp 
+  
 end
+
 
 %% Hilbert transform if not yet transformed
 
@@ -179,10 +198,6 @@ if ~isempty(length)
     stat(k) = streams_blp_feature(tmp, tmp2, 'feature', feature, 'lag', lag, 'method', metric);
   end
   
-  if ~isempty(savefile)
-    save(savefile, 'stat');
-  end
-  
   return;
 end
 
@@ -218,6 +233,9 @@ cfg.ivar = 1;
 
 % design(design > 1e7) = nan;
 
+% find the channel with feature data for MI computation
+refIndxCell = strfind(data.label(:), char(data.label(end)));
+refIndx = find(not(cellfun('isempty', refIndxCell)));
 
 switch metric
   case 'xcorr'
@@ -225,7 +243,7 @@ switch metric
   case 'mi'
      cfg = [];
      cfg.method = 'mi';
-     cfg.refindx = 274;
+     cfg.refindx = refIndx;
      
      cfg.mi  = [];
      cfg.mi.lags = lag./data.fsample;
@@ -240,40 +258,24 @@ switch metric
 
     [c]  = ft_connectivityanalysis(cfg, data);
     
+    % compute surrogate model-MI distribution nshuffle-time and store it
+    % into cshuf
     if nshuffle > 0
       
       fprintf('\nComputing MI for bias estimation with %d data permutations ...\n', nshuffle);
       fprintf('=========================================\n\n')
       
       cfgt = [];
-      cfgt.channel = 274;
+      cfgt.channel = refIndx;
       design = ft_selectdata(cfgt, data);
       
       shuff           = streams_shufflefeature(design, nshuffle);
-      
-      % Make feature_shuf ft-style struct to be used with ft_apenddata
-      feature_shuf = data;
-      
-      % Remove the empirical feature vector
-      cfgt = [];
-      cfgt.channel = {'MEG'};
-      data = ft_selectdata(cfgt, data);
-      
-      for m = 1:nshuffle
-        fprintf('\nPermutation nr. %d ...\n', m);
-        
-        % select current shuffle feature vector from shuff matrix
-        for j = 1:size(shuff, 2)
-          feature_shuf.trial{j} = shuff{:,j}(m,:);
-          feature_shuf.label = num2str(m);
-        end
-        
-        % append it to data (chan 274)
-        data = ft_appenddata([], data, feature_shuf);
+%       
+       for m = 1:nshuffle
+       fprintf('\nPermutation nr. %d ...\n', m);
         
         % compute MI
-        cshuf(:,:,m) = ft_connectivityanalysis(cfg, data);
-%       cshuf(:,:,m) = streams_statfun_mutualinformation_shift(cfg, dat, shuff(m,:));
+       cshuf(:,:,m) = ft_connectivityanalysis(cfg, data);
       
       end
       
