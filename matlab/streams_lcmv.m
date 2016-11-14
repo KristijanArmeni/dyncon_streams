@@ -4,9 +4,15 @@ if ischar(subject)
   subject = streams_subjinfo(subject);
 end
 
-anatomydir = '/home/language/jansch/projects/streams/data/anatomy';
-load(fullfile(anatomydir,[subject.name,'_anatomy_headmodel.mat']));
-load(fullfile(anatomydir,[subject.name,'_anatomy_leadfield.mat']));
+anatomydir = '/home/language/kriarm/pro/streams/data/MRI/preproc'; %temporary directory
+load(fullfile(anatomydir,[subject.name,'_headmodel.mat']));
+load(fullfile(anatomydir,[subject.name,'_leadfield_parc.mat']));
+
+%rename the leadfield variable if needed
+if exist('leadfield_parc', 'var')
+  leadfield = leadfield_parc;
+  clear leadfield_parc
+end
 
 cfg              = [];
 cfg.vartrllength = 2;
