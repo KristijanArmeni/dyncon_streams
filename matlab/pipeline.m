@@ -52,7 +52,7 @@ if ~ft_hastoolbox('qsub',1)
 end
 
 subjects = {'s01' 's02' 's03' 's04' 's05' 's07' 's08' 's09' 's10'};
-bpfreqs   = [01 03];
+bpfreqs   = [01 03; 04 08; 08 12];
 
 %Subject, story and freq loops
 for j = 1:numel(subjects)
@@ -162,7 +162,7 @@ if ~ft_hastoolbox('qsub',1)
 end
 
 subjects = {'s01' 's02' 's03' 's04' 's05' 's07' 's08' 's09' 's10'};
-bpfreqs   = [08 12; 13 30; 30 90];
+bpfreqs   = [04 08];
 
 for j = 1:numel(subjects)
 	subject    = streams_subjinfo(subjects{j});
@@ -186,3 +186,93 @@ for j = 1:numel(subjects)
   end
 
 end
+
+
+% Source level script
+subjects = {'s02'};
+bpfreqs   = [04 08];
+
+for j = 1:numel(subjects)
+	subject    = streams_subjinfo(subjects{j});
+	audiofiles = subject.audiofile;
+	
+  for k = 1:numel(audiofiles)
+		audiofile = audiofiles{k};
+		tmp       = strfind(audiofile, 'fn');
+		audiofile = audiofile(tmp+(0:7));
+ 		
+    for h = 1:size(bpfreqs)
+    bpfreq = bpfreqs(h,:);  
+    
+    qsubfeval('qsub_streams_bpl_feature2_lcmv', subject, bpfreq, audiofile,...
+                      'memreq', 1024^3 * 12,...
+                      'timreq', 480*60,...
+                      'batchid', 'streams_feature');
+    
+    end
+    
+  end
+
+end
+
+%% MRI PREPROCESSING, HEADMODEL, SOURCEMODEL
+
+% PREPOCESSING
+subject = 's03';
+
+% converting dicoms to mgz format
+streams_anatomy_dicom2mgz(subject);
+
+% reslicing to freesufer-friendly 256x256x256
+streams_anatomy_mgz2mni(subject);
+
+streams_anatomy_mgz2ctf(subject);
+
+% Skullstriping
+streams_anatomy_skullstrip(subject);
+
+%% Freesurfer scripts (creates subject-specific subdirectory in the directory where previous files are stored)
+if ~ft_hastoolbox('qsub',1)
+    addpath /home/common/matlab/fieldtrip/qsub;
+end
+
+qsubfeval('qsub_streams_anatomy_freesurfer', subject,...
+          'memreq', 1024^3 * 6,...
+          'timreq', 720*60,...
+          'batchid', 'streams_freesurferI')
+
+%% Check-up and white matter segmentation cleaning if needed
+
+streams_anatomy_volumetricQC(subject)
+
+streams_anatomy_wmclean(subject)
+
+%% Freesurfer qsub2
+if ~ft_hastoolbox('qsub',1)
+    addpath /home/common/matlab/fieldtrip/qsub;
+end
+
+qsubfeval('qsub_streams_anatomy_freesurfer2', subject,...
+          'memreq', 1024^3 * 7,...
+          'timreq', 720*60,...
+          'batchid', 'streams_freesurfer2');
+
+%% Post-processing Freesurfer script: workbench HCP tool
+if ~ft_hastoolbox('qsub',1)
+    addpath /home/common/matlab/fieldtrip/qsub;
+end
+
+qsubfeval('streams_anatomy_workbench', subject,...
+          'memreq', 1024^3 * 6,...
+          'timreq', 480*60,...
+          'batchid', 'streams_workbench');
+
+% Sourcemodel
+streams_anatomy_sourcemodel2d(subject);
+
+% Headmodel
+streams_anatomy_headmodel(subject);
+
+% Coregistration check
+streams_anatomy_coregistration_qc(subject);
+
