@@ -84,13 +84,61 @@ end
 
 save(fullfile(datadir, 'sub_avg_04-08'), 'avg_subs');
 
+%% Create combined structure for averaging
+
+% gcmi
+datadirFT = '~/pro/streams/res/stat/mi/meg_audio/phase/ft_con';
+
+filenameG1 = '*01-03_gcmi*';
+filenameG2 = '*04-08_gcmi*';
+filenameG3 = '*08-12_gcmi*';
+filenameG4 = '*13-30_gcmi*';
+filenameG5 = '*30-90_gcmi*';
+
+[deltaGcmiAll, ~, ~, ~, ~] = streams_statstruct(datadirFT, filenameG1);
+[thetaGcmiAll, ~, ~, ~, ~] = streams_statstruct(datadirFT, filenameG2);
+[alphaGcmiAll, ~, ~, ~, ~] = streams_statstruct(datadirFt, filenameG3);
+[betaGcmiAll, ~, ~, ~, ~]  = streams_statstruct(datadirFT, filenameG4);
+[gammaGcmiAll, ~, ~, ~, ~] = streams_statstruct(datadirFT, filenameG5);
+
+% ibtb
+datadirFT = '~/pro/streams/res/stat/mi/meg_audio/phase/ft_con';
+
+filenameI1 = '*01-03_ibtb*';
+filenameI2 = '*04-08_ibtb*';
+filenameI3 = '*08-12_ibtb*';
+filenameI4 = '*13-30_ibtb*';
+filenameI5 = '*30-90_ibtb*';
+
+[deltaIbtbAll, ~, ~, ~, ~] = streams_statstruct(datadirFT, filenameI1);
+[thetaIbtbAll, ~, ~, ~, ~] = streams_statstruct(datadirFT, filenameI2);
+[alphaIbtbAll, ~, ~, ~, ~] = streams_statstruct(datadirFT, filenameI3);
+[betaIbtbAll, ~, ~, ~, ~]  = streams_statstruct(datadirFT, filenameI4);
+[gammaIbtbAll, ~, ~, ~, ~] = streams_statstruct(datadirFT, filenameI5);
+
+% the legacy ouput
+datadirL = '~/pro/streams/res/stat/mi/meg_audio/phase/legacy';
+
+filenameL1 = '*01-03_lgcy*';
+filenameL2 = '*04-08_lgcy*';
+filenameL3 = '*08-12_lgcy*';
+filenameL4 = '*13-30_lgcy*';
+filenameL5 = '*30-90_lgcy*';
+
+[deltaLgcyAll, ~, ~, ~, ~] = streams_statstruct(datadir, filenameL1);
+[thetaLgcyAll, ~, ~, ~, ~] = streams_statstruct(datadir, filenameL2);
+[alphaLgcyAll, ~, ~, ~, ~] = streams_statstruct(datadir, filenameL3);
+[betaLgcyAll, ~, ~, ~, ~]  = streams_statstruct(datadir, filenameL4);
+[gammaLgcyAll, ~, ~, ~, ~] = streams_statstruct(datadir, filenameL5);
+
+save(fullfile(datadir, 'lgcyAll.mat'), 'deltaLgcyAll', 'thetaLgcyAll', 'alphaLgcyAll', 'betaLgcyAll', 'gammaLgcyAll');
 
 
-%% Grand averages for plots
+%% Grand averages for plots: language features
 
 %load in the data
-load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/ThetaAllSub');  %struct with subj-story data
-load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/DeltaAllSub');  %struct with subj-story data
+load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/ft_con/gcmiAll.mat');  %struct with subj-story data for all freqs
+load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/ft_con/ibtbAll.mat');  %struct with subj-story data for all freqs
 
 % MEG-model
 cfg = [];
@@ -101,14 +149,42 @@ ga_Real       = ft_timelockgrandaverage(cfg, miReal{:});
 ga_Shuf       = ft_timelockgrandaverage(cfg, miShuf{:});
 ga_Rand       = ft_timelockgrandaverage(cfg, miRand{:});
 
-% Audio-model
+%% Grand-averaging: Audio-model
+cfg = [];
+cfg.channel   = 'MEG';
+cfg.latency   = 'all';
+cfg.parameter = 'mi';
 
+% GCMI via ft_connectivityanalysis
+deltaGcmiGa     = ft_timelockgrandaverage(cfg, deltaGcmiAll{:});
+thetaGcmiGa     = ft_timelockgrandaverage(cfg, thetaGcmiAll{:});
+alphaGcmiGa     = ft_timelockgrandaverage(cfg, alphaGcmiAll{:});
+betaGcmiGa      = ft_timelockgrandaverage(cfg, betaGcmiAll{:});
+gammaGcmiGa     = ft_timelockgrandaverage(cfg, gammaGcmiAll{:});
+
+%IBTB via ft_connectivityanalysis
+deltaIbtbGa     = ft_timelockgrandaverage(cfg, deltaIbtbAll{:});
+thetaIbtbGa     = ft_timelockgrandaverage(cfg, thetaIbtbAll{:});
+alphaIbtbGa     = ft_timelockgrandaverage(cfg, alphaIbtbAll{:});
+betaIbtbGa      = ft_timelockgrandaverage(cfg, betaIbtbAll{:});
+gammaIbtbGa     = ft_timelockgrandaverage(cfg, gammaIbtbAll{:});
+
+save(fullfile(datadir, 'gcmiGa'), 'deltaGcmiGa', 'thetaGcmiGa', 'alphaGcmiGa', 'betaGcmiGa', 'gammaGcmiGa');
+save(fullfile(datadir, 'ibtbGa'), 'deltaIbtbGa', 'thetaIbtbGa', 'alphaIbtbGa', 'betaIbtbGa', 'gammaIbtbGa');
+
+%Grand-averaging for the legacy code
 cfg = [];
 cfg.channel   = 'MEG';
 cfg.latency   = 'all';
 cfg.parameter = 'stat';
-AlphaGaIBTB      = ft_timelockgrandaverage(cfg,AlphaAllSubIBTB{:});
-gaAudTheta      = ft_timelockgrandaverage(cfg, theta_audio_ibtb{:})
+
+deltaLgcyGa     = ft_timelockgrandaverage(cfg, deltaLgcyAll{:});
+thetaLgcyGa     = ft_timelockgrandaverage(cfg, thetaLgcyAll{:});
+alphaLgcyGa     = ft_timelockgrandaverage(cfg, alphaLgcyAll{:});
+betaLgcyGa      = ft_timelockgrandaverage(cfg, betaLgcyAll{:});
+gammaLgcyGa     = ft_timelockgrandaverage(cfg, gammaLgcyAll{:});
+
+save(fullfile(datadir, 'lgcyGa'), 'deltaLgcyGa', 'thetaLgcyGa', 'alphaLgcyGa', 'betaLgcyGa', 'gammaLgcyGa');
 
 %% SOURCE GRAND AVERAGE
 
