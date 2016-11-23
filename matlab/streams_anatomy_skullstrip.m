@@ -56,5 +56,11 @@ cfg.filetype = 'mgz';
 cfg.parameter = 'anatomy';
 ft_volumewrite(cfg, seg);
 
+% Check the plot already now
+skullstrip = ft_read_mri([mri_skullstrip '.mgz']);
+cfg = [];
+cfg.interactive = 'yes';
+ft_sourceplot(cfg, skullstrip);
+
 end
 
