@@ -101,6 +101,46 @@ end
 
 % do the basic processing per audiofile
 for k = 1:numel(seltrl)
+  
+  % read in raw MEG data
+  cfg         = [];
+  cfg.dataset = dataset{k};
+  cfg.trl     = trl(k,:);
+  cfg.trl(1,1) = cfg.trl(1,1) - 1200; % read in an extra second of data at the beginning
+  cfg.trl(1,2) = cfg.trl(1,2) + 1200; % read in an extra second of data at the end
+  cfg.trl(1,3) = -1200;               % update the offset, to account for the padding
+  cfg.channel  = 'MLC12';
+  cfg.continuous = 'yes';
+  cfg.demean     = 'yes';
+  data           = ft_preprocessing(cfg);
+    
+  % reject artifacts
+  cfg                  = [];
+  cfg.artfctdef        = subject.artfctdef;
+  cfg.artfctdef.reject = 'partial';
+	cfg.artfctdef.minaccepttim = 2;
+  data        = ft_rejectartifact(cfg, data);
+   
+  % subtract first time point for memory purposes
+  for kk = 1:numel(data.trial)
+    firsttimepoint(kk,1) = data.time{kk}(1);
+    data.time{kk}        = data.time{kk}-data.time{kk}(1);
+  end
+  
+  % downsampling
+  cfg = [];
+  cfg.demean  = 'yes';
+  cfg.detrend = 'no';
+  cfg.resamplefs = fsample;
+  data  = ft_resampledata(cfg, data);
+  
+  % add back the first time point, so that the relative time axis
+  % corresponds again with the timing in combineddata
+  for kk = 1:numel(data.trial)
+    data.time{kk}  = data.time{kk}  + firsttimepoint(kk);
+  end
+  
+  % create combineddata data structure
   dondersfile  = fullfile('/home/language/jansch/projects/streams/audio/',selaudio{k},[selaudio{k},'.donders']);
   textgridfile = fullfile('/home/language/jansch/projects/streams/audio/',selaudio{k},[selaudio{k},'.TextGrid']);
   combineddata = combine_donders_textgrid(dondersfile, textgridfile);
@@ -115,42 +155,8 @@ for k = 1:numel(seltrl)
       [combineddata(i).entropyred] = NaN;
     end
   end
-
-  cfg         = [];
-  cfg.dataset = dataset{k};
-  cfg.trl     = trl(k,:);
-  cfg.trl(1,1) = cfg.trl(1,1) - 1200; % read in an extra second of data at the beginning
-  cfg.trl(1,2) = cfg.trl(1,2) + 1200; % read in an extra second of data at the end
-  cfg.trl(1,3) = -1200; % update the offset, to account for the padding
-  cfg.channel  = 'MLC11';
-  cfg.continuous = 'yes';
-  cfg.demean     = 'yes';
-  data           = ft_preprocessing(cfg); % read in the MEG data
-    
-  % reject artifacts
-  cfg                  = [];
-  cfg.artfctdef        = subject.artfctdef;
-  cfg.artfctdef.reject = 'partial';
-	cfg.artfctdef.minaccepttim = 2;
-
-  data        = ft_rejectartifact(cfg, data);
-   
-  % subtract first time point for memory purposes
-  for kk = 1:numel(data.trial)
-    firsttimepoint(kk,1) = data.time{kk}(1);
-    data.time{kk}        = data.time{kk}-data.time{kk}(1);
-  end
-  cfg = [];
-  cfg.demean  = 'yes';
-  cfg.detrend = 'no';
-  cfg.resamplefs = fsample;
-  data  = ft_resampledata(cfg, data);
   
-  % add back the first time point, so that the relative time axis
-  % corresponds again with the timing in combineddata
-  for kk = 1:numel(data.trial)
-    data.time{kk}  = data.time{kk}  + firsttimepoint(kk);
-  end
+  % create featuredata structure with language model output
   if iscell(feature)
     for m = 1:numel(feature)
       featuredata{m} = create_featuredata(combineddata, feature{m}, data);
@@ -161,10 +167,10 @@ for k = 1:numel(seltrl)
     featuredata = create_featuredata(combineddata, feature, data);
   end
 
-  
   % append into 1 data structure
   tmpdataf{k} = featuredata;
   clear data featuredata;
+  
 end
 
 if numel(tmpdataf)>1,
