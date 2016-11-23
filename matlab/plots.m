@@ -4,20 +4,22 @@ clear all
 savedir = '/home/language/kriarm/streams/res/fig/mi/meg_audio';
 
 load '/home/language/jansch/projects/streams/data/preproc/s01_fn001078_data_04-08_30Hz.mat';
-load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/ThetaGaIBTB'); 
-load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/ThetaGaGCMI'); 
-load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/DeltaGaIBTB');  
-load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/DeltaGaGCMI'); 
-load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/GammaGaIBTB'); 
-load('/home/language/kriarm/pro/streams/res/stat/mi/meg_audio/phase/BetaGaIBTB');  
+load 'ibtbGa.mat';
+load 'gcmiGa.mat';
+load 'lgcyGa.mat';
 
-gas = {gaAudDelta, gaAudTheta, GammaGaIBTB, gaAudDeltaGCMI, gaAudThetaGCMI};
-titles = {'deltaIBTB', 'thetaIBTB', 'gammaIBTB', 'deltaGCMI', 'thetaGCMI', 'gammaGCMI: comming soon!'};
+gaI = {deltaIbtbGa, thetaIbtbGa, alphaIbtbGa, betaIbtbGa, gammaIbtbGa};
+gaG = {deltaGcmiGa, thetaGcmiGa, alphaGcmiGa, betaGcmiGa, gammaGcmiGa};
+gaL = {deltaLgcyGa, thetaLgcyGa, alphaLgcyGa, betaLgcyGa, gammaLgcyGa};
+
+titlesI = {'deltaIBTB', 'thetaIBTB', 'alphaIBTB', 'betaIBTB', 'gammaIBTB'};
+titlesG = {'deltaGCMI', 'thetaGCMI', 'alphaGCMI', 'betaGCMI', 'gammaGCMI'};
+titlesL = {'deltaLGCY', 'thetaLGCY', 'alphaLGCY', 'betaLGCY', 'gammaLGCY'};
 
 % Avg Topos: Phase and power
 figure('Color', [1 1 1]);
-set(gcf, 'Name', 'MEG-Audio Phase MI');
-for k = 1:numel(gas); 
+set(gcf, 'Name', ['MEG-Audio Phase MI' ' (' titlesG{1}(6:9) ')']);
+for k = 1:numel(gaG); 
      
      subplot(2, 3, k);
 
@@ -30,8 +32,8 @@ for k = 1:numel(gas);
      cfg.gridscale          = 150;
      cfg.layout             = 'CTF275_helmet.mat';
 
-     ft_topoplotER(cfg, gas{k});
-     title(titles{k});
+     ft_topoplotER(cfg, gaG{k});
+     title(titlesG{k});
 %      print(fullfile(savedir, sprintf('%s_ph_avgtopo', varnames{k})), '-depsc', '-adobecs', '-zbuffer');
 %      close(gcf);
 %      
@@ -41,39 +43,57 @@ for k = 1:numel(gas);
      
 end
 
-% Plot timecourses
-savedir = '/home/language/kriarm/streams/dis/fig/res/meg_audio_MI';
-
+% Avg time: phase and power
 figure('Color', [1 1 1]);
-cfg                    = [];
-cfg.comment            = 'no';
-cfg.parameter          = 'avg';
-cfg.graphcolor         = 'brgkcm';
-cfg.layout             = 'CTF275_helmet.mat';
+set(gcf, 'Name', ['MEG-Audio Phase MI' ' (' titlesG{1}(6:9) ')']);
+for k = 1:numel(gaL)-4; 
+     
+     subplot(2, 3, k);
 
-ft_singleplotER(cfg, ga_ph{:});
-print(fullfile(savedir, 'bbnd_ph_avgtime'), '-depsc', '-adobecs', '-zbuffer');
-close(gcf);
+     
+     cfg                    = [];   
+     cfg.parameter          = 'avg';
+     cfg.comment            = 'no';
+     cfg.colorbar           = 'yes';
+     cfg.gridscale          = 150;
+     cfg.layout             = 'CTF275_helmet.mat';
 
-ft_singleplotER(cfg, ga_ph{1:3});
-print(fullfile(savedir, 'bbnd_ph_avgtime1_2'), '-depsc', '-adobecs', '-zbuffer');
-close(gcf);
+     ft_singleplotER(cfg, gaG{k + 2});
+     title(titlesG{k});
+%      print(fullfile(savedir, sprintf('%s_ph_avgtopo', varnames{k})), '-depsc', '-adobecs', '-zbuffer');
+%      close(gcf);
+%      
+%      ft_topoplotER(cfg, ga_pw{k});
+%      print(fullfile(savedir, sprintf('%s_pw_avgtopo', varnames{k})), '-depsc', '-adobecs', '-zbuffer');
+%      close(gcf);
+     
+end
 
-ft_singleplotER(cfg, ga_ph{4:6});
-print(fullfile(savedir, 'bbnd_ph_avgtime2_2'), '-depsc', '-adobecs', '-zbuffer');
-close(gcf);
+%Manual averages
 
-ft_singleplotER(cfg, ga_pw{:});
-print(fullfile(savedir, 'bbnd_pw_avgtime'), '-depsc', '-adobecs', '-zbuffer');
-close(gcf);
+figure;
+for k = 1:numel(gaG)
 
-ft_singleplotER(cfg, ga_pw{1:3});
-print(fullfile(savedir, 'bbnd_pw_avgtime1_2'), '-depsc', '-adobecs', '-zbuffer');
-close(gcf);
+  data = gaG{k}.avg;
+  time = gaG{k}.time;
 
-ft_singleplotER(cfg, ga_pw{4:6});
-print(fullfile(savedir, 'bbnd_pw_avgtime2_2'), '-depsc', '-adobecs', '-zbuffer');
-close(gcf);
+  meanmi = mean(data, 1);
+  sdmi = std(data, 1);
+  sem = sdmi/sqrt(size(data, 1));
+  cimi = sem*1.96;
+  qua75 = quantile(data, 0.75);
+  qua25 = quantile(data, 0.25);
+
+  subplot(3, 2, k)
+  plot(time, data', '.', 'Color', [0.7 0.7 0.7])
+  hold on;
+  patch([time fliplr(time(1,:))],[meanmi+sdmi fliplr(meanmi-sdmi)],[1 0.7 0.7], 'EdgeColor', 'none', 'FaceAlpha', 0.6);
+  hold on;
+  plot(time, meanmi);
+  title(titlesG{k});
+
+end
+
 
 % nel = 20;
 % 
