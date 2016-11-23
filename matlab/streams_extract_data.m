@@ -47,16 +47,17 @@ hpfreq      = ft_getopt(varargin, 'hpfreq');
 lpfreq       = ft_getopt(varargin, 'lpfreq'); % before the post-envelope computation downsampling
 dftfreq     = ft_getopt(varargin, 'dftfreq');
 audiofile   = ft_getopt(varargin, 'audiofile', 'all');
-%fsample     = ft_getopt(varargin, 'fsample', 200);
-fsample     = ft_getopt(varargin, 'fsample', 30);
+fsample     = ft_getopt(varargin, 'fsample', 200);
 savefile    = ft_getopt(varargin, 'savefile');
 docomp      = ft_getopt(varargin, 'docomp', 0);
 dosns       = ft_getopt(varargin, 'dosns', 0);
 boxcar      = ft_getopt(varargin, 'boxcar');
-hilbert_transf = ft_getopt(varargin, 'hilbert', 'abs');
+abs         = ft_getopt(varargin, 'abs', 0);
 filter_audio   = ft_getopt(varargin, 'filter_audio', 'no');
 
-if ~strcmp(hilbert_transf, 'abs') && ~isempty(lpfreq)
+%% Input handling
+
+if abs == 0 && ~isempty(lpfreq)
   error('not taking the absolute of the hilbert transform in combination with lowpassfiltering is not allowed');
 end
 
@@ -128,7 +129,8 @@ else
 
 end
 
-% do the basic processing per audiofile
+%%  Loop through all audiofiles
+
 for k = 1:numel(seltrl)
   [p,f,e] = fileparts(selaudio{k});
   
@@ -167,6 +169,8 @@ for k = 1:numel(seltrl)
   cfg.channel  = 'UADC004';
   audio        = ft_preprocessing(cfg); % read in the audio data
   
+  
+  % band-pass filtering
   if usebsfilter
     cfg = [];
     cfg.bsfilter = 'yes';
@@ -176,6 +180,7 @@ for k = 1:numel(seltrl)
     end
   end
   
+  
   % reject artifacts
   cfg                  = [];
   cfg.artfctdef        = subject.artfctdef;
@@ -184,6 +189,7 @@ for k = 1:numel(seltrl)
   data        = ft_rejectartifact(cfg, data);
   audio       = ft_rejectartifact(cfg, audio);
 
+  
   % remove blink components
   if docomp && ~isempty(badcomps{k})
     fprintf('removing blink components\n');
@@ -197,6 +203,8 @@ for k = 1:numel(seltrl)
     audio.grad = grad; % fool ft_appenddata
   end
   
+  
+  % Sensor noise suppression
   if dosns
     fprintf('doing sensor noise suppression\n');
   
@@ -213,30 +221,34 @@ for k = 1:numel(seltrl)
 %   cfg.neighbours   = neighbours;
 %   cfg.planarmethod = 'sincos';
 %   data = ft_megplanar(cfg, data);
-% 
+
+
+  % Complex Hilbert transform
+   fprintf('Taking a complex transform of the data\n------');
    cfg = [];
    cfg.hilbert = 'complex';
    data = ft_preprocessing(cfg, data);
+
    if ~strcmp(filter_audio,'no')
      audio = ft_preprocessing(cfg, audio);
    end
-   
-%   cfg = [];
-%   cfg.method = 'svd';
-%   data = ft_combineplanar(cfg, data);
-%   
-  if strcmp(hilbert_transf, 'abs'),
-  cfg = [];
-  cfg.operation = 'abs';
-  cfg.parameter = 'trial';
-  data = ft_math(cfg, data);
+      
+  if abs
+    fprintf('Taking the absolute value of the complex-valued data\n------');
+    cfg = [];
+    cfg.operation = 'abs';
+    cfg.parameter = 'trial';
+    data = ft_math(cfg, data);
   end
+  
+  
   if ~isempty(boxcar),
     cfg = [];
     cfg.boxcar = boxcar;
     data = ft_preprocessing(cfg, data);
   end
   
+  % Low pass filtering
   if ~isempty(lpfreq)
     cfg = [];
     cfg.lpfreq = lpfreq;
@@ -274,6 +286,8 @@ for k = 1:numel(seltrl)
 end
 
 
+%% Append and save
+
 if numel(tmpdata)>1,
   data        = ft_appenddata([], tmpdata{:});
 else
@@ -292,7 +306,7 @@ if ~isempty(savefile)
 end
 
 
-% subfunction
+%% subfunction
 function [featuredata] = create_featuredata(combineddata, feature, data)
 
 if iscell(feature)
