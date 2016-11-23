@@ -45,10 +45,10 @@ end
 cfg = [];
 cfg.method = 'interactive';
 cfg.coordsys = 'ctf';
-mri_resliced_ctf    = ft_volumerealign(cfg, mri_resliced_mni);
+mri_ctf    = ft_volumerealign(cfg, mri_resliced_mni);
 
 % save the transformation matrix
-transform_vox2ctf = mri_resliced_ctf.transform;
+transform_vox2ctf = mri_ctf.transform;
 filename_vox2ctf  = fullfile(anatomy_savedir, [subject_code, '_transform_vox2ctf']);
 save(filename_vox2ctf, 'transform_vox2ctf');
   

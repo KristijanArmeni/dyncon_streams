@@ -6,7 +6,7 @@ if ischar(subject)
   subject = streams_subjinfo(subject);
 end
 
-anatomy_dir = fullfile('~/pro/streams/data/MRI/preproc/', subject.name);
+anatomy_dir = fullfile('~/pro/streams/data/MRI/preproc/');
 headmodel   = fullfile(anatomy_dir, [subject.name '_headmodel.mat']);
 sourcemodel = fullfile(anatomy_dir, [subject.name, '_sourcemodel.mat']);
 

@@ -9,10 +9,10 @@ end
 anatomy_dir     = '/home/language/kriarm/pro/streams/data/MRI/preproc';
 inp_dir         = fullfile(anatomy_dir, subject.name);
 
-t1              = fullfile(inp_dir, subject.name, 'mri', 'T1.mgz');
-normalization2  = fullfile(inp_dir, subject.name, 'mri', 'brain.mgz');
-white_matter    = fullfile(inp_dir, subject.name, 'mri', 'wm.mgz');
-white_matter_old = fullfile(inp_dir, subject.name, 'mri', 'wm_old.mgz');
+t1              = fullfile(inp_dir, 'mri', 'T1.mgz');
+normalization2  = fullfile(inp_dir, 'mri', 'brain.mgz');
+white_matter    = fullfile(inp_dir, 'mri', 'wm.mgz');
+white_matter_old = fullfile(inp_dir, 'mri', 'wm_old.mgz');
 
 % Show T1
 mri = ft_read_mri(t1);

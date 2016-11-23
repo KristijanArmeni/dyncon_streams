@@ -7,7 +7,7 @@ end
 mri_dir           = '/home/language/kriarm/pro/streams/data/MRI/preproc';
 subject_code      = subject.name;
 
-pname = fullfile(mri_dir, subject_code, subject_code, 'mri');
+pname = fullfile(mri_dir, subject_code, 'mri');
 mri   = ft_read_mri(fullfile(pname,'T1.mgz'));
 wm    = ft_read_mri(fullfile(pname,'wm.mgz'));
 system(['cp ',fullfile(pname,'wm.mgz'),' ',fullfile(pname,'wm_old.mgz')]);

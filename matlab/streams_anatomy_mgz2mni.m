@@ -1,8 +1,7 @@
 function streams_anatomy_mgz2mni(subject)
-%streams_anatomy_mgz2mni reads in the files created by
-%streams_anatomy_dicom2mgz, perfroms reslicing to 256x256x256 space and
-%creates the transformation matrix for conversion MNI space. It saves the
-%reliced volume 
+% streams_anatomy_mgz2mni reads in the files created by
+% streams_anatomy_dicom2mgz, and creates the transformation matrix for conversion to MNI space
+% perfroms reslicing to 256x256x256 space. It saves the reliced volume and the transformation matrix. 
 
 %% Initialize the variables
 if ischar(subject);
@@ -29,28 +28,28 @@ mri = ft_read_mri(mgz_filename);
 
 %% Transform to MNI and reslice to freesurfer-friendly dimensions
 
-% reslice & save the transformation matrix to the anatomy_dir
-cfg                 = [];
-cfg.resolution      = 1;
-cfg.dim             = [256 256 256];
-mri_resliced        = ft_volumereslice(cfg, mri);
-
 % realign to MNI space
 cfg                 = [];
 cfg.coordsys        = 'spm';
 cfg.parameter       = 'anatomy';
 cfg.method          = 'interactive';
-mri_resliced_mni    = ft_volumerealign(cfg, mri_resliced);
+mri_mni             = ft_volumerealign(cfg, mri);
+
+% reslice & save the transformation matrix to the anatomy_dir
+cfg                 = [];
+cfg.resolution      = 1;
+cfg.dim             = [256 256 256];
+mri_resliced        = ft_volumereslice(cfg, mri_mni);
 
 % Save the resliced mni-transformed mri image
 cfg                 = [];
 cfg.filename        = resliced_filename;
 cfg.filetype        = 'mgz';
 cfg.parameter       = 'anatomy';
-ft_volumewrite(cfg, mri_resliced_mni)
+ft_volumewrite(cfg, mri_resliced)
 
 % Save the transformation matrix
-transform_vox2mni   = mri_resliced_mni.transform;
+transform_vox2mni   = mri_resliced.transform;
 filename_vox2mni    = fullfile(anatomy_preproc_dir, [subject_code, '_transform_vox2mni']);
 save(filename_vox2mni, 'transform_vox2mni');
 

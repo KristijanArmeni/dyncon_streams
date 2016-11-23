@@ -8,15 +8,16 @@ if ischar(subject)
 end
 
 subject_code = subject.name;
+subject_number = str2num(subject.name(2:end));
 anatomy_savedir = fullfile('~/pro/streams/data/MRI/preproc'); %just for test, should be: '/home/language/jansch/projects/streams/data/anatomy'
 
-%if subject-specific folder does not exist, make one
-if ~isdir(anatomy_savedir)
-  mkdir('~/pro/streams/data/MRI/preproc');
+% select the last dicom file in subject's mri directory
+if subject_number <= 10 % pilot data have different directory structure
+  dicom_dir  = fullfile(subject.mridir, subject.id, 'dicom');
+else 
+  dicom_dir  = fullfile(subject.mridir, subject.id);
 end
 
-% select the last dicom file in subject's mri directory
-dicom_dir  = fullfile(subject.mridir, subject.id);
 dicom_list = dir(dicom_dir);
 dicom_file = fullfile(dicom_dir, dicom_list(end).name);
 
