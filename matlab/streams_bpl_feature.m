@@ -25,20 +25,16 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 %                   trim_feature  =   logical, indicating whether to
 %                                     discard the entropy values for word
 %                                     positions 0, 1, 2 when computing MI
+%                   metric        =   string ('mi'), specifies what metric
+%                                     should be computed
 %                   lpfreq        =   integer array, specifying the lower
 %                                     and upper bound of the frequency band
 %                                     for low-pass filtering after hilbert-transform
-%                   reject        =   1x2 cell array: first cell is a scalar specifying whether or not to do
-%                                     component analysis via ft_rejectcomponent, the second cell containts
-%                                     a list of components to reject (default is {0, []})
-%                   components    =   integer array specifiying which components to reject
-%                                     for the currently processed dataset, (default is [])
 %                   lag           =   vector with lags over which to compute the cross correlation
 %                                     function (default = -200:10:200, corresponding with [-1, 1]
 %                                     at 200 Hz sampling rate which is the default downsampling frequency)
 %                   dosource      =   boolean value, specifying whether or not to
 %                                     perform source reconstruction using streams_lcmv
-%                   chunk         =   scalar, ?
 %                   nshuffle      =   integer, specifies number of random
 %                                     permutations to perform on the
 %                                     feature vector (featuredata) to construct the null condition (default
@@ -46,6 +42,8 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 %                   avgwords     =    integer, specifying whether or not to
 %                                     average the feature vector values over all word sample
 %                                     points (default = 0)
+%                   mihilbert    =    string, ('complex', 'angle', or 'abs') determines the type of input to the MI computation, 
+%                                     influences the behavior of ft_connectivity_mutualinformation() and mi_gg()
 % 
 % FieldTrip Function called in this 'script-function'
 % CUSTUM SUBFUNCTIONS CALLED WITHIN THIS SCRIPT
@@ -54,6 +52,7 @@ function [stat] = streams_bpl_feature(subject, data, featuredata, varargin)
 % streams_dss_rejectauditory()
 % statfun_xcorr_spearman_adjusted()
 % statfun_xcorr()
+% addnoise()
 
 %% Initialization
 
@@ -62,14 +61,11 @@ trim_feature    = ft_getopt(varargin, 'trim_feature', 0);
 metric          = ft_getopt(varargin, 'metric', 'mi');
 method          = ft_getopt(varargin, 'method', 'ibtb');
 lag             = ft_getopt(varargin, 'lag',(-200:10:200)); % this corresponds to [-1 1] at 200 Hz
-chunk           = ft_getopt(varargin, 'chunk', []);
 dosource        = ft_getopt(varargin, 'dosource', 0);
-length          = ft_getopt(varargin, 'length');
-overlap         = ft_getopt(varargin, 'overlap');
 nshuffle        = ft_getopt(varargin, 'nshuffle', 0);
 lpfreq          = ft_getopt(varargin, 'lpfreq', []);
-avgwords        = ft_getopt(varargin, 'avgwords', 0);
 opts            = ft_getopt(varargin, 'opts', []); % optional arguments to influence the behaviour of the mi-computation
+micomplex       = ft_getopt(varargin, 'micomplex', 'abs'); % whether MI computation is done on complex-valued input signal
 
 feature_channel = data.label(end);
 
@@ -124,7 +120,7 @@ if dosource
    cfg.channel = 'MEG';
    data = ft_selectdata(cfg, data);
   
-  [source, data_source] = streams_lcmv(subject, data);
+  [~, data_source] = streams_lcmv(subject, data);
   
   % add feauture data as the last row to the source data structure
   data = ft_appenddata([], data_source, featuredata_tmp);
@@ -160,61 +156,6 @@ if ~isempty(lpfreq)
     data = ft_preprocessing(cfg, data);
 end
 
-%% Some extra data struct arrangements if needed
-
-% select specific channels if needed
-if ~isempty(chunk)
-  
-  div = [0:chunk:numel(data.label) numel(data.label)];
-  
-  for k = 1:(numel(div)-1)
-    sel = (div(k)+1):div(k+1);
-    tmp = ft_selectdata(data, 'channel', data.label(sel));
-    tmpstat(k) = streams_blp_feature(tmp, featuredata, 'feature', feature, 'lag', lag, 'nshuffle', nshuffle);
-  end
-  
-  stat       = tmpstat(1);
-  stat.stat  = cat(1, tmpstat.stat);
-  stat.statshuf = cat(1, tmpstat.statshuf);
-  stat.label = data.label;
-  
-  if ~isempty(savefile)
-    save(savefile, 'stat');
-  end
-  
-  return;
-end
-
-% respecify the time window for trials of interest if needed
-if ~isempty(length)
-  tmpcfg         = [];
-  tmpcfg.length  = length;
-  tmpcfg.overlap = overlap;
-  data           = ft_redefinetrial(tmpcfg,data);
-  featuredata    = ft_redefinetrial(tmpcfg,featuredata);
-  for k = 1:numel(data.trial)
-    tmp     = ft_selectdata(data,        'rpt', k);
-    tmp2    = ft_selectdata(featuredata, 'rpt', k);
-    stat(k) = streams_blp_feature(tmp, tmp2, 'feature', feature, 'lag', lag, 'method', metric);
-  end
-  
-  return;
-end
-
-% nnans   = max(abs(lag))+1;
-% dat     = data.trial{1};
-% featuredat = featuredata.trial{1}(selfeature,:);
-
-% Concatenate trials (if more trials are used) interspersed with NaN values of the lenght
-% of the lag for computing stats
-
-% if numel(data.trial)>1
-%   for k = 2:numel(data.trial)
-%     dat        = [dat        nan+zeros(numel(data.label),nnans) data.trial{k}];
-%     featuredat = [featuredat nan+zeros(1,nnans)                 featuredata.trial{k}(selfeature,:)];
-%   end
-% end
-
 
 %% Computing the chosen statistic
 
@@ -244,44 +185,59 @@ switch metric
      cfg = [];
      cfg.method = 'mi';
      cfg.refindx = refIndx;
-     
+
      cfg.mi  = [];
      cfg.mi.lags = lag./data.fsample;
      cfg.mi.method = method;
-     cfg.mi.complex = 'complex';
+     cfg.mi.complex = micomplex; %'complex';
      cfg.mi.remapdesign = ft_getopt(cfg.mi, 'remapdesign', 0);
-%    cfg.mi.bindesign = ft_getopt(cfg.mi, 'bindesign', 1);
-     
+  %    cfg.mi.bindesign = ft_getopt(cfg.mi, 'bindesign', 1);
+
      cfg.mi.nbin = ft_getopt(opts, 'nbin', 5);
      cfg.mi.binmethod = ft_getopt(opts, 'binmethod', 'eqpop');
      cfg.mi.opts = opts;
 
-    [c]  = ft_connectivityanalysis(cfg, data);
     
-    % compute surrogate model-MI distribution nshuffle-time and store it
-    % into cshuf
-    if nshuffle > 0
+     cfgt = [];
+     cfgt.channel = refIndx;
+     design = ft_selectdata(cfgt, data);
+
+    % here you also still need to add the noise
+     for mm = 1:numel(data.trial)
+       data.trial{mm}(refIndx,:) = addnoise(data.trial{mm}(refIndx,:));
+     end
+
+     [c]  = ft_connectivityanalysis(cfg, data);
+    
+    
+     % compute surrogate model-MI distribution nshuffle-time and store it
+     % into cshuf
+     if nshuffle > 0
       
-      fprintf('\nComputing MI for bias estimation with %d data permutations ...\n', nshuffle);
-      fprintf('=========================================\n\n')
+       fprintf('\nComputing MI for bias estimation with %d data permutations ...\n', nshuffle);
+       fprintf('=========================================\n\n')
       
-      cfgt = [];
-      cfgt.channel = refIndx;
-      design = ft_selectdata(cfgt, data);
       
-      shuff           = streams_shufflefeature(design, nshuffle);
+       shuff           = streams_shufflefeature(design, nshuffle);
 %       
        for m = 1:nshuffle
-       fprintf('\nPermutation nr. %d ...\n', m);
+         shufdata = data;
+         for mm = 1:numel(shufdata.trial)
+           % add the shuffled feature 
+           shufdata.trial{mm}(refIndx,:) = addnoise(shuff{mm}(m,:));
+         end
+         
+         fprintf('\nPermutation nr. %d ...\n', m);
         
         % compute MI
-       cshuf(:,:,m) = ft_connectivityanalysis(cfg, data);
+        tmp = ft_connectivityanalysis(cfg, shufdata);
+        cshuf(:,:,m) = tmp.mi;
       
-      end
+       end
       
-    else
+     else
       cshuf = [];
-    end
+     end
     
   case 'xcorr_spearman'
     c = statfun_xcorr_spearman_adjusted(cfg, dat, design(1,:));
@@ -294,6 +250,24 @@ end
 %% Output stat structure
 
 stat = c;
-stat.statshuf = cshuf;
+if ~isempty(cshuf)
+  stat.statshuf = cshuf;
+end
 
 fprintf('\n###streams_bpl_feature: DONE! ...###\n');
+
+function out = addnoise(in)
+
+  featurevector = in;
+  
+  steps = unique(featurevector);
+  steps_sel = isfinite(steps);  % indicate all non-Nan values
+  steps = steps(steps_sel);     % select all non-Nan values
+  steps = steps(find(steps));   % select all non-zero values
+  
+  range = 0.1*min(diff(steps));
+  num_samples = size(featurevector, 2);
+
+  noise = range*rand(1, num_samples);
+  noise(~isfinite(featurevector)) = NaN;
+  out = featurevector + noise;
