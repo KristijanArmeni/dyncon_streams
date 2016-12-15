@@ -25,7 +25,7 @@ cfg.vol  = headmodel;
 cfg.grid = leadfield;
 cfg.grid.label = tlck.label;
 cfg.method = 'lcmv';
-cfg.lcmv.fixedori   = 'yes';
+cfg.lcmv.fixedori   = 'yes';%'no';
 cfg.lcmv.keepfilter = 'yes';
 cfg.lcmv.lambda     = '5%';
 source              = ft_sourceanalysis(cfg, tlck);
@@ -35,5 +35,23 @@ if nargout>1
   for k = 1:numel(data.trial)
     data.trial{k} = cat(1,source.avg.filter{:})*data.trial{k};
   end
-  data.label = leadfield.label;
+  
+  % if multiple orientations per parcel are allowed, then adjust the parcel
+  % label field accordingly
+  if strmatch(cfg.lcmv.fixedori, 'no');  
+    ncomp = cellfun('size',source.avg.filter,1);
+    data.label=cell(0,1);
+    
+    for k = 1:numel(ncomp)  
+      for m = 1:ncomp(k)
+        data.label{end+1}=sprintf('%s_%0.2d',leadfield.label{k},m);
+      end
+    end
+  else 
+    % add parcel labels
+    data.label = leadfield.label;
+  end
+  
+end
+    
 end  
