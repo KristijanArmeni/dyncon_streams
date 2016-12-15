@@ -1,4 +1,4 @@
-function [ time , feature_value_vector , trl] = get_time_series( combined_data, feature, sampling_rate )
+function [ time , feature_value_vector, trl] = get_time_series( combined_data, feature, sampling_rate )
 
 % GET_STREAMS_TIME_SERIES creates a vector and time axis of a specified
 % feature from the computational model output, at a specified sampling
@@ -33,10 +33,12 @@ endtim = [combined_data.end_time]';
 sel    = find(begtim~=endtim); % the '.' seem to have the same begtim as endtim
 begtim = begtim(sel);
 endtim = endtim(sel);
+
 for k = 1:numel(begtim)
   begsmp = nearest(time, begtim(k));
   endsmp = nearest(time, endtim(k));
   feature_value_vector(begsmp:endsmp) = combined_data(sel(k)).(feature);
+  
 end
 
 % create a trl-like matrix for the feature with samples expressed in the
