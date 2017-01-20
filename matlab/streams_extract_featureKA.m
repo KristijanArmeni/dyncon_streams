@@ -1,10 +1,10 @@
 function [featuredata] = streams_extract_featureKA(subject, varargin)
 
-% STREAMS_EXTRACT_FEATURE extracts the specified feature and creates a data
+% STREAMS_EXTRACT_FEATUREKA extracts the specified feature and creates a data
 % structure contaning the feature as a time series.
 %
 % Use as 
-%   [featuredata] = streams_extract_feature(subject, 'key1',
+%   [featuredata] = streams_extract_featureKA(subject, 'key1',
 %      'value1', 'key2', 'value2', ...)
 %
 % Input arguments:
@@ -20,6 +20,9 @@ function [featuredata] = streams_extract_featureKA(subject, varargin)
 %   audiofile = string (or cell array) that specify the audio fragments to
 %                use (default 'all')
 %   savefile  = string, filename of file to save the output data
+%   addnoise  = integer (0 or 1, default = 0), if 1, noise sampled from a uniform
+%               distribution (using rand()) is added to the featurevector
+%               created by get_time_series()
 %
 % Output arguments:
 %   featuredata = fieldtrip data structure containing the feature data
@@ -43,6 +46,7 @@ feature     = ft_getopt(varargin, 'feature');
 audiofile   = ft_getopt(varargin, 'audiofile', 'all');
 fsample     = ft_getopt(varargin, 'fsample', 300);
 savefile    = ft_getopt(varargin, 'savefile', '');
+addnoise    = ft_getopt(varargin, 'addnoise', 0);
 
 % check whether all required user specified input is there
 if isempty(feature), error('no feature specified'); end
@@ -141,8 +145,8 @@ for k = 1:numel(seltrl)
   end
   
   % create combineddata data structure
-  dondersfile  = fullfile('/home/language/jansch/projects/streams/audio/',selaudio{k},[selaudio{k},'.donders']);
-  textgridfile = fullfile('/home/language/jansch/projects/streams/audio/',selaudio{k},[selaudio{k},'.TextGrid']);
+  dondersfile  = fullfile('/project/3011044.02/lab/pilot/stim/audio',selaudio{k},[selaudio{k},'.donders']);
+  textgridfile = fullfile('/project/3011044.02/lab/pilot/stim/audio',selaudio{k},[selaudio{k},'.TextGrid']);
   combineddata = combine_donders_textgrid(dondersfile, textgridfile);
   
   % Compute entropy reduction on the go
@@ -159,7 +163,7 @@ for k = 1:numel(seltrl)
   % create featuredata structure with language model output
   if iscell(feature)
     for m = 1:numel(feature)
-      featuredata{m} = create_featuredata(combineddata, feature{m}, data);
+      featuredata{m} = create_featuredata(combineddata, feature{m}, data, addnoise);
     end
     featuredata = ft_appenddata([], featuredata{:});
   else
@@ -185,11 +189,28 @@ if ~isempty(savefile)
 end
 
 % subfunction
-function [featuredata] = create_featuredata(combineddata, feature, data)
+function [featuredata] = create_featuredata(combineddata, feature, data, addnoise)
 
 % create FT-datastructure with the feature as a channel
 [time, featurevector] = get_time_series(combineddata, feature, data.fsample);
 
+
+if addnoise
+  
+  steps = unique(featurevector);
+  steps_sel = isfinite(steps);  % indicate all non-Nan values
+  steps = steps(steps_sel);     % select all non-Nan values
+  steps = steps(find(steps));   % select all non-zero values
+  
+  range = 0.1*min(diff(steps));
+  num_samples = size(featurevector, 2);
+
+  noise = range.*rand(1, num_samples);
+  noise(~isfinite(featurevector)) = NaN;
+  featurevector = featurevector + noise;
+
+end
+  
 featuredata   = ft_selectdata(data, 'channel', data.label(1)); % ensure that it only has 1 channel
 featuredata.label{1} = feature;
 for kk = 1:numel(featuredata.trial)
