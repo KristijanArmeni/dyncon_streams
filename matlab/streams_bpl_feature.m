@@ -68,6 +68,7 @@ opts            = ft_getopt(varargin, 'opts', []); % optional arguments to influ
 micomplex       = ft_getopt(varargin, 'micomplex', 'abs'); % whether MI computation is done on complex-valued input signal
 
 feature_channel = data.label(end);
+isaudio         = strmatch(feature_channel, 'audio_avg');
 
 %% Loading data
 
@@ -212,19 +213,26 @@ switch metric
     
      % compute surrogate model-MI distribution nshuffle-time and store it
      % into cshuf
+     
      if nshuffle > 0
       
        fprintf('\nComputing MI for bias estimation with %d data permutations ...\n', nshuffle);
        fprintf('=========================================\n\n')
       
-      
-       shuff           = streams_shufflefeature(design, nshuffle);
-%       
+       if isaudio
+           shuff           = streams_circularshift(design, nshuffle);     
+       else    
+           shuff           = streams_shufflefeature(design, nshuffle);
+       end
+       
        for m = 1:nshuffle
          shufdata = data;
          for mm = 1:numel(shufdata.trial)
-           % add the shuffled feature 
+           if isaudio
+           shufdata.trial{mm}(refIndx,:) = shuff{mm}(m,:);
+           else 
            shufdata.trial{mm}(refIndx,:) = addnoise(shuff{mm}(m,:));
+           end
          end
          
          fprintf('\nPermutation nr. %d ...\n', m);
