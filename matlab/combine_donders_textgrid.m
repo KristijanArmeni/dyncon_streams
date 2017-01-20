@@ -21,7 +21,7 @@ if nargin<2,
   % only a 'fnXXXXX' is given, make a smart guess
   [p,f,e] = fileparts(donders_path);
   if isempty(p)
-    p = fullfile('/home/language/jansch/projects/streams/audio',f);
+    p = fullfile('/project/3011044.02/lab/pilot/stim/audio',f);
   end
   
   textgrid_path = fullfile(p,[f,'.TextGrid']);
