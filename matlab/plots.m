@@ -1,151 +1,125 @@
-%% MEG~AUDIO PLOTS
 clear all
+close all
 
-savedir = '/home/language/kriarm/streams/res/fig/mi/meg_audio';
+datadir = '/project/3011044.02/analysis/mi/';
+savedir = '/project/3011044.02/analysis/mi/per_subject';
 
-load '/home/language/jansch/projects/streams/data/preproc/s01_fn001078_data_04-08_30Hz.mat';
-load 'ibtbGa.mat';
-load 'gcmiGa.mat';
-load 'lgcyGa.mat';
+subjects = {'s02', 's03', 's04', 's05', 's07', 's08', 's09', 's10'};
+freqs = {'04-08', '09-12' '13-18'};
+datatype = 'abs_ent';
 
-gaI = {deltaIbtbGa, thetaIbtbGa, alphaIbtbGa, betaIbtbGa, gammaIbtbGa};
-gaG = {deltaGcmiGa, thetaGcmiGa, alphaGcmiGa, betaGcmiGa, gammaGcmiGa};
-gaL = {deltaLgcyGa, thetaLgcyGa, alphaLgcyGa, betaLgcyGa, gammaLgcyGa};
+% plotting parameters for topoplot
+cfg                    = [];   
+cfg.zlim               = 'maxmin';
+cfg.comment            = 'no';
+cfg.colorbar           = 'EastOutside';
+cfg.style              = 'straight';
+cfg.colormap           = 'jet';
+cfg.layout             = 'CTF275_helmet.mat';
 
-titlesI = {'deltaIBTB', 'thetaIBTB', 'alphaIBTB', 'betaIBTB', 'gammaIBTB'};
-titlesG = {'deltaGCMI', 'thetaGCMI', 'alphaGCMI', 'betaGCMI', 'gammaGCMI'};
-titlesL = {'deltaLGCY', 'thetaLGCY', 'alphaLGCY', 'betaLGCY', 'gammaLGCY'};
+for h = 1:numel(freqs)
+    
+    freq = freqs{h};
+    
+    for k = 1:numel(subjects)
+    
+        % specify data
+        datadir = '/project/3011044.02/analysis/mi/per_subject/';
+        subject = subjects{k};
 
-% Avg Topos: Phase and power
-figure('Color', [1 1 1]);
-set(gcf, 'Name', ['MEG-Audio Phase MI' ' (' titlesG{1}(6:9) ')']);
-for k = 1:numel(gaG); 
-     
-     subplot(2, 3, k);
+        % plot the sensor-level data
+        filename_sens = [subject '_alls_' datatype '_' freq '_sens_30hz.mat'];
+        fullfilename_sens = fullfile(savedir,['ga_' filename_sens]);
+        load(fullfilename_sens);
 
-     
-     cfg                    = [];   
-     cfg.zlim               = 'maxmin';
-     cfg.comment            = 'no';
-     cfg.colorbar           = 'yes';
-     cfg.style              = 'straight';
-     cfg.gridscale          = 150;
-     cfg.layout             = 'CTF275_helmet.mat';
+        figure('Color', [1 1 1]);
+        
+        % plot topography
+        fprintf('plotting %s \n', filename_sens)
+        subplot(3, 2, 1); 
+        ft_topoplotER(cfg, ga);
+        clear title
+        title([subject '  ' datatype(1:3) '  ' datatype(end-2:end) '  ' freq])
 
-     ft_topoplotER(cfg, gaG{k});
-     title(titlesG{k});
-%      print(fullfile(savedir, sprintf('%s_ph_avgtopo', varnames{k})), '-depsc', '-adobecs', '-zbuffer');
-%      close(gcf);
-%      
-%      ft_topoplotER(cfg, ga_pw{k});
-%      print(fullfile(savedir, sprintf('%s_pw_avgtopo', varnames{k})), '-depsc', '-adobecs', '-zbuffer');
-%      close(gcf);
-     
+        % plot timecourses
+        subplot(3, 2, 2)
+        plot(ga.time, ga.avg);
+        xlim([min(ga.time) max(ga.time)])
+
+
+        % source level plot
+        filename_source = ['ga_' subject '_alls_' datatype '_' freq '_lcmv_30hz'];
+        functional = [filename_source '.mat'];
+        sourcemodel = ['~/pro/streams/data/MRI/preproc/' subject '_sourcemodel.mat'];
+
+        fprintf('plotting %s \n\n', filename_source)
+
+        % load the data
+        load(functional) 
+        load(sourcemodel)
+        load atlas_subparc374_8k
+
+        % add anatomical information to functional struct
+        s = ga;
+        s.stat = ga.avg;
+        s = rmfield(s, {'avg', 'var', 'dof'});
+        s.brainordinate.pos = sourcemodel.pos;
+        s.brainordinate.tri = sourcemodel.tri;
+        s.brainordinate.parcellation = atlas.parcellation;
+        s.brainordinate.parcellationlabel = atlas.parcellationlabel;
+
+        %plot time MI timecourse for all parcels
+        subplot(3, 2, 5);
+        plot(s.time, s.stat);
+        xlim([min(s.time), max(s.time)]);
+        axis([min(s.time), max(s.time), min(min(s.stat)), max(max(s.stat))]);
+
+        % Get the time point with maximum MI values
+        [maxvalue, I] = max(max(s.stat));
+        s.time = s.time(:, I);
+        s.stat = s.stat(:, I);
+        s.stat = s.stat-min(s.stat);
+
+        % plot on cortical surface
+        splot = ft_checkdata(s, 'datatype', 'source'); % new data structure variable for ft_plot_mesh
+        titlestring = [subject '   ' datatype(end-2:end) '   ' freq ' Hz' '   ' 'lag: ' num2str(s.time) ' s'];
+
+        h = subplot(3, 2, 3); set(h,'position',[0.10 0.35 0.30 0.30]);
+        ft_plot_mesh(splot, 'vertexcolor', splot.stat);
+
+        view(160, 10);
+        h = light; set(h, 'position', [0 1 0]);
+        lighting gouraud
+        
+        % plot the left hemisphere
+        h = subplot(3, 2, 4); set(h,'position',[0.55 0.35 0.30 0.30]);
+        ft_plot_mesh(splot, 'vertexcolor', splot.stat);
+        
+        hc = colorbar; set(hc, 'YLim', [min(splot.stat) max(splot.stat)]);
+        ax = gca; % get colorobar axes
+        ax.Position(3) = ax.Position(3) - ax.Position(3)*0.3; % arrange colorbar height
+        ax.Position(1) = 0.6; % arrange colorbar y coordinate
+
+        view(20, 10);
+        h = light; set(h, 'position', [0 -1 0]);
+        lighting gouraud
+        
+        print(fullfile(savedir, ['ga_' subject '_' datatype '_' freq]), '-dpdf', '-fillpage');
+        close all
+        
+    end
+    
+    % append separate pdfs into a single firle(requires export_fig toolbox)
+    append_names_list = dir([savedir '/ga_*' datatype '*' freq '*.pdf']);
+    append_names = {append_names_list.name}';
+
+    for i=1:numel(append_names)
+
+        append_names{i} = fullfile(savedir, append_names{i});
+
+    end
+
+    jointpdf = fullfile(savedir, ['ga_' datatype '_' freq '.pdf']);
+    append_pdfs(jointpdf, append_names{:});
+    
 end
-
-% Avg time: phase and power
-figure('Color', [1 1 1]);
-set(gcf, 'Name', ['MEG-Audio Phase MI' ' (' titlesG{1}(6:9) ')']);
-for k = 1:numel(gaL)-4; 
-     
-     subplot(2, 3, k);
-
-     
-     cfg                    = [];   
-     cfg.parameter          = 'avg';
-     cfg.comment            = 'no';
-     cfg.colorbar           = 'yes';
-     cfg.gridscale          = 150;
-     cfg.layout             = 'CTF275_helmet.mat';
-
-     ft_singleplotER(cfg, gaG{k + 2});
-     title(titlesG{k});
-%      print(fullfile(savedir, sprintf('%s_ph_avgtopo', varnames{k})), '-depsc', '-adobecs', '-zbuffer');
-%      close(gcf);
-%      
-%      ft_topoplotER(cfg, ga_pw{k});
-%      print(fullfile(savedir, sprintf('%s_pw_avgtopo', varnames{k})), '-depsc', '-adobecs', '-zbuffer');
-%      close(gcf);
-     
-end
-
-%Manual averages
-
-figure;
-for k = 1:numel(gaG)
-
-  data = gaG{k}.avg;
-  time = gaG{k}.time;
-
-  meanmi = mean(data, 1);
-  sdmi = std(data, 1);
-  sem = sdmi/sqrt(size(data, 1));
-  cimi = sem*1.96;
-  qua75 = quantile(data, 0.75);
-  qua25 = quantile(data, 0.25);
-
-  subplot(3, 2, k)
-  plot(time, data', '.', 'Color', [0.7 0.7 0.7])
-  hold on;
-  patch([time fliplr(time(1,:))],[meanmi+sdmi fliplr(meanmi-sdmi)],[1 0.7 0.7], 'EdgeColor', 'none', 'FaceAlpha', 0.6);
-  hold on;
-  plot(time, meanmi);
-  title(titlesG{k});
-
-end
-
-
-% nel = 20;
-% 
-% mycolormap = ones(nel,3);
-% mycolormap(:,1) = flipud(0:1/(size(mycolormap, 1)-1):1);
-% mycolormap(:,3) = flipud(0:1/(size(mycolormap, 1)-1):1);
-% mycolormap(:,2) = 1;
-% 
-% mycolormap(:,1) = flipud(mycolormap(:,1));
-% mycolormap(:,3) = flipud(mycolormap(:,3));
-% 
-% mycolormapgrey = rgb2gray(mycolormap);
-
-
-%% Theta vs beta
-
-%load /home/language/kriarm/streams/data/stat/infer/stat_mi_audio_betatheta
-load /home/language/kriarm/streams/data/stat/infer/stat_mi_audio_betatheta_time
-
-pos_cluster_pvals = [stat.posclusters(:).prob];
-
-% In case you have downloaded and loaded the data, ensure stat.cfg.alpha exists:
-if ~isfield(stat.cfg,'alpha'); 
-  stat.cfg.alpha = 0.05;
-end; 
-
-pos_signif_clust = find(pos_cluster_pvals < stat.cfg.alpha);
-pos = ismember(stat.posclusterslabelmat, pos_signif_clust);
-
-time = find(sum(pos, 1)); %
-
-for i = 1:numel(time)-1
-  
-  chans = find(all(pos(:,i:i+1), 2));
-  
-  figure('Color', [1 1 1]);
-  cfg                    = [];
-  cfg.parameter          = 'stat';
-  cfg.highlight          = 'on';
-  cfg.xlim               = [stat.time(i) stat.time(i+1)];
-  cfg.highlightchannel   = chans;
-  cfg.highlightsymbol    = '*';
-  cfg.highlightsize      = 10;
-  cfg.colorbar           = 'yes';
-  cfg.comment            = 'no';   
-  cfg.commentpos         = 'title';
-  cfg.style              = 'straight';
-  cfg.gridscale          = 150;
-  cfg.layout             = 'CTF275_helmet.mat';
-
-  ft_topoplotER(cfg, stat);
-end
-
-print(fullfile(savedir, 'thetabeta_clust'), '-depsc', '-adobecs', '-zbuffer');
-print(fullfile(savedir, 'thetabeta_clust'), '-dpdf');
