@@ -20,14 +20,14 @@ subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
 subject.montage.labelnew = {'EOGh';  'EOGv';  'ECG'};
 subject.montage.tra      = eye(3);
 
-subject.datadir   = '/home/language/jansch/MEG/3011044.02';
-subject.mridir    = '/home/language/jansch/MRI/3011044.02';
-subject.audiodir  = '/home/language/jansch/projects/streams/audio/audio_stories';
+subject.datadir   = '/project/3011044.02/data/raw_old';
+subject.mridir    = '/project/3011044.02/data/mri';
+subject.audiodir  = '/project/3011044.02/lab/pilot/stim/audio';
     
 
 switch name
   case 'p01'
-    subject.datadir   = '/home/language/jansch/MEG/';
+    subject.datadir   = '/project/3011044.02/data/raw_old/3011044.02_pilot';
     subject.dataset   = {fullfile(subject.datadir, 'streampilot_1200hz_20120611_01.ds');
       fullfile(subject.datadir, 'streampilot_1200hz_20120611_02.ds');
       fullfile(subject.datadir, 'streampilot_1200hz_20120611_03.ds');
@@ -36,7 +36,7 @@ switch name
       9291 284257 0 22;
       14013 884990 0 21;
       41607 761265 0 11];
-    subject.audiodir  = '/home/language/jansch/projects/streams/audio/20120611/';
+    subject.audiodir  = '/project/3011044.02/lab/pilot/stim/audio/old/20120611/';
     subject.audiofile = {fullfile(subject.audiodir, 'fn000249_dialogue2', 'fn000249_dialog2.wav');
       fullfile(subject.audiodir, 'fn001055_lit2', 'fn001055_lit2.wav');
       fullfile(subject.audiodir, 'fn001163_lit1.wav');
@@ -52,14 +52,14 @@ switch name
     
     
   case 'p02'
-    subject.datadir   = '/home/language/jansch/MEG/';
+    subject.datadir   = '/project/3011044.02/data/raw_old/3011044.02_pilot';
     subject.dataset   = {fullfile(subject.datadir, 'streampilot_1200hz_20120709_02.ds');
       fullfile(subject.datadir, 'streampilot_1200hz_20120709_02.ds');
       fullfile(subject.datadir, 'streampilot_1200hz_20120709_02.ds')};
     subject.trl       = [  35901  710002 0 11;
       869024 1432662 0 21;
       1532322 2346136 0 12];
-    subject.audiodir  = '/home/language/jansch/projects/streams/audio/20120709/';
+    subject.audiodir  = '/project/3011044.02/lab/pilot/stim/audio/old/20120709';
     subject.audiofile = {fullfile(subject.audiodir, 'fn000606_dialog1.wav');
       fullfile(subject.audiodir, 'fn001100_lit1.wav');
       fullfile(subject.audiodir, 'fn000249_dialog2.wav')};
