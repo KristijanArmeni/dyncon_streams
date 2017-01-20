@@ -130,11 +130,14 @@ else
 end
 
 % do the basic processing per audiofile
+
+audiodir = '/project/3011044.02/lab/pilot/stim/audio';
+
 for k = 1:numel(seltrl)
   [p,f,e] = fileparts(selaudio{k});
   
-  dondersfile  = fullfile('/home/language/jansch/projects/streams/audio/',f,[f,'.donders']);
-  textgridfile = fullfile('/home/language/jansch/projects/streams/audio/',f,[f,'.TextGrid']);
+  dondersfile  = fullfile(audiodir, f, [f,'.donders']);
+  textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
   combineddata = combine_donders_textgrid(dondersfile, textgridfile);
 
   cfg         = [];
