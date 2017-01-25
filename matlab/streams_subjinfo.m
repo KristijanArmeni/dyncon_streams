@@ -259,7 +259,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001293.wav')
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
-    subject.id = '116209';
+    subject.id = '115054';
     subject.eogv.badcomps = [1 2 3 4];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
@@ -420,7 +420,17 @@ switch name
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
-    
+  case 's28'
+    subject.dataset   = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20161121_01.ds']);
+    subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
+                         fullfile(subject.audiodir, 'fn001155.wav');
+                         fullfile(subject.audiodir, 'fn001293.wav');
+                         fullfile(subject.audiodir, 'fn001443.wav');
+                         fullfile(subject.audiodir, 'fn001498.wav')};
+    subject.id = '122515';
+    subject.eogv.badcomps = [];
+    subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
+    subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
 end
 
 if ~strcmp(name, 's01')
