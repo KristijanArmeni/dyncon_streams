@@ -2,7 +2,7 @@ function [status, filename] = streams_existfile(filenamein, pathname)
 
 % the assumed path where the files will be looked for is:
 if nargin<2
-  pathname = '/home/language/jansch/projects/streams/data/';
+  pathname = '/project/3011044.02/preproc/meg';
 end
 filename = fullfile(pathname,filenamein);
 status   = exist(filename,'file');
