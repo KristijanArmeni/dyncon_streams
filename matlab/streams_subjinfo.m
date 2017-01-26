@@ -14,7 +14,7 @@ if iscell(name)
 end
 
 subject.name = name;
-subjectdir = sprintf('sub-0%s', name(2:end));
+subjectdir = sprintf('sub-%0.3d', str2double(name(2:end)));
 
 subject.montage          = [];
 subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
