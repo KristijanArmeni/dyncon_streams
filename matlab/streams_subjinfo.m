@@ -14,16 +14,23 @@ if iscell(name)
 end
 
 subject.name = name;
+subjectdir = sprintf('sub-0%s', name(2:end));
 
 subject.montage          = [];
 subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
 subject.montage.labelnew = {'EOGh';  'EOGv';  'ECG'};
 subject.montage.tra      = eye(3);
 
-subject.datadir   = '/project/3011044.02/data/raw_old';
+subject.datadir   = fullfile('/project/3011044.02/raw/', subjectdir);
 subject.mridir    = '/project/3011044.02/data/mri';
 subject.audiodir  = '/project/3011044.02/lab/pilot/stim/audio';
-    
+
+% check the sessions subfolders in the subjectdir
+sessions = dir(fullfile(subject.datadir, 'ses*'));
+sessions = {sessions.name}';
+if numel(sessions) == 1
+    subject.datadir = char(fullfile(subject.datadir, sessions{1}));
+end
 
 switch name
   case 'p01'
@@ -184,8 +191,8 @@ switch name
     %subject.cac = [1.25 5 8];
     subject.cac = [1.2 3.2 5.2];
   case 's09'
-    subject.dataset   = {fullfile(subject.datadir, [name, '_1200hz_20130523_01.ds']);
-      fullfile(subject.datadir, [name, '_1200hz_20130523_02.ds'])};
+    subject.dataset   = {fullfile(subject.datadir, sessions{1}, [name, '_1200hz_20130523_01.ds']);
+      fullfile(subject.datadir, sessions{2}, [name, '_1200hz_20130523_02.ds'])};
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
       fullfile(subject.audiodir, 'fn001293.wav');
       fullfile(subject.audiodir, 'fn001294.wav');
