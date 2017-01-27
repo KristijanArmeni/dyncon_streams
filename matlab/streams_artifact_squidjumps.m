@@ -51,7 +51,7 @@ else
     cfg = cfg{1};
   end
   
-  filename = fullfile('/home/language/jansch/projects/streams/data/general', [subject.name,'_squidjumps.mat']);
+  filename = fullfile('/project/3011044.02/preproc/meg', [subject.name,'_squidjumps.mat']);
   save(filename, 'cfg');
 end
 
