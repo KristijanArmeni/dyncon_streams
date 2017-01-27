@@ -7,7 +7,7 @@ if ischar(subject)
 end
 
 
-anatomy_dir           = '/home/language/kriarm/pro/streams/data/MRI/preproc';
+anatomy_dir           = '/project/3011044.02/preproc/anatomy';
 inp_dir               = fullfile(anatomy_dir, subject.name);
 sourcemodel_filename  =fullfile(anatomy_dir, [subject.name, '_sourcemodel.mat']); %string for saving the sourcemodel file
 
