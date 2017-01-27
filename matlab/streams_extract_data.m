@@ -62,7 +62,7 @@ if abs == 0 && ~isempty(lpfreq)
 end
 
 % check whether all required user specified input is there
-if isempty(bpfreq) && isempty(hpfreq),  
+if isempty(bpfreq) && isempty(hpfreq)  
   error('no filter specified');
 elseif isempty(bpfreq)
   usehpfilter = true;
@@ -134,7 +134,7 @@ end
 audiodir = '/project/3011044.02/lab/pilot/stim/audio';
 
 for k = 1:numel(seltrl)
-  [p,f,e] = fileparts(selaudio{k});
+  [~,f,~] = fileparts(selaudio{k});
   
   dondersfile  = fullfile(audiodir, f, [f,'.donders']);
   textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
@@ -164,7 +164,7 @@ for k = 1:numel(seltrl)
   end
   data           = ft_preprocessing(cfg); % read in the MEG data
   
-  if strcmp('filter_audio', 'no'),
+  if strcmp('filter_audio', 'no')
     cfg.bpfilter = 'no';
     cfg.hpfilter = 'no';
   end
@@ -244,7 +244,7 @@ for k = 1:numel(seltrl)
   end
   
   
-  if ~isempty(boxcar),
+  if ~isempty(boxcar)
     cfg = [];
     cfg.boxcar = boxcar;
     data = ft_preprocessing(cfg, data);
@@ -260,7 +260,7 @@ for k = 1:numel(seltrl)
     data = ft_preprocessing(cfg, data);
   end
     
-  if fsample<1200,
+  if fsample < 1200
     % subtract first time point for memory purposes
     for kk = 1:numel(data.trial)
       firsttimepoint(kk,1) = data.time{kk}(1);
