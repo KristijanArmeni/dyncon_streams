@@ -4,12 +4,13 @@ if ischar(subject)
   subject = streams_subjinfo(subject);
 end
 
-anatomydir = '/home/language/kriarm/pro/streams/data/MRI/preproc'; %temporary directory
+anatomydir = '/project/3011044.02/preproc/anatomy'; %temporary directory
 load(fullfile(anatomydir,[subject.name,'_headmodel.mat']));
-load(fullfile(anatomydir,[subject.name,'_leadfield_parc.mat']));
+load(fullfile(anatomydir,[subject.name,'_leadfield.mat']));
 
 %rename the leadfield variable if needed
 if exist('leadfield_parc', 'var')
+  fprintf('Using parcellated leadfields in streams_lcmv()...\n')
   leadfield = leadfield_parc;
   clear leadfield_parc
 end
