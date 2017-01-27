@@ -21,17 +21,37 @@ subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
 subject.montage.labelnew = {'EOGh';  'EOGv';  'ECG'};
 subject.montage.tra      = eye(3);
 
-subject.datadir   = fullfile('/project/3011044.02/raw/', subjectdir);
+subject_rawdir   = fullfile('/project/3011044.02/raw/', subjectdir);
 subject.mridir    = '/project/3011044.02/data/mri';
 subject.audiodir  = '/project/3011044.02/lab/pilot/stim/audio';
 
-% check the sessions subfolders in the subjectdir
-sessions = dir(fullfile(subject.datadir, 'ses*'));
-sessions = {sessions.name}';
-if numel(sessions) == 1
-    subject.datadir = char(fullfile(subject.datadir, sessions{1}));
+% check for meg sessions subfolders in the /project/3011044.02/raw/sub-XXX
+meg_sessions = dir(fullfile(subject_rawdir, 'ses-meg*'));
+meg_sessions = {meg_sessions.name}';
+mri_sessions = dir(fullfile(subject_rawdir, 'ses-mri*'));
+mri_sessions = {mri_sessions.name}';
+if isempty(meg_sessions) && isempty(mri_sessions)
+    error('Cannot find meg and mri subdirectories in %s. Check please.', subject_rawdir)
+elseif isempty(meg_sessions)
+    error('Cannot find meg subdirectory in %s. Check please.', subject_rawdir)
+elseif isempty(mri_sessions)
+    warning('Cannot find mri subdirectories in %s.', subject_rawdir)
 end
 
+if numel(meg_sessions) == 1
+    subject.datadir = char(fullfile(subject_rawdir, meg_sessions{1}));
+else
+    subject.datadir = subject_rawdir; % enter sessions manually later in the code
+end
+
+% check for mri sessions subfolders in /project/3011044.02/raw/sub-XXX
+if numel(mri_sessions) == 1
+    subject.mridir = char(fullfile(subject_rawdir, mri_sessions{1}));
+else
+    subject.mridir = subject_rawdir; % enter sessions manually later in the code
+end
+
+% enter information for subject-specific datastructures
 switch name
   case 'p01'
     subject.datadir   = '/project/3011044.02/data/raw_old/3011044.02_pilot';
@@ -191,8 +211,8 @@ switch name
     %subject.cac = [1.25 5 8];
     subject.cac = [1.2 3.2 5.2];
   case 's09'
-    subject.dataset   = {fullfile(subject.datadir, sessions{1}, [name, '_1200hz_20130523_01.ds']);
-      fullfile(subject.datadir, sessions{2}, [name, '_1200hz_20130523_02.ds'])};
+    subject.dataset   = {fullfile(subject.datadir, meg_sessions{1}, [name, '_1200hz_20130523_01.ds']);
+      fullfile(subject.datadir, meg_sessions{2}, [name, '_1200hz_20130523_02.ds'])};
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
       fullfile(subject.audiodir, 'fn001293.wav');
       fullfile(subject.audiodir, 'fn001294.wav');
