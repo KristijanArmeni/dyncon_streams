@@ -153,7 +153,7 @@ for k = 1:numel(seltrl)
   for i = 1:numel(combineddata)
     if ~isempty(combineddata(i).entropy) && i ~= 1
       [combineddata(i).entropyred] = combineddata(i-1).entropy - combineddata(i).entropy; % compute difference in entropy between previous and current word
-    elseif ~isempty(combineddata(i).entropy) && i == 1;
+    elseif ~isempty(combineddata(i).entropy) && i == 1
       [combineddata(i).entropyred] = combineddata(i).entropy;
     else
       [combineddata(i).entropyred] = NaN;
@@ -177,7 +177,7 @@ for k = 1:numel(seltrl)
   
 end
 
-if numel(tmpdataf)>1,
+if numel(tmpdataf) > 1
   featuredata = ft_appenddata([], tmpdataf{:});
 else
   featuredata = tmpdataf{1};
