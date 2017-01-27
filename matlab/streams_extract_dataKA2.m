@@ -47,7 +47,6 @@ hpfreq      = ft_getopt(varargin, 'hpfreq');
 lpfreq       = ft_getopt(varargin, 'lpfreq'); % before the post-envelope computation downsampling
 dftfreq     = ft_getopt(varargin, 'dftfreq');
 audiofile   = ft_getopt(varargin, 'audiofile', 'all');
-%fsample     = ft_getopt(varargin, 'fsample', 200);
 fsample     = ft_getopt(varargin, 'fsample', 30);
 savefile    = ft_getopt(varargin, 'savefile');
 docomp      = ft_getopt(varargin, 'docomp', 0);
@@ -62,7 +61,7 @@ if ~strcmp(hilbert_transf, 'abs') && ~isempty(lpfreq)
 end
 
 % check whether all required user specified input is there
-if isempty(bpfreq) && isempty(hpfreq),  
+if isempty(bpfreq) && isempty(hpfreq) 
   error('no filter specified');
 elseif isempty(bpfreq)
   usehpfilter = true;
@@ -134,7 +133,7 @@ end
 audiodir = '/project/3011044.02/lab/pilot/stim/audio';
 
 for k = 1:numel(seltrl)
-  [p,f,e] = fileparts(selaudio{k});
+  [~,f,~] = fileparts(selaudio{k});
   
   dondersfile  = fullfile(audiodir, f, [f,'.donders']);
   textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
@@ -164,7 +163,7 @@ for k = 1:numel(seltrl)
   end
   data           = ft_preprocessing(cfg); % read in the MEG data
   
-  if strcmp(filter_audio, 'no'),
+  if strcmp(filter_audio, 'no')
     cfg.bpfilter = 'no';
     cfg.hpfilter = 'no';
   end
@@ -175,7 +174,7 @@ for k = 1:numel(seltrl)
   %% AUDIO AVG
   % now we get the audio signal from the wavfile, at the same Fs as the
   % MEG, and for now we are going to use the 'audio_avg signal'
-  audio2       = streams_wav2mat(selaudio{k});
+  audio2       = streams_wav2mat(fullfile(audiodir, f, [f, '.wav']));
   
   % first we are going to shift the time axis as bit, as specified in the
   % precomputed delays.
@@ -199,7 +198,7 @@ for k = 1:numel(seltrl)
   audio.label(3,1) = audio2.label(aud_ind); 
   
   % Now apply the same bandpass filter to this broadband envelope as well.
-  if strcmp(filter_audiobdb, 'no'),
+  if strcmp(filter_audiobdb, 'no')
     cfg.bpfilter = 'no';
     cfg.hpfilter = 'no';
   end
@@ -303,7 +302,7 @@ for k = 1:numel(seltrl)
 %   end
   
   %% LOW PASS FILTERING
-  if ~isempty(boxcar),
+  if ~isempty(boxcar)
     cfg = [];
     cfg.boxcar = boxcar;
     data = ft_preprocessing(cfg, data);
@@ -320,7 +319,7 @@ for k = 1:numel(seltrl)
   
   %% RESAMPLING
   
-  if fsample<1200,
+  if fsample < 1200
     % subtract first time point for memory purposes
     for kk = 1:numel(data.trial)
       firsttimepoint(kk,1) = data.time{kk}(1);
@@ -350,7 +349,7 @@ end
 
 %% APPENDING AND SAVING
 
-if numel(tmpdata)>1,
+if numel(tmpdata) > 1
   data        = ft_appenddata([], tmpdata{:});
 else
   data        = tmpdata{1};
@@ -367,38 +366,3 @@ if ~isempty(savefile)
   save(savefile, 'data');
 end
 
-
-%% SUBFUNCTION
-
-function [featuredata] = create_featuredata(combineddata, feature, data)
-
-if iscell(feature)
-  for k = 1:numel(feature)
-    featuredata(k) = create_featuredata(combineddata, feature{k}, data);
-  end
-  return;
-else
-  % normal behavior
-end
-
-% create FT-datastructure with the feature as a channel
-[time, featurevector] = get_time_series(combineddata, feature, data.fsample);
-
-featuredata   = ft_selectdata(data, 'channel', data.label(1)); % ensure that it only has 1 channel
-featuredata.label{1} = feature;
-for kk = 1:numel(featuredata.trial)
-  if featuredata.time{kk}(1)>=0
-    begsmp = nearest(time, featuredata.time{kk}(1));
-  else
-    begsmp = nearest(data.time{kk}+featuredata.time{kk}(1), 0);
-  end
-  endsmp = (begsmp-1+numel(featuredata.time{kk}));
-  if endsmp<=numel(featurevector)
-    featuredata.trial{kk} = featurevector(begsmp:endsmp);
-  else
-    endsmp = numel(featurevector);
-    nsmp   = endsmp-begsmp+1;
-    featuredata.trial{kk}(:) = nan;
-    featuredata.trial{kk}(1:nsmp) = featurevector(begsmp:endsmp);
-  end
-end
