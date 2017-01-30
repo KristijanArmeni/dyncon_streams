@@ -168,40 +168,20 @@ for k = 1:numel(seltrl)
     cfg.hpfilter = 'no';
   end
   cfg.channel  = 'UADC004';
-  audio        = ft_preprocessing(cfg); % read in the audio data
-  audio_orig = audio;
+  audio_orig        = ft_preprocessing(cfg); % read in the audio data
   
   %% AUDIO AVG
-  % now we get the audio signal from the wavfile, at the same Fs as the
-  % MEG, and for now we are going to use the 'audio_avg signal'
-  audio2       = streams_wav2mat(fullfile(audiodir, f, [f, '.wav']));
+  wavfile = fullfile(audiodir, f, [f, '.wav']);
+  delay = subject.delay(seltrl(k))./1000;
   
-  % first we are going to shift the time axis as bit, as specified in the
-  % precomputed delays.
-  audio2.time{1} = audio2.time{1}+subject.delay(seltrl(k))./1000;
-  
-  i1 = nearest(audio.time{1},audio2.time{1}(1));
-  i2 = nearest(audio.time{1},audio2.time{1}(end));
-  i3 = nearest(audio2.time{1},audio.time{1}(1));
-  i4 = nearest(audio2.time{1},audio.time{1}(end));
-  
-  % add the correctly aligned average envelope signal to the 'audio' data structure
-  audio.trial{1}(2,:) = 0;
-  audio.trial{1}(3,:) = 0;
-  
-  avg_ind = find(all(ismember(audio2.label, 'audio_avg'), 2)); % find index of 'audio_avg' in audio2.label
-  aud_ind = find(all(ismember(audio2.label, 'audio'), 2)); % find index of 'audio' channel in audio2.label
-  
-  audio.trial{1}(2,i1:i2) = audio2.trial{1}(avg_ind,i3:i4); % assign audio_avg channel
-  audio.trial{1}(3,i1:i2) = audio2.trial{1}(aud_ind,i3:i4); % assign audio channel
-  audio.label(2,1) = audio2.label(avg_ind); %add label as well
-  audio.label(3,1) = audio2.label(aud_ind); 
+  audio = streams_broadbandaudio(audio_orig, wavfile, delay);
   
   % Now apply the same bandpass filter to this broadband envelope as well.
   if strcmp(filter_audiobdb, 'no')
     cfg.bpfilter = 'no';
     cfg.hpfilter = 'no';
   end
+  
   cfg.channel  = {'audio_avg', 'audio'};
   audio        = ft_preprocessing(cfg, audio); % read in the audio data
   
@@ -366,3 +346,33 @@ if ~isempty(savefile)
   save(savefile, 'data');
 end
 
+%% Subfunction
+function out = streams_broadbandaudio(audio, wavfile, delay)
+
+  % now we get the audio signal from the wavfile, at the same Fs as the
+  % MEG, and for now we are going to use the 'audio_avg signal'
+  audio_broadband       = streams_wav2mat(wavfile);
+  
+  % first we are going to shift the time axis as bit, as specified in the
+  % precomputed delays.
+  audio_broadband.time{1} = audio_broadband.time{1} + delay;
+  
+  i1 = nearest(audio.time{1},audio_broadband.time{1}(1));
+  i2 = nearest(audio.time{1},audio_broadband.time{1}(end));
+  i3 = nearest(audio_broadband.time{1},audio.time{1}(1));
+  i4 = nearest(audio_broadband.time{1},audio.time{1}(end));
+  
+  % add the correctly aligned average envelope signal to the 'audio' data structure
+  audio.trial{1}(2,:) = 0;
+  audio.trial{1}(3,:) = 0;
+  
+  avg_ind = find(all(ismember(audio_broadband.label, 'audio_avg'), 2)); % find index of 'audio_avg' in audio_wav.label
+  aud_ind = find(all(ismember(audio_broadband.label, 'audio'), 2)); % find index of 'audio' channel in audio_wav.label
+  
+  audio.trial{1}(2,i1:i2) = audio_broadband.trial{1}(avg_ind,i3:i4); % assign audio_avg channel
+  audio.trial{1}(3,i1:i2) = audio_broadband.trial{1}(aud_ind,i3:i4); % assign audio channel
+  audio.label(2,1) = audio_broadband.label(avg_ind); %add label as well
+  audio.label(3,1) = audio_broadband.label(aud_ind);
+  
+  out = audio;
+ 
