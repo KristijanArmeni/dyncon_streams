@@ -3,7 +3,7 @@ function streams_anatomy_workbench(subject)
 %   Detailed explanation goes here
 
 % Strings for the command
-shell_script      = '/home/language/kriarm/pro/streams/code/streams/matlab/streams_anatomy_postfreesurferscript.sh';
+shell_script      = '/project/3011044.02/scripts/matlab/streams_anatomy_postfreesurferscript.sh';
 mri_dir           = '/home/language/kriarm/pro/streams/data/MRI/preproc';
 subject_dir       = subject;
 
