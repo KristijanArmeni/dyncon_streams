@@ -1,4 +1,4 @@
-function [data] = streams_extract_dataKA2(subject, varargin)
+function [data, audio] = streams_extract_dataKA2(subject, varargin)
 
 % STREAMS_EXTRACT_DATA computes the time series of band-limited power at the MEG
 % channel level. Currently the only measure.
@@ -48,7 +48,6 @@ lpfreq       = ft_getopt(varargin, 'lpfreq'); % before the post-envelope computa
 dftfreq     = ft_getopt(varargin, 'dftfreq');
 audiofile   = ft_getopt(varargin, 'audiofile', 'all');
 fsample     = ft_getopt(varargin, 'fsample', 30);
-savefile    = ft_getopt(varargin, 'savefile');
 docomp      = ft_getopt(varargin, 'docomp', 0);
 dosns       = ft_getopt(varargin, 'dosns', 0);
 boxcar      = ft_getopt(varargin, 'boxcar');
@@ -133,11 +132,8 @@ end
 audiodir = '/project/3011044.02/lab/pilot/stim/audio';
 
 for k = 1:numel(seltrl)
-  [~,f,~] = fileparts(selaudio{k});
   
-  dondersfile  = fullfile(audiodir, f, [f,'.donders']);
-  textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
-  combineddata = combine_donders_textgrid(dondersfile, textgridfile);
+  [~,f,~] = fileparts(selaudio{k});
 
   cfg         = [];
   cfg.dataset = dataset{k};
@@ -171,6 +167,7 @@ for k = 1:numel(seltrl)
   audio_orig        = ft_preprocessing(cfg); % read in the audio data
   
   %% AUDIO AVG
+  
   wavfile = fullfile(audiodir, f, [f, '.wav']);
   delay = subject.delay(seltrl(k))./1000;
   
@@ -230,14 +227,8 @@ for k = 1:numel(seltrl)
     data            = ft_denoise_sns(cfg, data);
   end
   
-%   % convert to synthetic planar gradient representation
-%   load('/home/common/matlab/fieldtrip/template/neighbours/ctf275_neighb');
-%   cfg              = [];
-%   cfg.neighbours   = neighbours;
-%   cfg.planarmethod = 'sincos';
-%   data = ft_megplanar(cfg, data);
-% 
-% HILBERT TRANSFORM
+ 
+%% HILBERT TRANSFORM
 
    cfg = [];
    cfg.hilbert = 'complex';
@@ -245,43 +236,8 @@ for k = 1:numel(seltrl)
    if ~strcmp(filter_audio,'no')
      audio = ft_preprocessing(cfg, audio);
    end
-   
-%   cfg = [];
-%   cfg.method = 'svd';
-%   data = ft_combineplanar(cfg, data);
-%   
-%   if strcmp(hilbert_transf, 'abs')
-    
-% %     sprintf('Taking the %s of the complex-valued MEG data', hilbert_transf);
-%     cfg = [];
-%     cfg.parameter = 'trial';
-%     cfg.operation = hilbert_transf;
-%     data = ft_math(cfg, data);
-%     
-%     if ~strcmp(filter_audio,'no')
-%       sprintf('Taking the %s of the complex-valued audio data', hilbert_transf)
-%       audio = ft_math(cfg, audio);
-%     end
-%     
-%   elseif strcmp(hilbert_transf, 'angle')
-%     
-%     sprintf('Extracting the %s of the complex-valued MEG data', hilbert_transf)
-%     for i = 1:numel(data.trial)
-%       data.trial{i}(:) = angle(data.trial{i}(:));
-%     end
-%     
-%     if ~strcmp(filter_audio,'no')
-%       sprintf('Extracting the %s of the complex-valued audio data', hilbert_transf)
-%       for i = 1:numel(audio.trial)
-%         audio.trial{i}(:) = angle(audio.trial{i}(:));
-%       end
-%     end
-%     
-%   else
-%     sprintf('Outputing the complex-valued signals')
-%   end
   
-  %% LOW PASS FILTERING
+%% LOW PASS FILTERING
   if ~isempty(boxcar)
     cfg = [];
     cfg.boxcar = boxcar;
@@ -321,30 +277,25 @@ for k = 1:numel(seltrl)
     end
   end
   
-  % append into 1 data structure
-  tmpdata{k}  = ft_appenddata([], data, audio);
+  % add to structs for outputting
+  tmpdata{k}  = data;
+  tmpaudio{k} = audio;
   clear data audio;
 
 end
 
-%% APPENDING AND SAVING
+%% APPENDING FOR OUPUT
 
 if numel(tmpdata) > 1
   data        = ft_appenddata([], tmpdata{:});
+  audio        = ft_appenddata([], tmpaudio{:});
 else
   data        = tmpdata{1};
+  audio        = tmpaudio{1};
 end
 clear tmpdata tmpdataf
 
 
-%for k = 1:numel(data.trial)
-%  data.trial{k} = log10(data.trial{k});
-%end
-%data = ft_channelnormalise([], data); % standardise across trials
-
-if ~isempty(savefile)
-  save(savefile, 'data');
-end
 
 %% Subfunction
 function out = streams_broadbandaudio(audio, wavfile, delay)
