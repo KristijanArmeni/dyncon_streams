@@ -4,8 +4,8 @@ close all
 datadir = '/project/3011044.02/analysis/mi/';
 savedir = '/project/3011044.02/analysis/mi/per_subject';
 
-subjects = {'s02', 's03', 's04', 's05', 's07', 's08', 's09', 's10'};
-freqs = {'01-03', '04-08' '09-12', '13-18'};
+subjects = {'s03', 's04', 's05', 's07', 's08', 's09', 's10'};
+freqs = {'04-08'};
 datatype = 'abs_ent';
 
 % plotting parameters for topoplot
@@ -44,8 +44,8 @@ for h = 1:numel(freqs)
         
         % take the time point with max MI value for topo
 %         [maxvalue, I] = max(max(ga.avg));
-        ga.time = ga.time(:, 12);
-        ga.avg = ga.avg(:, 12);
+        ga.time = ga.time(:, 10);
+        ga.avg = ga.avg(:, 10);
         %ga.avg = ga.avg-min(ga.avg);
         
         % plot topography
@@ -107,7 +107,7 @@ for h = 1:numel(freqs)
         
         % left hemisphere
         clim =   [-max(max(abs(splot.stat))) max(max(abs(splot.stat)))];  % implement the 'maxabs' option
-        h = subplot(3, 2, 3); set(h,'position',[0.10 0.35 0.30 0.30], 'Clim', clim);
+        h = subplot(3, 2, 3); set(h,'position',[0.15 0.35 0.30 0.30], 'Clim', clim);
         ft_plot_mesh(splot, 'vertexcolor', splot.stat);
         
         view(160, 10);
@@ -115,7 +115,7 @@ for h = 1:numel(freqs)
         lighting gouraud
         
         % plot the right hemisphere
-        h = subplot(3, 2, 4); set(h,'Position',[0.55 0.35 0.30 0.30], 'Clim', clim);
+        h = subplot(3, 2, 4); set(h,'Position',[0.50 0.35 0.30 0.30], 'Clim', clim);
         ft_plot_mesh(splot, 'vertexcolor', splot.stat);
         xlabel(h, sprintf('time: %ss', num2str(splot.time)));
         ax = gca;
@@ -133,7 +133,7 @@ for h = 1:numel(freqs)
         %% plot parcellated
         clear ga
         
-        % source level plot
+        % source level plot with parcellated leadfields
         filename_source = ['ga_' subject '_alls_' datatype '_' freq '_lcmv-parc_30hz'];
         functional = [filename_source '.mat'];
         
@@ -153,7 +153,7 @@ for h = 1:numel(freqs)
         
         % left hemisphere
         clim =   [-max(max(abs(splot.stat))) max(max(abs(splot.stat)))];  % implement the 'maxabs' option
-        h = subplot(3, 2, 5); set(h,'position',[0.10 0.08 0.30 0.30], 'Clim', clim);
+        h = subplot(3, 2, 5); set(h,'position',[0.15 0.06 0.30 0.30], 'Clim', clim);
         ft_plot_mesh(splot, 'vertexcolor', splot.stat);
         
         view(160, 10);
@@ -161,7 +161,7 @@ for h = 1:numel(freqs)
         lighting gouraud
         
         % plot the right hemisphere
-        h = subplot(3, 2, 6); set(h,'Position',[0.55 0.08 0.30 0.30], 'Clim', clim);
+        h = subplot(3, 2, 6); set(h,'Position',[0.50 0.06 0.30 0.30], 'Clim', clim);
         ft_plot_mesh(splot, 'vertexcolor', splot.stat);
         xlabel(h, sprintf('time: %ss', num2str(splot.time)));
         ax = gca;
@@ -169,7 +169,7 @@ for h = 1:numel(freqs)
         
         hc = colorbar;
         ax = gca; % get colorobar axes
-        set(hc, 'Position', [0.90 0.07 0.02 0.27]); % arrange colorbar y coordinate
+        set(hc, 'Position', [0.90 0.06 0.02 0.27]); % arrange colorbar y coordinate
         ylabel(hc, 'MI (bit)', 'FontSize', 12, 'FontWeight', 'bold');
 
         view(20, 10);
@@ -177,13 +177,13 @@ for h = 1:numel(freqs)
         lighting gouraud
         
         
-        print(fullfile(savedir, ['ga_' subject '_' datatype '_' freq]), '-dpdf', '-bestfit');
+        print(fullfile(savedir, ['ga_' subject '_' datatype '_' freq '_full-parc']), '-dpdf', '-bestfit');
         close all
         
     end
     
     % append separate pdfs into a single file(requires export_fig toolbox)
-    append_names_list = dir([savedir '/ga_s*' datatype '*' freq '*.pdf']);
+    append_names_list = dir([savedir '/ga_s*' datatype '*' freq '_full-parc.pdf']);
     append_names = {append_names_list.name}';
 
     for i=1:numel(append_names)
