@@ -1,4 +1,4 @@
-function [data, audio] = streams_extract_dataKA2(subject, varargin)
+function [data, audio] = streams_preprocessing(subject, varargin)
 
 % STREAMS_EXTRACT_DATA computes the time series of band-limited power at the MEG
 % channel level. Currently the only measure.
@@ -55,11 +55,8 @@ boxcar          = ft_getopt(varargin, 'boxcar');
 filter_audio    = ft_getopt(varargin, 'filter_audio', 'no');
 filter_audiobdb = ft_getopt(varargin, 'filter_audiobdb', 'no');
 
-if ~doabs && ~isempty(lpfreq)
-  error('not taking the absolute of the hilbert transform in combination with lowpassfiltering is not allowed');
-end
+%% check whether all required user specified input is there
 
-% check whether all required user specified input is there
 if isempty(bpfreq) && isempty(hpfreq) 
   error('no filter specified');
 elseif isempty(bpfreq)
@@ -127,7 +124,7 @@ else
 
 end
 
-% do the basic processing per audiofile
+%% do the basic processing per audiofile
 
 audiodir = '/project/3011044.02/lab/pilot/stim/audio';
 
@@ -225,6 +222,7 @@ for k = 1:numel(seltrl)
     audio.grad = grad; % fool ft_appenddata
   end
   
+  % sensor noise suppression
   if dosns
     fprintf('doing sensor noise suppression\n');
   
