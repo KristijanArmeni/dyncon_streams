@@ -116,12 +116,8 @@ if dosource
   fprintf('\nStarting source reconstruction. Call to streams_lcmv ...\n');
   fprintf('=========================================\n\n') 
   
-   %make sure only MEG channels are in the data structure
-   cfg = [];
-   cfg.channel = 'MEG';
-   data = ft_selectdata(cfg, data);
-  
   [~, data_source] = streams_lcmv(subject, data);
+
   
   % add feauture data as the last row to the source data structure
   data = ft_appenddata([], data_source, featuredata_tmp);
