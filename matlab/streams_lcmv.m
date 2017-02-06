@@ -6,7 +6,7 @@ end
 
 anatomydir = '/project/3011044.02/preproc/anatomy'; %temporary directory
 load(fullfile(anatomydir,[subject.name,'_headmodel.mat']));
-load(fullfile(anatomydir,[subject.name,'_leadfield.mat']));
+load(fullfile(anatomydir,[subject.name,'_leadfield_parc.mat']));
 
 %rename the leadfield variable if needed
 if exist('leadfield_parc', 'var')
@@ -31,6 +31,14 @@ cfg.lcmv.keepfilter = 'yes';
 cfg.lcmv.lambda     = '5%';
 source              = ft_sourceanalysis(cfg, tlck);
 
+% storing source.cfg information for ft_analysispipeline
+cfgt = [];
+cfgt.comment = 'streams_lcmv';
+data = ft_annotate(cfgt, data);  % add comment and shift .previous
+data.cfg.previous = {data.cfg.previous}; % make it a 1-by-1 cell
+data.cfg.previous(2) = {source.cfg};  % store source.cfg info
+
+% apply spatial filters to the data
 if nargout>1
   data = ft_selectdata(data, 'channel', ft_channelselection('MEG', data.label));
   for k = 1:numel(data.trial)
@@ -39,7 +47,7 @@ if nargout>1
   
   % if multiple orientations per parcel are allowed, then adjust the parcel
   % label field accordingly
-  if strmatch(cfg.lcmv.fixedori, 'no');  
+  if strmatch(cfg.lcmv.fixedori, 'no')
     ncomp = cellfun('size',source.avg.filter,1);
     data.label=cell(0,1);
     
