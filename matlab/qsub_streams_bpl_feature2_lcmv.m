@@ -56,7 +56,7 @@ iv = featuresel(1:3);
 analysis = 'sens';
 
 if dosource
-  analysis = 'lcmv-full';
+  analysis = 'lcmv-parc';
 end
 
 filename = [subject.name, '_', audiofile(5:end), '_', datatype, '_', iv, '_' , freqband, '_', analysis, '_', num2str(fsample), 'hz'];
