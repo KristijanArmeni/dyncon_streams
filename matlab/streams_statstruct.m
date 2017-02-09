@@ -24,13 +24,19 @@ for k = 1 : numel(files)
     
         % real MI condition
         mi{k} = stat;
-        mi{k}.stat = stat.mi - nanmean(stat.statshuf, 3);
-        mi{k}.raw = stat.mi;
-        mi{k}.shuf = nanmean(stat.statshuf, 3);
         
-       
-        mi{k} = rmfield(mi{k}, fields2remove);
-    
+        if isfield(mi{k}, 'statshuf') % substract the surrogate mi if it exists
+            mi{k}.stat = stat.mi - nanmean(stat.statshuf, 3);
+            mi{k}.raw = stat.mi;
+            mi{k}.shuf = nanmean(stat.statshuf, 3);
+            
+            %remove statshuf and mi fields
+            mi{k} = rmfield(mi{k}, fields2remove);
+            
+        else
+            mi{k}.stat = stat.mi;
+        end
+        
 end    
 
 end
