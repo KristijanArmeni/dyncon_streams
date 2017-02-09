@@ -7,8 +7,8 @@ savedir = '/project/3011044.02/analysis/mi/per_subject'; %for saving
 
 % define the data string
 subjects = {'s02', 's03', 's04', 's05', 's07', 's08', 's09', 's10'};
-analysis = 'lcmv-parc';
-freqs = {'01-03', '04-08', '09-12', '13-18'};
+analysis = 'lcmv-full';
+freqs = {'04-08'};
 datatype = 'abs_ent';
 
 if strncmp(datatype, 'abs_per', length(datatype)); minus_refchannel = '-perplexity';
@@ -22,12 +22,12 @@ cfg.channel   = {'all', minus_refchannel};
 cfg.latency   = 'all';
 cfg.parameter = 'stat';
 
-for k = 1:numel(freqs)-3
+for k = 1:numel(freqs)
     
     freq = freqs{k};
     
     % loop over subjects
-    for i = 1:numel(subjects)-7
+    for i = 1:numel(subjects)
 
         subject = subjects{i};
         filename_part = sprintf('%s_*%s_%s_%s*', subject, datatype, freq, analysis);
