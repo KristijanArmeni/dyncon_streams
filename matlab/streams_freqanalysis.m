@@ -1,8 +1,9 @@
 function [freq, data, featuredata] = streams_freqanalysis(data, featuredata)
-%UNTITLED2 Summary of this function goes here
-%   Detailed explanation goes here
+%streams_freqanalysis() chunks the data into 1s long epochs and computes
+%powerspectra via ft_freqanalysis
 
-% Epoch the data
+
+%% Epoch the data
 
 epoch = data.fsample; % chunk size in samples
 measure = 'entropy';
@@ -10,7 +11,7 @@ measure_index = find(strcmp(featuredata.label, measure));
 
 datatmp         = [data.trial{:}];
 featuredatatmp  = [featuredata.trial{:}];
-featuredatatmp  = featuredatatmp(measure_index, :);
+featuredatatmp  = featuredatatmp(measure_index, :); % select the feature value, e.g. entropy
 timetmp         = [data.time{:}];
 end_sample      = size(datatmp, 2);
 
@@ -19,13 +20,14 @@ if ~isequal(size(datatmp, 2), size(featuredatatmp, 2))
     error('MEG trials length are not equal to language vector trial lengths. Please check.')
 end
 
-num_epochs = floor(end_sample/epoch);
+num_epochs = floor(end_sample/epoch); % determine number of epochs
 residual = mod(end_sample, epoch);
 
 epochs = zeros(1, num_epochs);
 epochs(:) = epoch;
 
-data_epoched = mat2cell(datatmp, size(datatmp, 1), [epochs, residual]);
+% epoching
+data_epoched = mat2cell(datatmp, size(datatmp, 1), [epochs, residual]); % chunk the data into a cell array of epoch length
 data_epoched = data_epoched(1:end-1); % drop the last trial which is of shorter time lenght then the rest
 
 featuredata_epoched = mat2cell(featuredatatmp, size(featuredatatmp, 1), [epochs, residual]);
@@ -50,7 +52,7 @@ trials_grouped(indx_high) = 2;
 trials_grouped(indx_low) = 1;
 
 
-%% do freq analysis somehow
+%% do freqanalysis
 
 dataorig = data;
 featuredataorig = featuredata;
