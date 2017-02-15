@@ -3,11 +3,12 @@ function pipeline_preprocessing_language_qsub(subject, audiofile)
 savedir = '/project/3011044.02/preproc/language';
 
 % preprocessing options
-fsample = 150;
+fsample = 200;
 features = {'perplexity' 'entropy' 'entropyred' 'depind' 'gra_perpl' 'pho_perpl'};
-filename = [subject.name '_' audiofile(5:end) '_feature_' [num2str(fsample) 'Hz']];
+
+filename = [subject.name '_' audiofile '_feature_' [num2str(fsample) 'Hz']];
 fullname = fullfile(savedir, filename);
-pipelinefilename = ['s01_1078_feature_' [num2str(fsample) 'Hz']];
+pipelinefilename = ['s01_all_feature_' [num2str(fsample) 'Hz']];
 
 % preprocess language data
 featuredata = streams_preprocessing_language(subject, ...
