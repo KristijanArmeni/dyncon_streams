@@ -44,7 +44,7 @@ end
 bpfreq          = ft_getopt(varargin, 'bpfreq');
 hpfreq          = ft_getopt(varargin, 'hpfreq');
 lpfreq          = ft_getopt(varargin, 'lpfreq'); % before the post-envelope computation downsampling
-dftfreq         = ft_getopt(varargin, 'dftfreq');
+dftfreq         = ft_getopt(varargin, 'dftfreq', [50 100 150]);
 audiofile       = ft_getopt(varargin, 'audiofile', 'all');
 fsample         = ft_getopt(varargin, 'fsample', 30);
 docomp          = ft_getopt(varargin, 'docomp', 0);
@@ -52,6 +52,7 @@ dosns           = ft_getopt(varargin, 'dosns', 0);
 dohilbert       = ft_getopt(varargin, 'dohilbert', 0);
 doabs           = ft_getopt(varargin, 'doabs', 0);
 boxcar          = ft_getopt(varargin, 'boxcar');
+dospeechenvelope = ft_getopt(varargin, 'dospeechenvelope', 0);
 filter_audio    = ft_getopt(varargin, 'filter_audio', 'no');
 filter_audiobdb = ft_getopt(varargin, 'filter_audiobdb', 'no');
 
@@ -167,26 +168,31 @@ for k = 1:numel(seltrl)
     cfg.hpfilter = 'no';
   end
   cfg.channel  = 'UADC004';
-  audio_orig        = ft_preprocessing(cfg); % read in the audio data
+  audio        = ft_preprocessing(cfg); % read in the audio data
   
   %% AUDIO AVG
-  
-  wavfile = fullfile(audiodir, f, [f, '.wav']);
-  delay = subject.delay(seltrl(k))./1000;
-  
-  audio = streams_broadbandenvelope(audio_orig, wavfile, delay);
-  
-  % Now apply the same bandpass filter to this broadband envelope as well.
-  if strcmp(filter_audiobdb, 'no')
-    cfg.bpfilter = 'no';
-    cfg.hpfilter = 'no';
+  if dospeechenvelope
+      
+      audio_orig = audio; % save the original audio file
+      
+      wavfile = fullfile(audiodir, f, [f, '.wav']);
+      delay = subject.delay(seltrl(k))./1000;
+
+      audio_new = streams_broadbandenvelope(audio_orig, wavfile, delay);
+
+      % Now apply the same bandpass filter to this broadband envelope as well.
+      if strcmp(filter_audiobdb, 'no')
+        cfg.bpfilter = 'no';
+        cfg.hpfilter = 'no';
+      end
+
+      cfg.channel  = {'audio_avg', 'audio'};
+      audio_new        = ft_preprocessing(cfg, audio_new); % read in the audio data
+
+      % Add original UADC004 channel back to audio
+      audio = ft_appenddata([], audio_orig, audio_new);
+      
   end
-  
-  cfg.channel  = {'audio_avg', 'audio'};
-  audio        = ft_preprocessing(cfg, audio); % read in the audio data
-  
-  % Add original UADC004 channel back to audio
-  audio = ft_appenddata([], audio_orig, audio);
 
 %% BANDSTOP FILTERING FOR LINE NOISE
 
