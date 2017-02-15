@@ -103,9 +103,13 @@ else
 
 end
 
+audiodir = '/project/3011044.02/lab/pilot/stim/audio';
+
 % do the basic processing per audiofile
 for k = 1:numel(seltrl)
   
+  [~, f, ~] = fileparts(selaudio{k});
+    
   % read in raw MEG data
   cfg         = [];
   cfg.dataset = dataset{k};
@@ -145,8 +149,8 @@ for k = 1:numel(seltrl)
   end
   
   % create combineddata data structure
-  dondersfile  = fullfile('/project/3011044.02/lab/pilot/stim/audio',selaudio{k},[selaudio{k},'.donders']);
-  textgridfile = fullfile('/project/3011044.02/lab/pilot/stim/audio',selaudio{k},[selaudio{k},'.TextGrid']);
+  dondersfile  = fullfile(audiodir, f, [f,'.donders']);
+  textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
   combineddata = combine_donders_textgrid(dondersfile, textgridfile);
   
   % Compute entropy reduction on the go
