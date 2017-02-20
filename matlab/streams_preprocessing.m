@@ -44,7 +44,7 @@ end
 bpfreq          = ft_getopt(varargin, 'bpfreq');
 hpfreq          = ft_getopt(varargin, 'hpfreq');
 lpfreq          = ft_getopt(varargin, 'lpfreq'); % before the post-envelope computation downsampling
-dftfreq         = ft_getopt(varargin, 'dftfreq', [50 100 150]);
+dftfreq         = ft_getopt(varargin, 'dftfreq', [49 51; 99 101; 149 151]);
 audiofile       = ft_getopt(varargin, 'audiofile', 'all');
 fsample         = ft_getopt(varargin, 'fsample', 30);
 docomp          = ft_getopt(varargin, 'docomp', 0);
