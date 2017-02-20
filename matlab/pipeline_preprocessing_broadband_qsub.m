@@ -11,12 +11,13 @@ hpfreq = 1;
 
 %% Preprocessing, band-pass filtering, complex hilbert and downsampling
                         
-[data, ~] = streams_preprocessing(subject, ...
+[data, audio] = streams_preprocessing(subject, ...
                             'audiofile', audiofile, ...
                             'lpfreq', lpfreq, ...
                             'hpfreq', hpfreq, ...,
-                            'dftfreq', [50 100 150], ...
+                            'dftfreq', [49 51; 99 101; 149 151], ...
                             'docomp', 1, ...
+                            'dospeechenvelope', 1, ...
                             'dohilbert', 0, ...
                             'doabs', 0,  ...
                             'fsample', fsample);
@@ -28,8 +29,10 @@ lowpassfreq = sprintf('%02d', lpfreq);
 highpassfreq = sprintf('%02d', hpfreq);
 frequency_band = [highpassfreq, '-', lowpassfreq];
 
-filename = [subject.name '_' audiofile '_' frequency_band '_' num2str(fsample) 'Hz'];
-filename = fullfile(savedir, filename);
+filenamemeg = [subject.name '_' audiofile '_' frequency_band '_' num2str(fsample) 'Hz_meg'];
+filenamemeg = fullfile(savedir, filenamemeg);
+filenameaudio = [subject.name '_' audiofile '_' frequency_band '_' num2str(fsample) 'Hz_aud'];
+filenameaudio = fullfile(savedir, filenameaudio);
 
 pipelinefilename = '/project/3011044.02/preproc/meg/s01_all_01-100_200Hz';
 
@@ -41,7 +44,8 @@ if ~exist([pipelinefilename '.html'], 'file')
     ft_analysispipeline(cfgt, data);
 end
     
-save(filename, 'data');
+save(filenamemeg, 'data');
+save(filenameaudio, 'audio');
 
 
 end
