@@ -23,7 +23,7 @@ epochlength = 1; % seconds
 
 %% Frequency analysis
 
-freq = streams_freqanalsysis(data, featuredata, epochlength);
+freq = streams_freqanalysis(data, featuredata, epochlength);
 
 
 %% save the output
