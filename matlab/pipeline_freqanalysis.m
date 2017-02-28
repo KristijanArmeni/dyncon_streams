@@ -15,7 +15,7 @@ for j = 1:numel(subjects)
     
 %   for k = 1:numel(audiofiles)
 		
-%     audiofile = audiofiles{k};
+%   audiofile = audiofiles{k};
 % 	tmp       = strfind(audiofile, 'fn');
 % 	audiofile = audiofile(tmp+(0:7));
     
