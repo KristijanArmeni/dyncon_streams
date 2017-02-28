@@ -50,7 +50,7 @@ end
 cfg = [];
 cfg.method = 'mtmfft';
 cfg.output = 'pow';
-cfg.taper = 'hanning';
+cfg.taper = 'dpss';
 cfg.tapsmofrq = 2;
 cfg.keeptrials = 'yes';
 freq = ft_freqanalysis(cfg, data_epoched);
