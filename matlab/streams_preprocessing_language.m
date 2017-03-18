@@ -45,7 +45,6 @@ end
 feature     = ft_getopt(varargin, 'feature');
 audiofile   = ft_getopt(varargin, 'audiofile', 'all');
 fsample     = ft_getopt(varargin, 'fsample', 300);
-savefile    = ft_getopt(varargin, 'savefile', '');
 addnoise    = ft_getopt(varargin, 'addnoise', 0);
 
 % check whether all required user specified input is there
@@ -104,6 +103,14 @@ else
 end
 
 audiodir = '/project/3011044.02/lab/pilot/stim/audio';
+subtlex_table_filename = '/project/3011044.02/data/language/worddata_subtlex.mat';
+subtlex_firstrow_filename = '/project/3011044.02/data/language/worddata_subtlex_firstrow.mat';
+subtlex_data = [];          % declare the variables, it throws a dynamic assignment error otherwise
+subtlex_firstrow = [];
+
+% load in the files that contain word frequency information
+load(subtlex_firstrow_filename);
+load(subtlex_table_filename);
 
 % do the basic processing per audiofile
 for k = 1:numel(seltrl)
@@ -153,8 +160,11 @@ for k = 1:numel(seltrl)
   textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
   combineddata = combine_donders_textgrid(dondersfile, textgridfile);
   
-  % Compute entropy reduction on the go
+  % Compute entropy reduction on the go and log_transform perplexity
   for i = 1:numel(combineddata)
+    
+    combineddata(i).log10perp = log10(combineddata(i).perplexity);
+      
     if ~isempty(combineddata(i).entropy) && i ~= 1
       [combineddata(i).entropyred] = combineddata(i-1).entropy - combineddata(i).entropy; % compute difference in entropy between previous and current word
     elseif ~isempty(combineddata(i).entropy) && i == 1
@@ -163,6 +173,9 @@ for k = 1:numel(seltrl)
       [combineddata(i).entropyred] = NaN;
     end
   end
+  
+  % add frequency info and word length
+  combineddata = add_subtlex(combineddata, subtlex_data,  subtlex_firstrow);
   
   % create featuredata structure with language model output
   if iscell(feature)
@@ -188,11 +201,38 @@ else
 end
 clear tmpdataf
 
-if ~isempty(savefile)
-  save(savefile, 'featuredata');
+%%  subfunctions
+function [combineddata] = add_subtlex(combineddata, subtlex_data, subtlex_firstrow)
+
+num_words = size(combineddata, 1);
+
+word_column = find(strcmp(subtlex_firstrow, 'spelling'));
+wlen_column = find(strcmp(subtlex_firstrow, 'nchar'));
+frequency_column = find(strcmp(subtlex_firstrow, 'Lg10WF'));
+
+subtlex_words = subtlex_data(:, word_column);
+
+    % add frequency information to combineddata structure
+    for j = 1:num_words
+
+        word = combineddata(j).word;
+        word = word{1};
+        row = find(strcmp(subtlex_words, word)); % find the row index in subtlex data
+
+        if ~isempty(row) % if it is a punctuation mark (subtlex doesn't give values for punctuation marks)
+            
+             combineddata(j).log10wf = subtlex_data{row, frequency_column}; % lookup the according frequency values
+             combineddata(j).nchar = subtlex_data{row, wlen_column};
+             
+        else
+            combineddata(j).log10wf = nan;
+            combineddata(j).nchar = nan; % write nan
+        end
+
+    end
+    
 end
 
-% subfunction
 function [featuredata] = create_featuredata(combineddata, feature, data, addnoise)
 
 % create FT-datastructure with the feature as a channel
@@ -217,19 +257,23 @@ end
   
 featuredata   = ft_selectdata(data, 'channel', data.label(1)); % ensure that it only has 1 channel
 featuredata.label{1} = feature;
-for kk = 1:numel(featuredata.trial)
-  if featuredata.time{kk}(1)>=0
-    begsmp = nearest(time, featuredata.time{kk}(1));
-  else
-    begsmp = nearest(data.time{kk}+featuredata.time{kk}(1), 0);
-  end
-  endsmp = (begsmp-1+numel(featuredata.time{kk}));
-  if endsmp<=numel(featurevector)
-    featuredata.trial{kk} = featurevector(begsmp:endsmp);
-  else
-    endsmp = numel(featurevector);
-    nsmp   = endsmp-begsmp+1;
-    featuredata.trial{kk}(:) = nan;
-    featuredata.trial{kk}(1:nsmp) = featurevector(begsmp:endsmp);
-  end
+    for kk = 1:numel(featuredata.trial)
+      if featuredata.time{kk}(1)>=0
+        begsmp = nearest(time, featuredata.time{kk}(1));
+      else
+        begsmp = nearest(data.time{kk}+featuredata.time{kk}(1), 0);
+      end
+      endsmp = (begsmp-1+numel(featuredata.time{kk}));
+      if endsmp<=numel(featurevector)
+        featuredata.trial{kk} = featurevector(begsmp:endsmp);
+      else
+        endsmp = numel(featurevector);
+        nsmp   = endsmp-begsmp+1;
+        featuredata.trial{kk}(:) = nan;
+        featuredata.trial{kk}(1:nsmp) = featurevector(begsmp:endsmp);
+      end
+    end
+end
+
+
 end
