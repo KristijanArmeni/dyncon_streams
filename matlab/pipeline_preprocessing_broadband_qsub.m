@@ -1,13 +1,13 @@
-function pipeline_preprocessing_broadband_qsub(subject, audiofile)
+function pipeline_preprocessing_broadband_qsub(subject, audiofile, optarg)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
 savedir = '/project/3011044.02/preproc/meg';
 
 % preprocessing options
-fsample = 200;
-lpfreq = 100;
-hpfreq = 1;
+fsample = ft_getopt(optarg, 'fsample');
+lpfreq = ft_getopt(optarg, 'lpfreq');
+hpfreq = ft_getopt(optarg, 'hpfreq');
 
 %% Preprocessing, band-pass filtering, complex hilbert and downsampling
                         
@@ -29,12 +29,16 @@ lowpassfreq = sprintf('%02d', lpfreq);
 highpassfreq = sprintf('%02d', hpfreq);
 frequency_band = [highpassfreq, '-', lowpassfreq];
 
-filenamemeg = [subject.name '_' audiofile '_' frequency_band '_' num2str(fsample) 'Hz_meg'];
-filenamemeg = fullfile(savedir, filenamemeg);
-filenameaudio = [subject.name '_' audiofile '_' frequency_band '_' num2str(fsample) 'Hz_aud'];
-filenameaudio = fullfile(savedir, filenameaudio);
+pipelinename = ['_' audiofile '_' frequency_band '_' num2str(fsample)];
 
-pipelinefilename = '/project/3011044.02/preproc/meg/s01_all_01-100_200Hz';
+savenamemeg = [subject.name pipelinename 'hz_meg'];
+savenamemeg = fullfile(savedir, savenamemeg);
+
+savenameaudio = [subject.name pipelinename 'hz_aud'];
+savenameaudio = fullfile(savedir, savenameaudio);
+
+datecreated = char(datetime('today', 'Format', 'dd_MM_yy'));
+pipelinefilename = fullfile(savedir, ['s01' pipelinename 'hz_' datecreated]);
 
 % save the pipeline if not yet saved
 if ~exist([pipelinefilename '.html'], 'file')
@@ -44,8 +48,8 @@ if ~exist([pipelinefilename '.html'], 'file')
     ft_analysispipeline(cfgt, data);
 end
     
-save(filenamemeg, 'data');
-save(filenameaudio, 'audio');
+save(savenamemeg, 'data');
+save(savenameaudio, 'audio');
 
 
 end
