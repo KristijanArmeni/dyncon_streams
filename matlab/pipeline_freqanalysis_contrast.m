@@ -8,17 +8,17 @@ ivars = {'entropy', 'log10perp'};
 
 for i = 1:numel(ivars)
     
-    ivar = ivars{i};
+    ivarexp = ivars{i};
 
     for k = 1:numel(subjects)
 
         subject = subjects{k};
         
-        filename = '_all_01-150_hanning';
+        filename = 'dpss8';
         
-        qsubfeval('pipeline_freqanalysis_contrast_qsub', subject, filename, ivar, ...
-                                                            'memreq', 1024^3 * 5,...
-                                                            'timreq', 60*60,...
+        qsubfeval('pipeline_freqanalysis_contrast_qsub', subject, filename, ivarexp, ...
+                                                            'memreq', 1024^3 * 4,...
+                                                            'timreq', 30*60,...
                                                             'batchid', 'streams_freq');
 
     end

@@ -5,7 +5,7 @@ if ~ft_hastoolbox('qsub',1)
 end
 
 subjects = {'s01', 's02', 's03', 's04', 's05', 's07', 's08', 's10'};
-runpipeline = 'hanning';
+runpipeline = 'dpss4';
 
 switch runpipeline
     
