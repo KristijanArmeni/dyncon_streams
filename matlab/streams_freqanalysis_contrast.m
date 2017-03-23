@@ -1,17 +1,33 @@
-function [freq_T, freq_high, freq_low] = streams_freqanalysis_contrast(freq, ivar)
+function [stat, freq_high, freq_low] = streams_freqanalysis_contrast(freq, ivars, ivarsel, ivarctrl, contrast_type, foi)
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
 
 % find channel index
-chan_idx = strcmp(freq.trialinfolabel(:), ivar);
-ivar_vector = freq.trialinfo(:, chan_idx); % pick the appropriate language variable
+chan_idx = strcmp(ivars.label(:), ivarsel);
+chan_ctrl = strcmp(ivars.label(:), ivarctrl);
+ivar_vector = ivars.trial(:, chan_idx); % pick the appropriate language variable
+ivar_control = ivars.trial(:, chan_ctrl);
 
-% select the trials in the low and high quartiles
-threshold_low = prctile(ivar_vector, 25);
-threshold_high = prctile(ivar_vector, 75);
+q = quantile(ivar_vector, [0.25 0.50 0.75]); % extract the three quantile values
+% median split
+ic1 = ivar_control(ivar_vector > q(2));
+ic2 = ivar_control(ivar_vector < q(2));
 
-trials_low = ivar_vector <= threshold_low;
-trials_high = ivar_vector >= threshold_high;
+[ivar_sel_strat1, ivar_sel_strat2] = ft_stratify([], ic1', ic2');
+
+% index trials that fall into each of the quartile ranges
+% qr1 = ivar_vector <= q(1);
+% qr2 = ivar_vector > q(1) & ivar_vector <= q(2);
+% qr3 = ivar_vector > q(2) & ivar_vector <= q(3);
+% qr4 = ivar_vector > q(3);
+% 
+% if strcmp(contrast_type, 'outer')
+%     trials_low = qr1; % first quartile
+%     trials_high = qr4; % second quartile
+% elseif strcmp(contrast_type, 'inner')
+%     trials_low = qr2; % second quartile
+%     trials_high = qr3; % third quartile
+% end
 
 cfg = [];
 cfg.trials = trials_low;
@@ -27,8 +43,9 @@ cfg = [];
 cfg.method = 'montecarlo';
 cfg.statistic = 'indepsamplesT'; % for each subject do between trials (independent) t-test
 cfg.numrandomization = 0;
+cfg.frequency = foi;
 cfg.design = [ones(1,size(freq_high.trialinfo,1)) ones(1,size(freq_low.trialinfo,1))*2];
-freq_T = ft_freqstatistics(cfg, freq_high, freq_low);
+stat = ft_freqstatistics(cfg, freq_high, freq_low);
 
 end
 
