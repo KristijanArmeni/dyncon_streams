@@ -1,3 +1,7 @@
+% This script is used to read in story and word data from .donders and
+% .Textgrid files (via combine_donders_textgrid) and write the obtained .mat
+% structures as csv files (all and words only). The words-only files is
+% used as input to Subtlex database in order to get the word frequencies.
 
 audiodir = '/project/3011044.02/lab/pilot/stim/audio';
 stories = {'fn001078', 'fn001155', 'fn001172', 'fn001293', 'fn001294', 'fn001443', 'fn001481', 'fn001498'};

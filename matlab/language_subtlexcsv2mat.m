@@ -3,6 +3,8 @@
 %
 %    /project/3011044.02/data/language/worddata_subtlex.txt
 %
+% The output is used in language_data.m to add the Subtlex frequencies to
+% storydata
 
 % Initialize variables.
 
