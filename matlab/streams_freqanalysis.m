@@ -1,4 +1,4 @@
-function [freq, data, featuredata] = streams_freqanalysis(data, featuredata, epochlength, taper, tapsmooth)
+function [freq, data, featuredata, ivars] = streams_freqanalysis(data, featuredata, epochlength, taper, tapsmooth)
 %streams_freqanalysis() chunks the data into 1s long epochs and computes
 %powerspectra via ft_freqanalysis
 
@@ -48,6 +48,10 @@ data      = ft_megplanar(cfg, data);
 selected_features = {'nchar' 'log10wf' 'log10perp' 'entropy'};
 featuredata = streams_freqanalsysis_trialinfo(featuredata, selected_features);
 
+% add trial information and labels
+ivars.trial = featuredata.trialinfo; % for plotting
+ivars.label = featuredata.trialinfolabel;
+
 %% do freqanalysis and combine planar if specified
 
 cfg = [];
@@ -61,10 +65,6 @@ freq = ft_freqanalysis(cfg, data);
 cfg = [];
 cfg.method = 'sum';
 freq = ft_combineplanar(cfg, freq);
-
-% add trial information and labels
-freq.trialinfo = featuredata.trialinfo; % for plotting
-freq.trialinfolabel = featuredata.trialinfolabel;
 
 end
 
@@ -97,7 +97,7 @@ for k = 1:numel(selected_features)
     
     tmp = cellfun(@(x) x(chan_indx,:), featuredata.trial(:), 'UniformOutput', 0); % choose the correct row in every cell
     
-    tmp = cellfun(@unique, tmp(:), 'UniformOutput', 0); % extract unique values
+%     tmp = cellfun(@unique, tmp(:), 'UniformOutput', 0); % extract unique values
     featuredata.trialinfo(:, k + 1) = cellfun(@nanmean, tmp(:)); % take the mean, ignoring nans
     featuredata.trialinfolabel{k + 1, 1} = feature;
 end
