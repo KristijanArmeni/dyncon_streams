@@ -6,6 +6,7 @@ if ischar(subject)
 end
 
 savedir = '/project/3011044.02/analysis/freqanalysis';
+savedir2 = '/project/3011044.02/analysis/freqanalysis/ivars';
 datadir = '/project/3011044.02/preproc';
 
 filter_range = ft_getopt(optarg, 'filter_range');
@@ -25,13 +26,13 @@ epochlength     = ft_getopt(optarg, 'epochlength');
 taper           = ft_getopt(optarg, 'taper');
 tapsmooth       = ft_getopt(optarg, 'tapsmooth');
 
-[freq, ~, ~] = streams_freqanalysis(data, featuredata, epochlength, taper, tapsmooth);
+[freq, ~, ~, ivars] = streams_freqanalysis(data, featuredata, epochlength, taper, tapsmooth);
 
 %% save the output
 
 taperinfo = [taper num2str(tapsmooth)];
 % save the info on preprocessing options used
-pipelinefilename = fullfile(savedir, ['s01_all_' filter_range '_' taperinfo]);
+pipelinefilename = fullfile(savedir, ['s01_' taperinfo]);
 
 if ~exist([pipelinefilename '.html'], 'file')
     cfgt = [];
@@ -40,8 +41,12 @@ if ~exist([pipelinefilename '.html'], 'file')
     ft_analysispipeline(cfgt, freq);
 end
 
-savename = [subject.name '_' audiofile '_' filter_range '_' taperinfo];
-savename = fullfile(savedir, savename);
+savenamefreq = [subject.name '_' taperinfo];
+savenamefreq = fullfile(savedir, savenamefreq);
 
-save(savename, 'freq');
+savenameivars = [subject.name '_ivars2'];
+savenameivars = fullfile(savedir2, savenameivars);
+
+save(savenamefreq, 'freq');
+save(savenameivars, 'ivars');
 
