@@ -1,6 +1,3 @@
-%% STREAMS ANALYSIS PIPELINE
-
-
 %% AUDITORY COMPONENT ANALYSIS
 clear all
 
@@ -19,7 +16,7 @@ for k = 1:numel(subjects)
     
     jobid_array_tlck{k} = qsubfeval('qsub_streams_dss_auditory', data, subject, ...
                                     'memreq', 1024^3 * 12,...
-                                    'timreq', 60*60,...
+                                    'timreq', 240*60,...
                                     'batchid', 'streams_tlck');
 end
 
@@ -42,6 +39,61 @@ for k = 1:numel(subjects)
                                         'batchid', 'streams_features');
 end
 
+%% PREPROCESSING
+
+clear all
+if ~ft_hastoolbox('qsub',1)
+    addpath /home/kriarm/git/fieldtrip/qsub;
+end
+
+subjects = {'s01', 's02', 's03', 's04', 's05', 's07', 's08', 's09', 's10'};
+bpfreqs   = [04 08; 09 12];
+
+
+% MEG: Subject, story and freq loops
+for j = 1:numel(subjects)
+	subject    = streams_subjinfo(subjects{j});
+	audiofiles = subject.audiofile;
+	
+  for k = 1:numel(audiofiles)
+		
+    audiofile = audiofiles{k};
+	tmp       = strfind(audiofile, 'fn');
+	audiofile = audiofile(tmp+(0:7));
+    
+    for h = 1:size(bpfreqs, 1)
+      
+      bpfreq = bpfreqs(h,:);
+    
+      qsubfeval('pipeline_preprocesssing_bandpasslimited_qsub', subject, audiofile, bpfreq, ...
+                      'memreq', 1024^3 * 12,...
+                      'timreq', 240*60,...
+                      'batchid', 'streams_preproc');
+    end
+    
+  end
+
+end
+
+% Language: Subject, story loops
+for j = 1:numel(subjects)
+	subject    = streams_subjinfo(subjects{j});
+	audiofiles = subject.audiofile;
+	
+  for k = 1:numel(audiofiles)
+		
+    audiofile = audiofiles{k};
+	tmp       = strfind(audiofile, 'fn');
+	audiofile = audiofile(tmp+(0:7));
+    
+    qsubfeval('qsub_streams_getfeatures', subject, audiofile, ...
+                      'memreq', 1024^3 * 12,...
+                      'timreq', 240*60,...
+                      'batchid', 'streams_features');
+    
+  end
+
+end
 
 
 %% AUDIOCORTICO MI
@@ -51,8 +103,8 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-subjects = {'s01' 's02' 's03' 's04' 's05' 's07' 's08' 's09' 's10'};
-bpfreqs   = [01 03; 04 08; 08 12];
+subjects = {'s02', 's03', 's04', 's05', 's07', 's08', 's09', 's10'};
+bpfreqs   = [09 12; 13 18];
 
 %Subject, story and freq loops
 for j = 1:numel(subjects)
@@ -62,8 +114,8 @@ for j = 1:numel(subjects)
   for k = 1:numel(audiofiles)
 		
     audiofile = audiofiles{k};
-		tmp       = strfind(audiofile, 'fn');
-		audiofile = audiofile(tmp+(0:7));
+	tmp       = strfind(audiofile, 'fn');
+	audiofile = audiofile(tmp+(0:7));
     
     for h = 1:size(bpfreqs, 1)
       
@@ -71,8 +123,8 @@ for j = 1:numel(subjects)
     
       qsubfeval('qsub_streams_bpl_audio', subject, bpfreq, audiofile,...
                       'memreq', 1024^3 * 12,...
-                      'timreq', 60*60,...
-                      'batchid', 'streams_feature');
+                      'timreq', 240*60,...
+                      'batchid', 'streams_audio');
     end
     
   end
@@ -104,7 +156,7 @@ for j = 1:numel(subjects)
 
 end
 
-%% BAND-PASS-LIMITED DATA ~ FEATURE ANALYSIS
+%% LANGUAGE-MEG MI
 
 clear all
 if ~ft_hastoolbox('qsub',1)
@@ -188,25 +240,30 @@ for j = 1:numel(subjects)
 end
 
 
-% Source level script
-subjects = {'s02'};
+%% FEATURE ANALYSIS: SOURCE
+clear all;
+if ~ft_hastoolbox('qsub',1)
+    addpath /home/common/matlab/fieldtrip/qsub;
+end
+
+subjects = {'s02', 's03', 's04' 's05' 's07' 's08' 's09' 's10'};
 bpfreqs   = [04 08];
 
 for j = 1:numel(subjects)
-	subject    = streams_subjinfo(subjects{j});
-	audiofiles = subject.audiofile;
+    subject    = streams_subjinfo(subjects{j});
+    audiofiles = subject.audiofile;
 	
   for k = 1:numel(audiofiles)
-		audiofile = audiofiles{k};
-		tmp       = strfind(audiofile, 'fn');
-		audiofile = audiofile(tmp+(0:7));
+    audiofile = audiofiles{k};
+    tmp       = strfind(audiofile, 'fn');
+    audiofile = audiofile(tmp+(0:7));
  		
     for h = 1:size(bpfreqs)
-    bpfreq = bpfreqs(h,:);  
-    
-    qsubfeval('qsub_streams_bpl_feature2_lcmv', subject, bpfreq, audiofile,...
+        bpfreq = bpfreqs(h,:);  
+
+        qsubfeval('qsub_streams_bpl_feature2_lcmv', subject, bpfreq, audiofile,...
                       'memreq', 1024^3 * 12,...
-                      'timreq', 480*60,...
+                      'timreq', 240*60,...
                       'batchid', 'streams_feature');
     
     end
@@ -218,7 +275,7 @@ end
 %% MRI PREPROCESSING, HEADMODEL, SOURCEMODEL
 
 % PREPOCESSING
-subject = 's03';
+subject = 's05';
 
 % converting dicoms to mgz format
 streams_anatomy_dicom2mgz(subject);
@@ -235,11 +292,17 @@ streams_anatomy_skullstrip(subject);
 if ~ft_hastoolbox('qsub',1)
     addpath /home/common/matlab/fieldtrip/qsub;
 end
+subjects = {'s12' 's13' 's14' 's15' 's16' 's17' 's18' 's19' 's20' 's21' 's22' 's23' 's24' 's25' 's26'};
 
-qsubfeval('qsub_streams_anatomy_freesurfer', subject,...
-          'memreq', 1024^3 * 6,...
-          'timreq', 720*60,...
-          'batchid', 'streams_freesurferI')
+for i = 1:numel(subjects)
+  
+  subject = subjects{i};
+  
+  qsubfeval('qsub_streams_anatomy_freesurfer', subject,...
+            'memreq', 1024^3 * 6,...
+            'timreq', 720*60,...
+            'batchid', 'streams_freesurferI');
+end
 
 %% Check-up and white matter segmentation cleaning if needed
 
@@ -262,17 +325,56 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/common/matlab/fieldtrip/qsub;
 end
 
-qsubfeval('streams_anatomy_workbench', subject,...
-          'memreq', 1024^3 * 6,...
-          'timreq', 480*60,...
-          'batchid', 'streams_workbench');
+subjects = {'s03' 's04' 's05' 's07' 's08' 's09' 's10'};
 
-% Sourcemodel
-streams_anatomy_sourcemodel2d(subject);
+for k = 1:numel(subjects)
+  
+  subject = subjects{k};
+  qsubfeval('streams_anatomy_workbench', subject,...
+            'memreq', 1024^3 * 6,...
+            'timreq', 480*60,...
+            'batchid', 'streams_workbench');
+          
+end
 
-% Headmodel
-streams_anatomy_headmodel(subject);
 
 % Coregistration check
 streams_anatomy_coregistration_qc(subject);
 
+
+%%  Sourcemodel
+subjects = {'s04' 's05' 's07' 's08' 's09' 's10'};
+for h = 1:numel(subjects)
+
+  subject = subjects{h};
+  streams_anatomy_sourcemodel2d(subject);
+
+       
+end
+
+%% Headmodel
+
+subjects = {'s04' 's05' 's07' 's08' 's09' 's10'};
+for i = 1:numel(subjects)
+   
+  subject = subjects{i};
+  qsubfeval('streams_anatomy_headmodel', subject, ...
+            'memreq', 1024^3 * 5,...
+            'timreq', 20*60,...
+            'batchid', 'streams_headmodel')
+
+end
+
+%% Leadfield parcellation
+
+subjects = {'s03' 's04' 's05' 's07' 's08' 's09' 's10'};
+for h = 1:numel(subjects)
+
+  subject = subjects{h};
+  qsubfeval('streams_leadfield', subject, ...
+            'memreq', 1024^3 * 6,...
+            'timreq', 25*60,...
+            'batchid', 'streams_headmodel');
+
+       
+end
