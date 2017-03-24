@@ -90,6 +90,6 @@ else
     end
   end
   
-  filename = fullfile('/home/language/jansch/projects/streams/data/general', [name,'_trl.mat']);
+  filename = fullfile('/project/3011044.02/preproc/meg', [name,'_trl.mat']);
   save(filename, 'trl');
 end
