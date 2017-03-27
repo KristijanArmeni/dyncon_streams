@@ -70,7 +70,7 @@ data = add_subtlex(data, subtlex_data, subtlex_firstrow);
 
 sprintf('saving \n %s \n %s \n %s \n', fullfile(datadir, 'language_data.mat'), fullfile(datadir, 'language_data.txt'), fullfile(datadir, 'language_data-noheader.txt'))
 
-data_table = cell2table(data, 'VariableNames', data(1, :));
+data_table = cell2table(data(2:end,:), 'VariableNames', data(1, :));
 save(fullfile(datadir, 'language_data.mat'), 'data_table');
 writetable(data_table, fullfile(datadir, 'language_data.txt'),'Delimiter', ',');
 writetable(data_table, fullfile(datadir, 'language_data-noheader.txt'),'Delimiter', ',', 'WriteVariableNames', 0);
