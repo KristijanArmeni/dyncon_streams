@@ -38,7 +38,7 @@ savenameaudio = [subject.name pipelinename 'hz_aud'];
 savenameaudio = fullfile(savedir, savenameaudio);
 
 datecreated = char(datetime('today', 'Format', 'dd_MM_yy'));
-pipelinefilename = fullfile(savedir, ['s01' pipelinename 'hz_' datecreated]);
+pipelinefilename = fullfile(savedir, ['s11' pipelinename 'hz_' datecreated]);
 
 % save the pipeline if not yet saved
 if ~exist([pipelinefilename '.html'], 'file')
