@@ -5,7 +5,11 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-subjects = {'s01', 's02', 's03', 's04', 's05', 's07', 's08', 's09', 's10'};
+subjects = strsplit(sprintf('s%d ', 13:27));
+subjects = subjects(~cellfun(@isempty, subjects));
+display(subjects);
+num_sub = numel(subjects);
+
 pipeline = '2';
 
 %% PREPROCESSING PIPELINES
@@ -14,7 +18,7 @@ switch pipeline
     
     case '1' % 1-100 bandpass, 200Hz downsampling
     fprintf('Running pipeline Nr %s. \n\n', pipeline);
-    for j = 1:numel(subjects)
+    for j = 1:num_sub
         
         subject    = streams_subjinfo(subjects{j});
         audiofile = 'all';
@@ -30,9 +34,9 @@ switch pipeline
    
     
     case '2' % 1-150 bandpass, 300Hz downsampling
-    fprintf('Running pipeline Nr %s \n\n', pipeline);
+    fprintf('Running pipeline Nr %s for %d subjects \n\n', pipeline, num_sub);
     
-    for j = 1:numel(subjects)
+    for j = 1:num_sub
         
         subject    = streams_subjinfo(subjects{j});
         audiofile = 'all';
