@@ -36,8 +36,8 @@ ivar_ctrl2(trl_reject2) = [];
 % stratify the data
 [ivar_ctrl_strat, ~] = ft_stratify([], ivar_ctrl1', ivar_ctrl2');
 
-trl_indx_high = find(isnan(ivar_ctrl_strat{1})); % find indices
-trl_indx_low = find(isnan(ivar_ctrl_strat{2}));
+trl_indx_high = find(~isnan(ivar_ctrl_strat{1})); % find indices
+trl_indx_low = find(~isnan(ivar_ctrl_strat{2}));
 
 % select data
 cfg = [];
