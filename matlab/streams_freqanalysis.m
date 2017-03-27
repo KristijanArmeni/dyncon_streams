@@ -97,7 +97,6 @@ for k = 1:numel(selected_features)
     
     tmp = cellfun(@(x) x(chan_indx,:), featuredata.trial(:), 'UniformOutput', 0); % choose the correct row in every cell
     
-%     tmp = cellfun(@unique, tmp(:), 'UniformOutput', 0); % extract unique values
     featuredata.trialinfo(:, k + 1) = cellfun(@nanmean, tmp(:)); % take the mean, ignoring nans
     featuredata.trialinfolabel{k + 1, 1} = feature;
 end
