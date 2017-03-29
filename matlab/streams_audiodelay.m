@@ -37,7 +37,7 @@ else
         delay(k,1) = streams_audiodelay(subject, subject.audiofile{k});
       end
     end
-    filename = fullfile('/home/language/jansch/projects/streams/data/general/', [subject.name,'_delay.mat']);
+    filename = fullfile('/project/3011044.02/preproc/meg', [subject.name,'_delay.mat']);
     save(filename, 'delay');
     return;
   end
@@ -57,7 +57,7 @@ else
   data = ft_preprocessing(cfg);
   
   [p,f,e] = fileparts(audiofile);
-  matfile = strrep(strrep(audiofile,'audio_stories',f),'.wav','.mat');
+  matfile = fullfile(subject.audiodir, f, [f '.mat']);
   load(matfile);
   
   audio = ft_selectdata(audio, 'channel', audio.label(1));
