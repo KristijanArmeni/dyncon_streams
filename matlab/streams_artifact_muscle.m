@@ -53,7 +53,7 @@ else
   if numel(subject.dataset)==1
     cfg = cfg{1};
   end
-  filename = fullfile('/home/language/jansch/projects/streams/data/general/', [subject.name,'_muscle.mat']);
+  filename = fullfile('/project/3011044.02/preproc/meg', [subject.name,'_muscle.mat']);
   save(filename, 'cfg');
 end
 
