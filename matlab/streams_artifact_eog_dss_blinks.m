@@ -109,7 +109,7 @@ else
     mixing  = all_mixing;
     unmixing = all_unmixing;
   end
-  filename = fullfile('/home/language/jansch/projects/streams/data/general/', [subject.name,'_eogv.mat']);
+  filename = fullfile('/project/3011044.02/preproc/meg', [subject.name,'_eogv.mat']);
   save(filename, 'avgpre', 'avgcomp', 'avgeog', 'mixing', 'unmixing');
 end
 
