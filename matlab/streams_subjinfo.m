@@ -42,6 +42,7 @@ if numel(meg_sessions) == 1
     subject.datadir = char(fullfile(subject_rawdir, meg_sessions{1}));
 else
     subject.datadir = subject_rawdir; % enter sessions manually later in the code
+    warning('More than one meg sessions in %s. Specify manually', subject_rawdir)
 end
 
 % check for mri sessions subfolders in /project/3011044.02/raw/sub-XXX
@@ -448,7 +449,7 @@ switch name
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
   case 's28'
-    subject.dataset   = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20161121_01.ds']);
+    subject.dataset   = fullfile(subject.datadir, ['301104402kriarm' name '_1200hz_20161121_02.ds']);
     subject.audiofile = {fullfile(subject.audiodir, 'fn001078.wav');
                          fullfile(subject.audiodir, 'fn001155.wav');
                          fullfile(subject.audiodir, 'fn001293.wav');
