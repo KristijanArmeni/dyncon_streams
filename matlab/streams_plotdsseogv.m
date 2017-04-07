@@ -5,9 +5,10 @@ function streams_plotdsseogv(name, numcom)
 subj = streams_subjinfo(name);
 hdr = ft_read_header(subj.dataset);
 meglabel = ft_channelselection('MEG', hdr.label);
+eogvdir = '/project/3011044.02/preproc/meg';
 
-
-load([name '_eogv.mat']);
+filename = fullfile(eogvdir, [name '_eogv.mat']);
+load(filename);
 
 comp.unmixing = unmixing;
 comp.topo=mixing;
