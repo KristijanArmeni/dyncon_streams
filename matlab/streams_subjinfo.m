@@ -432,7 +432,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '117964';
-    subject.eogv.badcomps = [1];
+    subject.eogv.badcomps = 1;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -456,7 +456,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav');
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '122515';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = [1 2];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
 end
