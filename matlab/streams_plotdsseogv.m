@@ -24,14 +24,14 @@ comp.time{1} = 1:size(avgcomp,2);
 comp.time{1} = (1:126)./300;
 
 cfg = [];
-cfg.component = 1:numcom;
+cfg.component = numcom;
 cfg.title = 'auto';
 cfg.layout = 'CTF275_helmet.mat';
 ft_topoplotIC(cfg, comp);  
 
 figure;
 subplot(2, 1, 1);
-plot(comp.time{1}, comp.trial{1}(1:numcom,:));
+plot(comp.time{1}, comp.trial{1}(numcom,:));
 title([name ' comps']);
 subplot(2, 1, 2);
 plot(avgpre');
