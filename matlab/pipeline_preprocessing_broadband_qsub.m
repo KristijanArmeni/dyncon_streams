@@ -2,14 +2,14 @@ function pipeline_preprocessing_broadband_qsub(subject, audiofile, optarg)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
-savedir = '/project/3011044.02/preproc/meg';
+savedir = '/project/3011044.02/preproc/meg/epoched';
 
 % preprocessing options
 fsample = ft_getopt(optarg, 'fsample');
 lpfreq = ft_getopt(optarg, 'lpfreq');
 hpfreq = ft_getopt(optarg, 'hpfreq');
 
-%% Preprocessing, band-pass filtering, complex hilbert and downsampling
+%% Preprocessing, band-pass filtering, and downsampling
                         
 [data, audio] = streams_preprocessing(subject, ...
                             'audiofile', audiofile, ...
@@ -18,10 +18,16 @@ hpfreq = ft_getopt(optarg, 'hpfreq');
                             'dftfreq', [49 51; 99 101; 149 151], ...
                             'docomp', 1, ...
                             'dospeechenvelope', 1, ...
-                            'dohilbert', 0, ...
-                            'doabs', 0,  ...
                             'fsample', fsample);
 
+
+%% Epoching
+
+cfg = [];
+cfg.length = 1; % create 1s long trials
+data = ft_redefinetrial(cfg, data);
+audio = ft_redefinetrial(cfg, audio);
+                        
 %% Saving
 
 % construct naming variable
