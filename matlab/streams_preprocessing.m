@@ -49,8 +49,6 @@ audiofile       = ft_getopt(varargin, 'audiofile', 'all');
 fsample         = ft_getopt(varargin, 'fsample', 30);
 docomp          = ft_getopt(varargin, 'docomp', 0);
 dosns           = ft_getopt(varargin, 'dosns', 0);
-dohilbert       = ft_getopt(varargin, 'dohilbert', 0);
-doabs           = ft_getopt(varargin, 'doabs', 0);
 boxcar          = ft_getopt(varargin, 'boxcar');
 dospeechenvelope = ft_getopt(varargin, 'dospeechenvelope', 0);
 filter_audio    = ft_getopt(varargin, 'filter_audio', 'no');
@@ -238,28 +236,6 @@ for k = 1:numel(seltrl)
     cfg.truncate    = 40;
     data            = ft_denoise_sns(cfg, data);
   end
-  
- 
-%% HILBERT TRANSFORM
-
-if dohilbert
-    
-   cfg = [];
-   cfg.hilbert = 'complex';
-   data = ft_preprocessing(cfg, data);
-   
-   if ~strcmp(filter_audio,'no')
-      audio = ft_preprocessing(cfg, audio);
-   end
-end
-
-% take power
-if doabs
-    cfg = [];
-    cfg.operation = 'abs';
-    cfg.parameter = 'trial';
-    data = ft_math(cfg, data);
-end
 
 %% LOW PASS FILTERING
 
