@@ -218,7 +218,7 @@ for k = 1:numel(seltrl)
     fprintf('removing blink components\n');
     P        = eye(numel(data.label)) - mixing{k}(:,badcomps{k})*unmixing{k}(badcomps{k},:);
     montage.tra = P;
-    montage.labelorg = data.label;
+    montage.labelold = data.label;
     montage.labelnew = data.label;
     grad      = ft_apply_montage(data.grad, montage);
     data      = ft_apply_montage(data, montage);
