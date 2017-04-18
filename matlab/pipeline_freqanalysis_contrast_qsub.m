@@ -2,42 +2,46 @@ function pipeline_freqanalysis_contrast_qsub(subject, filename, ivarexp)
 
 datadir = '/project/3011044.02/analysis/freqanalysis/';
 datadirivars = '/project/3011044.02/analysis/freqanalysis/ivars';
-savedir = '/project/3011044.02/analysis/freqanalysis/contrast-subject';
+savedir = '/project/3011044.02/analysis/freqanalysis/contrast/subject/regressed';
 
 filefreq = fullfile(datadir, [subject '_' filename '.mat']); %.mat files
 fileivars = fullfile(datadirivars, [subject '_ivars2' '.mat']);
 load(filefreq) % loads in the freq variable
 load(fileivars) % loads in the ivars variable
 
+%% throw out nan trials
+
+trialskeep = ~isnan(ivars.trial(:,2));
+
+cfg = [];
+cfg.trials = trialskeep;
+freq = ft_selectdata(cfg, freq);
+
+trialinfo.trial = ivars.trial(trialskeep, :);
+trialinfo.label = ivars.label;
+
+%% regress out number of characters and lexical frequency
+
+nuisance_vars = {'nchar', 'log10wf'};
+confounds = ismember(trialinfo.label, nuisance_vars);
+
+cfg  = [];
+cfg.confound = trialinfo.trial(:, confounds);
+cfg.model = 'yes';
+freq = ft_regressconfound(cfg, freq);
 
 %% Split the data into high and low conditions and control for frequency
-ivarctrl = 'log10wf';
 
 % find channel index
-col_exp = strcmp(ivars.label(:), ivarexp);
-col_ctrl = strcmp(ivars.label(:), ivarctrl);
-ivar_exp = ivars.trial(:, col_exp); % pick the appropriate language variable
-ivar_ctrl = ivars.trial(:, col_ctrl);
+col_exp = strcmp(trialinfo.label(:), ivarexp);
+ivar_exp = trialinfo.trial(:, col_exp); % pick the appropriate language variable
 
 q = quantile(ivar_exp, [0.25 0.50 0.75]); % extract the three quantile values
 med = q(2); % median quartile
 
-% median split on the control variable (freq) based on experimental condition
-ivar_ctrl1 = ivar_ctrl(ivar_exp > med);
-ivar_ctrl2 = ivar_ctrl(ivar_exp < med);
-
-%find out which trials still have nan's and throw them out
-trl_reject1 = isnan(ivar_ctrl1);
-trl_reject2 = isnan(ivar_ctrl2);
-
-ivar_ctrl1(trl_reject1) = [];
-ivar_ctrl2(trl_reject2) = [];
-
-% stratify the data
-[ivar_ctrl_strat, ~] = ft_stratify([], ivar_ctrl1', ivar_ctrl2');
-
-trl_indx_high = find(~isnan(ivar_ctrl_strat{1})); % find indices
-trl_indx_low = find(~isnan(ivar_ctrl_strat{2}));
+% median split
+trl_indx_high = ivar_exp > med;
+trl_indx_low = ivar_exp < med;
 
 % select data
 cfg = [];
