@@ -31,20 +31,20 @@ audio = ft_redefinetrial(cfg, audio);
 %% Saving
 
 % construct naming variable
-lowpassfreq = sprintf('%02d', lpfreq);
-highpassfreq = sprintf('%02d', hpfreq);
-frequency_band = [highpassfreq, '-', lowpassfreq];
+% lowpassfreq = sprintf('%02d', lpfreq);
+% highpassfreq = sprintf('%02d', hpfreq);
+% frequency_band = [highpassfreq, '-', lowpassfreq];
 
-pipelinename = ['_' audiofile '_' frequency_band '_' num2str(fsample)];
+%pipelinename = ['_' audiofile '_' frequency_band '_' num2str(fsample)];
 
-savenamemeg = [subject.name pipelinename 'hz_meg'];
+savenamemeg = [subject.name '_meg'];
 savenamemeg = fullfile(savedir, savenamemeg);
 
-savenameaudio = [subject.name pipelinename 'hz_aud'];
+savenameaudio = [subject.name '_aud'];
 savenameaudio = fullfile(savedir, savenameaudio);
 
 datecreated = char(datetime('today', 'Format', 'dd_MM_yy'));
-pipelinefilename = fullfile(savedir, ['s11' pipelinename 'hz_' datecreated]);
+pipelinefilename = fullfile(savedir, ['s01_meg_' datecreated]);
 
 % save the pipeline if not yet saved
 if ~exist([pipelinefilename '.html'], 'file')
