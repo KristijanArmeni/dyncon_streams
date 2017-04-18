@@ -4,12 +4,12 @@ if ~ft_hastoolbox('qsub',1)
 end
 
 subjects = {'s01', 's02', 's03', 's04', 's05', 's07', 's08', 's10'};
-ivars = {'entropy', 'log10perp'};
-runpipeline = 'strat';
+ivars = {'log10perp'};
+runpipeline = 'regress';
 
 switch runpipeline
     
-    case 'strat'
+    case 'regress'
     sprintf('Doing the %s contrast...\n\n', runpipeline)
     
     for i = 1:numel(ivars)
@@ -57,7 +57,7 @@ switch runpipeline
         for k = 1:numel(subjects)
 
                 subject = subjects{k};
-                filename = 'dpss4';
+                filename = 'dpss8';
                 qsubfeval('pipeline_freqanalysis_contrast_outerqr_qsub', subject, filename, ivarexp, ...
                                                                     'memreq', 1024^3 * 4,...
                                                                     'timreq', 30*60,...
