@@ -2,31 +2,22 @@ function pipeline_preprocessing_broadband_qsub(subject, audiofile, optarg)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
-savedir = '/project/3011044.02/preproc/meg/epoched';
+savedir = '/project/3011044.02/preproc/meg';
 
 % preprocessing options
 fsample = ft_getopt(optarg, 'fsample');
-lpfreq = ft_getopt(optarg, 'lpfreq');
-hpfreq = ft_getopt(optarg, 'hpfreq');
 
 %% Preprocessing, band-pass filtering, and downsampling
                         
-[data, audio] = streams_preprocessing(subject, ...
+[data, eeg, audio] = streams_preprocessing(subject, ...
                             'audiofile', audiofile, ...
-                            'lpfreq', lpfreq, ...
-                            'hpfreq', hpfreq, ...,
+                            'lpfreq', [], ...
+                            'hpfreq', [], ...
                             'dftfreq', [49 51; 99 101; 149 151], ...
                             'docomp', 1, ...
                             'dospeechenvelope', 1, ...
                             'fsample', fsample);
 
-
-%% Epoching
-
-cfg = [];
-cfg.length = 1; % create 1s long trials
-data = ft_redefinetrial(cfg, data);
-audio = ft_redefinetrial(cfg, audio);
                         
 %% Saving
 
@@ -40,22 +31,26 @@ audio = ft_redefinetrial(cfg, audio);
 savenamemeg = [subject.name '_meg'];
 savenamemeg = fullfile(savedir, savenamemeg);
 
+savenameeeg = [subject.name '_eeg'];
+savenameeeg = fullfile(savedir, savenameeeg);
+
 savenameaudio = [subject.name '_aud'];
 savenameaudio = fullfile(savedir, savenameaudio);
 
-datecreated = char(datetime('today', 'Format', 'dd_MM_yy'));
-pipelinefilename = fullfile(savedir, ['s01_meg_' datecreated]);
-
-% save the pipeline if not yet saved
-if ~exist([pipelinefilename '.html'], 'file')
-    cfgt = [];
-    cfgt.filename = pipelinefilename;
-    cfgt.filetype = 'html';
-    ft_analysispipeline(cfgt, data);
-end
+% datecreated = char(datetime('today', 'Format', 'dd_MM_yy'));
+% pipelinefilename = fullfile(savedir, ['s11_meg_' datecreated]);
+% 
+% % save the pipeline if not yet saved
+% if ~exist([pipelinefilename '.html'], 'file')
+%     cfgt = [];
+%     cfgt.filename = pipelinefilename;
+%     cfgt.filetype = 'html';
+%     ft_analysispipeline(cfgt, data);
+% end
     
-save(savenamemeg, 'data');
-save(savenameaudio, 'audio');
+% save(savenamemeg, 'data');
+save(savenameeeg, 'eeg');
+% save(savenameaudio, 'audio');
 
 
 end

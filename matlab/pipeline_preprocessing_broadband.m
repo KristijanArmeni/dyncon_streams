@@ -5,10 +5,14 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-subjects = strsplit(sprintf('s%.2d ', 1:10));
+subjects = strsplit(sprintf('s%.2d ', 9));
 subjects = subjects(~cellfun(@isempty, subjects));
-display(subjects);
+
+s6 = strcmp(subjects, 's06');
+subjects(s6) = []; % s06 dataset does not exist, empty it to prevent errors
+
 num_sub = numel(subjects);
+display(subjects);
 
 pipeline = '2';
 
@@ -33,14 +37,14 @@ switch pipeline
     end
    
     
-    case '2' % 1-150 bandpass, 300Hz downsampling
+    case '2' % 300Hz downsampling
     fprintf('Running pipeline Nr %s for %d subjects \n\n', pipeline, num_sub);
     
     for j = 1:num_sub
         
         subject    = streams_subjinfo(subjects{j});
         audiofile = 'all';
-        optarg = {'lpfreq', 150, 'hpfreq', 1, 'fsample', 300};
+        optarg = {'fsample', 300};
         
         qsubfeval('pipeline_preprocessing_broadband_qsub', subject, audiofile, optarg, ...
                           'memreq', 1024^3 * 12,...
