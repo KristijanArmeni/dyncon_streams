@@ -1,40 +1,13 @@
-function [data, audio] = streams_preprocessing(subject, varargin)
+function [data, eeg, audio] = streams_preprocessing(subject, varargin)
 
-% STREAMS_EXTRACT_DATA computes the time series of band-limited power at the MEG
-% channel level. Currently the only measure.
-%
-% Use as 
-%   [data] = streams_extract_data(subject, 'key1',
-%      'value1', 'key2', 'value2', ...)
-%
-% Input arguments:
-%   subject = string identifying the subject, or struct obtained with
-%               streams_subjinfo.
-%
-%   The rest of the input arguments are key-value pairs.
-%   Required are:
-%   bpfreq  = bandpass filter frequency for the MEG data
-%
-%   Optional are:
-%   audiofile = string or cell-array of strings, specifying the audiofiles
-%               to use (default = 'all')
-%   fsample   = sample frequency (default 200 Hz)
-%  
-% Output arguments:
-%   data = fieldtrip data structure containing the MEG data
-%
-% Example use:
-%   [data] = streams_extract_data('s04', 'audiofile',
-%                           'fn001078', 'bpfreq', [16 20]);
-
-% TO DO: additional cleaning of MEG data (eye + cardiac): eye = done
-% TO DO: compute planar gradient and do computation of correlation on: done
-% combined planar gradient
+% streams_preprocessing() 
 
 
 % try whether this solves the problems with finding fftfilt when running it
 % in a torque job
 addpath('/opt/matlab/R2014b/toolbox/signal/signal');
+
+%% INITIALIZE
 
 if ischar(subject)
   subject = streams_subjinfo(subject);
@@ -47,9 +20,7 @@ lpfreq          = ft_getopt(varargin, 'lpfreq'); % before the post-envelope comp
 dftfreq         = ft_getopt(varargin, 'dftfreq', [49 51; 99 101; 149 151]);
 audiofile       = ft_getopt(varargin, 'audiofile', 'all');
 fsample         = ft_getopt(varargin, 'fsample', 30);
-docomp          = ft_getopt(varargin, 'docomp', 0);
 dosns           = ft_getopt(varargin, 'dosns', 0);
-boxcar          = ft_getopt(varargin, 'boxcar');
 dospeechenvelope = ft_getopt(varargin, 'dospeechenvelope', 0);
 filter_audio    = ft_getopt(varargin, 'filter_audio', 'no');
 filter_audiobdb = ft_getopt(varargin, 'filter_audiobdb', 'no');
@@ -57,7 +28,9 @@ filter_audiobdb = ft_getopt(varargin, 'filter_audiobdb', 'no');
 %% check whether all required user specified input is there
 
 if isempty(bpfreq) && isempty(hpfreq) 
-  error('no filter specified');
+  %error('no filter specified');
+  usehpfilter = false;
+  usebpfilter = false;
 elseif isempty(bpfreq)
   usehpfilter = true;
   usebpfilter = false;
@@ -160,6 +133,10 @@ for k = 1:numel(seltrl)
   % meg
   data           = ft_preprocessing(cfg); % read in the MEG data
   
+  % eog channel
+  cfg.channel = {'EEG057', 'EEG058', 'EEG059'};
+  eeg        = ft_preprocessing(cfg);
+  
   % audio channel
   if strcmp(filter_audio, 'no')
     cfg.bpfilter = 'no';
@@ -199,32 +176,20 @@ for k = 1:numel(seltrl)
     cfg.bsfilter = 'yes';
     for kk = 1:size(dftfreq,1)
       cfg.bsfreq = dftfreq(kk,:);
-      data = ft_preprocessing(cfg, data);
+      data    = ft_preprocessing(cfg, data);
     end
   end
   
-  %% ARTIFACT REJECTION
+%% ARTIFACT REJECTION
   
   % reject artifacts
   cfg                  = [];
   cfg.artfctdef        = subject.artfctdef;
   cfg.artfctdef.reject = 'partial';
-	cfg.artfctdef.minaccepttim = 2;
+  cfg.artfctdef.minaccepttim = 2;
   data        = ft_rejectartifact(cfg, data);
+  eeg         = ft_rejectartifact(cfg, eeg);
   audio       = ft_rejectartifact(cfg, audio);
-
-  % remove blink components
-  if docomp && ~isempty(badcomps{k})
-    fprintf('removing blink components\n');
-    P        = eye(numel(data.label)) - mixing{k}(:,badcomps{k})*unmixing{k}(badcomps{k},:);
-    montage.tra = P;
-    montage.labelold = data.label;
-    montage.labelnew = data.label;
-    grad      = ft_apply_montage(data.grad, montage);
-    data      = ft_apply_montage(data, montage);
-    data.grad = grad;
-    audio.grad = grad; % fool ft_appenddata
-  end
   
   % sensor noise suppression
   if dosns
@@ -238,12 +203,6 @@ for k = 1:numel(seltrl)
   end
 
 %% LOW PASS FILTERING
-
-  if ~isempty(boxcar)
-    cfg = [];
-    cfg.boxcar = boxcar;
-    data = ft_preprocessing(cfg, data);
-  end
   
   if ~isempty(lpfreq)
     cfg = [];
@@ -252,6 +211,7 @@ for k = 1:numel(seltrl)
     cfg.lpfilttype = 'firws';
     cfg.usefftfilt = 'yes';
     data = ft_preprocessing(cfg, data);
+    eeg = ft_preprocessing(cfg, eeg);
   end
   
   %% RESAMPLING
@@ -261,27 +221,31 @@ for k = 1:numel(seltrl)
     for kk = 1:numel(data.trial)
       firsttimepoint(kk,1) = data.time{kk}(1);
       data.time{kk}        = data.time{kk}-data.time{kk}(1);
+      eeg.time{kk}         = eeg.time{kk}-eeg.time{kk}(1);
       audio.time{kk}       = audio.time{kk}-audio.time{kk}(1);
     end
     cfg = [];
     cfg.demean  = 'no';
     cfg.detrend = 'no';
     cfg.resamplefs = fsample;
-    data  = ft_resampledata(cfg, data);
-    audio = ft_resampledata(cfg, audio);
+    data        = ft_resampledata(cfg, data);
+    eeg         = ft_resampledata(cfg, eeg);
+    audio       = ft_resampledata(cfg, audio);
     
     % add back the first time point, so that the relative time axis
     % corresponds again with the timing in combineddata
     for kk = 1:numel(data.trial)
-      data.time{kk}  = data.time{kk}  + firsttimepoint(kk);
+      data.time{kk}  = data.time{kk} + firsttimepoint(kk);
+      eeg.time{kk}   = eeg.time{kk} + firsttimepoint(kk);
       audio.time{kk} = audio.time{kk} + firsttimepoint(kk);
     end
   end
   
   % add to structs for outputting
   tmpdata{k}  = data;
+  tmpdeeg{k} = eeg;
   tmpaudio{k} = audio;
-  clear data audio;
+  clear data dataeog audio;
 
 end
 
@@ -289,10 +253,12 @@ end
 
 if numel(tmpdata) > 1
   data        = ft_appenddata([], tmpdata{:});
+  eeg         = ft_appenddata([], tmpdeeg{:});
   audio        = ft_appenddata([], tmpaudio{:});
 else
   data        = tmpdata{1};
-  audio        = tmpaudio{1};
+  eeg     = tmpdeeg{1};
+  audio       = tmpaudio{1};
 end
 clear tmpdata tmpdataf
 
