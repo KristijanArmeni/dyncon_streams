@@ -102,7 +102,7 @@ switch name
       fullfile(subject.audiodir, 'fn001443.wav');
       fullfile(subject.audiodir, 'fn001481.wav')};
     subject.id        = 'jansch';
-    subject.eogv.badcomps = [];
+    subject.eogv.badcomps = 12;
     subject.trl       = [  28757  297926 0  1;
       311914  597034 0  2;
       771421 1058574 0 31;
@@ -130,7 +130,7 @@ switch name
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '43513';
-    subject.eogv.badcomps = [1 2];
+    subject.eogv.badcomps = [11 14 15];
     %subject.cac = [1 6];
     subject.cac = [1 4.2 6.6];
     
@@ -153,7 +153,7 @@ switch name
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
     subject.id = '78310';
-    subject.eogv.badcomps = [1 2 3 4];
+    subject.eogv.badcomps = [1 3 4 6 13];
     %subject.cac = [1 4.5];
     subject.cac = [1 4.4 5.4];
   case 's04'
@@ -166,7 +166,7 @@ switch name
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '55066';
-    subject.eogv.badcomps = [1 2];
+    subject.eogv.badcomps = 7;
     %subject.cac = [1 5];
     subject.cac = [0.8 3.6 4.2 7];
   case 's05'
@@ -180,7 +180,7 @@ switch name
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
     subject.id = '47143';
-    subject.eogv.badcomps = [1 2 3];
+    subject.eogv.badcomps = 18;
     %subject.cac = [1 5.5];
     subject.cac = [1 4.6 5.6];
   
@@ -195,7 +195,7 @@ switch name
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
     subject.id = '79969';
-    subject.eogv.badcomps = [1 2];
+    subject.eogv.badcomps = [13 15];
     %subject.cac = [1 5.5];
     subject.cac = [1 3.8 4.6 5.6];
   case 's08'
@@ -208,7 +208,7 @@ switch name
       fullfile(subject.audiodir, 'fn001481.wav');
       fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '46726';
-    subject.eogv.badcomps = [1 2];
+    subject.eogv.badcomps = [12 14];
     %subject.cac = [1.25 5 8];
     subject.cac = [1.2 3.2 5.2];
   case 's09'
@@ -225,7 +225,7 @@ switch name
     % this one was lost due to a dsq error? : fullfile(subject.audiodir, 'fn001155.wav');
     
     subject.id = '71926';
-    subject.eogv.badcomps = {[1 2] [1 2]};
+    subject.eogv.badcomps = [1 8];
     %subject.cac = [1 5.5 4.5];
     subject.cac = [1 3.2 4.6 5.4];
   case 's10'
@@ -239,7 +239,7 @@ switch name
       fullfile(subject.audiodir, 'fn001498.wav');
       fullfile(subject.audiodir, 'fn001172.wav')};
     subject.id = '78250';
-    subject.eogv.badcomps = [1];
+    subject.eogv.badcomps = [];
     subject.montage.labelorg = {'EEG058';'EEG057';'EEG059'};
     %subject.cac  = [1 4.5 10];
     subject.cac = [0.8 3.6 6 11.2];
@@ -252,7 +252,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '105445';
-    subject.eogv.badcomps = [1 2];
+    subject.eogv.badcomps = 10;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGh';  'EOGv'};
     
@@ -312,7 +312,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '116533';
-    subject.eogv.badcomps = [1 2 3 4 8];
+    subject.eogv.badcomps = 5;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -324,7 +324,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '111493';
-    subject.eogv.badcomps = [1 2 3];
+    subject.eogv.badcomps = 6;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -336,7 +336,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = 'jansch';
-    subject.eogv.badcomps = [1 2 3 4];
+    subject.eogv.badcomps = [2];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -348,7 +348,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '95194';
-    subject.eogv.badcomps = [1 2 3 4 5 6 7];
+    subject.eogv.badcomps = [];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -360,7 +360,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '116371';
-    subject.eogv.badcomps = [1];
+    subject.eogv.badcomps = 5;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -372,7 +372,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '97753';
-    subject.eogv.badcomps = [1 2 3];
+    subject.eogv.badcomps = 8;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -384,7 +384,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '93829';
-    subject.eogv.badcomps = [1 2];
+    subject.eogv.badcomps = [1 3];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -396,7 +396,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav')
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '117349';
-    subject.eogv.badcomps = [1 2];
+    subject.eogv.badcomps = 1;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -408,7 +408,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav')
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '84556';
-    subject.eogv.badcomps = [1 2];
+    subject.eogv.badcomps = 8;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -420,7 +420,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav')
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '111865';
-    subject.eogv.badcomps = [1 2 4 8];
+    subject.eogv.badcomps = 10;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -432,7 +432,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '117964';
-    subject.eogv.badcomps = 1;
+    subject.eogv.badcomps = 4;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -444,7 +444,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav');
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '111121';
-    subject.eogv.badcomps = [1 2 4 7];
+    subject.eogv.badcomps = 2;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -456,7 +456,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav');
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '122515';
-    subject.eogv.badcomps = [1 2 3];
+    subject.eogv.badcomps = 6;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
 end
@@ -488,6 +488,15 @@ end
 
 % get eogv unmixing/mixing matrices
 [avgcomp, avgpre, avgeog, mixing, unmixing] = streams_artifact_eog_dss_blinks(subject);
+subject.eogv_dss.mixing   = mixing;
+subject.eogv_dss.unmixing = unmixing;
+subject.eogv_dss.avgcomp  = avgcomp;
+subject.eogv_dss.avgpre   = avgpre;
+subject.eogv_dss.avgeog   = avgeog;
+
+% get eogv unmixing/mixing matrices, based on a fastica decomposition ->
+% the dss stuff produces poor results, to be understood in more detail
+[avgcomp, avgpre, avgeog, mixing, unmixing] = streams_artifact_eog_fastica_blinks(subject);
 subject.eogv.mixing   = mixing;
 subject.eogv.unmixing = unmixing;
 subject.eogv.avgcomp  = avgcomp;
