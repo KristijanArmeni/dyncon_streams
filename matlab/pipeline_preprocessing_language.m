@@ -4,7 +4,11 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-subjects = {'s01', 's02', 's03', 's04', 's05', 's07', 's08', 's09', 's10'};
+subjects = strsplit(sprintf('s%d ', 11:28));
+subjects = subjects(~cellfun(@isempty, subjects));
+display(subjects);
+num_sub = numel(subjects);
+
 pipeline = '2';
 
 switch pipeline
