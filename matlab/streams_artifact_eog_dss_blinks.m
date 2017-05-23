@@ -55,6 +55,12 @@ else
     data            = ft_resampledata(cfg3, ft_preprocessing(cfg1));
     eog             = ft_resampledata(cfg3, ft_channelnormalise([], ft_preprocessing(cfg2)));
     
+    % only use the trials that are longer than 5 seconds
+    nsmp = cellfun('size', data.trial, 2);
+    cfg4.trials = find(nsmp>1500);
+    data = ft_selectdata(cfg4, data);
+    eog  = ft_selectdata(cfg4, eog);
+    
     % compute peak times for eog
     clear p
     for k = 1:numel(eog.trial)
@@ -83,6 +89,7 @@ else
     cfg.method            = 'dss';
     cfg.dss.denf.function = 'denoise_avg2';
     cfg.dss.denf.params   = params;
+    cfg.dss.wdim          = 50;
     cfg.channel           = 'MEG';
     cfg.numcomponent      = 10;
     cfg.cellmode          ='yes';
