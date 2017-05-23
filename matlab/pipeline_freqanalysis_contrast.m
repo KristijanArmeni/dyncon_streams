@@ -3,8 +3,15 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-subjects = {'s01', 's02', 's03', 's04', 's05', 's07', 's08', 's10'};
-ivars = {'log10perp'};
+subjects = strsplit(sprintf('s%.2d ', 1:10));
+subjects = subjects(~cellfun(@isempty, subjects));
+
+s6 = strcmp(subjects, 's06');
+subjects(s6) = []; % s06 dataset does not exist, empty it to prevent errors
+
+num_sub = numel(subjects);
+display(subjects);
+ivars = {'log10perp', 'entropy'};
 runpipeline = 'regress';
 
 switch runpipeline
@@ -21,7 +28,7 @@ switch runpipeline
             subject = subjects{k};
             filename = 'dpss8';
             qsubfeval('pipeline_freqanalysis_contrast_qsub', subject, filename, ivarexp, ...
-                                                                'memreq', 1024^3 * 4,...
+                                                                'memreq', 1024^3 * 8,...
                                                                 'timreq', 30*60,...
                                                                 'batchid', 'streams_freq');
         end
