@@ -4,8 +4,16 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-subjects = {'s01', 's02', 's03', 's04', 's05', 's07', 's08', 's10'};
-runpipeline = 'dpss4';
+subjects = strsplit(sprintf('s%.2d ', 1:10));
+subjects = subjects(~cellfun(@isempty, subjects));
+
+s6 = strcmp(subjects, 's06');
+subjects(s6) = []; % s06 dataset does not exist, empty it to prevent errors
+
+num_sub = numel(subjects);
+display(subjects);
+
+runpipeline = 'dpss8';
 
 switch runpipeline
     
@@ -42,7 +50,7 @@ switch runpipeline
         optarg = {'filter_range', '01-150', 'sr', '300hz', 'taper', 'dpss', 'tapsmooth', 8, 'epochlength', 1};
         qsubfeval('pipeline_freqanalysis_qsub', subject, audiofile, optarg, ...
                                                           'memreq', 1024^3 * 12,...
-                                                          'timreq', 240*60,...
+                                                          'timreq', 60*60,...
                                                           'batchid', 'streams_features');
 
 
