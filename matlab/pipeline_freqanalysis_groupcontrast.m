@@ -1,9 +1,6 @@
 
-clear all
-close all
-
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast-subject';
-savedir = '/project/3011044.02/analysis/freqanalysis/contrast-group';
+datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject/regressed-3';
+savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group/regressed-3';
 subjects = {'s01', 's02', 's03', 's04', 's05', 's07', 's08', 's10'};
 num_sub = numel(subjects);
 
