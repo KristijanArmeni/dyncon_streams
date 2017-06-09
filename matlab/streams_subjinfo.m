@@ -252,7 +252,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '105445';
-    subject.eogv.badcomps = 10;
+    subject.eogv.badcomps = [];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGh';  'EOGv'};
     
@@ -264,7 +264,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '79819';
-    subject.eogv.badcomps = [1 2 3 6];
+    subject.eogv.badcomps = [];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGh';  'EOGv'};
    
@@ -276,7 +276,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '116209';
-    subject.eogv.badcomps = [1 2 3 4];
+    subject.eogv.badcomps = 6;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGh';  'EOGv'};
     
@@ -288,7 +288,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '115054';
-    subject.eogv.badcomps = [1 2 3 4];
+    subject.eogv.badcomps = [];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -300,7 +300,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '114196';
-    subject.eogv.badcomps = [1 2 3];
+    subject.eogv.badcomps = [16 18];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -312,7 +312,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '116533';
-    subject.eogv.badcomps = 5;
+    subject.eogv.badcomps = 17;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -324,7 +324,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '111493';
-    subject.eogv.badcomps = 6;
+    subject.eogv.badcomps = [];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -336,7 +336,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = 'jansch';
-    subject.eogv.badcomps = [2];
+    subject.eogv.badcomps = [];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -360,7 +360,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '116371';
-    subject.eogv.badcomps = 5;
+    subject.eogv.badcomps = 7;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -372,7 +372,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '97753';
-    subject.eogv.badcomps = 8;
+    subject.eogv.badcomps = 16;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -384,7 +384,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '93829';
-    subject.eogv.badcomps = [1 3];
+    subject.eogv.badcomps = 10;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -396,7 +396,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav')
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '117349';
-    subject.eogv.badcomps = 1;
+    subject.eogv.badcomps = [];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -408,7 +408,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav')
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '84556';
-    subject.eogv.badcomps = 8;
+    subject.eogv.badcomps = [];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -420,7 +420,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav')
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '111865';
-    subject.eogv.badcomps = 10;
+    subject.eogv.badcomps = 15;
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -432,7 +432,7 @@ switch name
                         fullfile(subject.audiodir, 'fn001443.wav')
                         fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '117964';
-    subject.eogv.badcomps = 4;
+    subject.eogv.badcomps = [];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -444,7 +444,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav');
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '111121';
-    subject.eogv.badcomps = 2;
+    subject.eogv.badcomps = [2 4];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
     
@@ -456,7 +456,7 @@ switch name
                          fullfile(subject.audiodir, 'fn001443.wav');
                          fullfile(subject.audiodir, 'fn001498.wav')};
     subject.id = '122515';
-    subject.eogv.badcomps = 6;
+    subject.eogv.badcomps = [8 12];
     subject.montage.labelorg = {'EEG057';'EEG058';'EEG059'};
     subject.montage.labelnew = {'ECG';  'EOGv';  'EOGh'};
 end
