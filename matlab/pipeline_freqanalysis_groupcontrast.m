@@ -1,20 +1,31 @@
+%% Initialize
+% directories
+datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject/lexfreq';
+savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group/lexfreq';
 
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject/regressed-3';
-savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group/regressed-3';
-subjects = {'s01', 's02', 's03', 's04', 's05', 's07', 's08', 's10'};
+% define subject array
+subjects = strsplit(sprintf('s%.2d ', 11:28));
+subjects = subjects(~cellfun(@isempty, subjects));
+
+s6 = strcmp(subjects, 's06'); % doesn't exist
+subjects(s6) = [];
+s9 = strcmp(subjects, 's09'); % not computed
+subjects(s9) = [];
+
 num_sub = numel(subjects);
 
-ivar = 'log10perp';
-foi = '4-8';
+% for loading freq structures
+prefix = [subjects{1} '-' subjects{end}];
+ivar = 'log10wf';
+foi = '30-90';
 
-% for loading
 filename_stat = [ivar '_' foi '.mat'];
 
-% for saving
-savename_stat_all = fullfile(savedir, ['all_' filename_stat]);
-savename_stat_group = fullfile(savedir, [ivar '_' foi '.mat']);
+% create strings for saving
+savename_stat_all = fullfile(datadir, [prefix '_' filename_stat]);
+savename_stat_group = fullfile(savedir, [prefix '_' ivar '_' foi '.mat']);
 
-data = cell(num_sub, 1);
+stat_all = cell(num_sub, 1);
 
 %% Combine subject-specific structures
 if ~exist(savename_stat_all, 'file')
@@ -47,11 +58,16 @@ end
 %% Freq statistics
 fprintf('Doing second level stats on: \n\n')
 
-% Null structure
+% import preproc data for grad information in neighbourhoud chan definition
+load('/project/3011044.02/preproc/meg/s01_meg.mat');
+neighdata = stat_all{1};
+neighdata.grad = data.grad;
+
+% Create the null structure
 data_N = stat_all;
 for k = 1:numel(data_N); data_N{k}.stat(:,:) = 0; end
 
-% design matrix
+% specify design matrix
 design = zeros(2, 2*num_sub);
 design(1, 1:num_sub) = 1:num_sub;
 design(1, num_sub + 1:num_sub*2) = 1:num_sub;
@@ -60,16 +76,29 @@ design(2, num_sub + 1:num_sub*2) = 2;
 
 % second-level t-test
 cfg = [];
-cfg.method = 'montecarlo';
-cfg.parameter = 'stat';
-cfg.statistic = 'depsamplesT';
-cfg.numrandomization = 0;
+
+% define which chans can form clusters
+cfg_neighb.method    = 'template';
+% cfg_neighb.feedback  = 'yes';
+cfg.neighbours       = ft_prepare_neighbours(cfg_neighb, neighdata);
+
+% specify stat options
+cfg.method           = 'montecarlo';
+cfg.parameter        = 'stat';
+cfg.correctm         = 'cluster';
+cfg.statistic        = 'depsamplesT';
+cfg.tail             = 0; % two-sided test
+cfg.clustertail      = 0;
+cfg.alpha            = 0.025; % adjust alpha-level for two-sided test 
+cfg.clusteralpha     = 0.025; % adjust cluster alpha-level for two-sided test 
+cfg.numrandomization = 1000;
 cfg.design = design;
 cfg.uvar = 1;
 cfg.ivar = 2;
+
 stat_group = ft_freqstatistics(cfg, stat_all{:}, data_N{:});
 
-%% saving
+%% Saving
 
 fprintf('Saving %s... \n', savename_stat_group)
 
