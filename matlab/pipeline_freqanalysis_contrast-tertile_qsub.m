@@ -35,13 +35,19 @@ trialinfo.label = ivars.label;
 
 %% regress out number of characters and lexical frequency
 
-nuisance_vars = {'nchar', 'log10wf'};
-confounds = ismember(trialinfo.label, nuisance_vars);
+nuisance_vars = {'log10wf'}; % take lexical frequency as nuissance
+confounds = ismember(trialinfo.label, nuisance_vars); % logical with 1 in the columns for nuisance vars
+
+freqold = freq; % for grad field
 
 cfg  = [];
 cfg.confound = trialinfo.trial(:, confounds);
 cfg.beta = 'no';
 freq = ft_regressconfound(cfg, freq);
+
+%add grad field
+freq.grad = freqold.grad;
+clear freqold;
 
 %% Split the data into high and low conditions and control for frequency
 
@@ -49,12 +55,18 @@ freq = ft_regressconfound(cfg, freq);
 col_exp = strcmp(trialinfo.label(:), ivarexp);
 ivar_exp = trialinfo.trial(:, col_exp); % pick the appropriate language variable
 
-q = quantile(ivar_exp, [0.25 0.50 0.75]); % extract the three quantile values
-med = q(2); % median quartile
+q = quantile(ivar_exp, [0.33 0.66]); % extract the three quantile values
+low_tertile = q(1);
+high_tertile = q(2);
+% median quartile
 
-% median split
-trl_indx_high = ivar_exp > med; % this gives a logical vector
-trl_indx_low = ivar_exp < med;
+% split into high and low tertile groups
+trl_indx_low = ivar_exp < low_tertile; % this gives a logical vector
+trl_indx_high = ivar_exp > high_tertile; 
+
+% create condition structure
+conditions.trial = [trl_indx_low, trl_indx_high];
+conditions.label = {'low', 'high'};
 
 % select data
 cfg = [];
@@ -94,9 +106,9 @@ if ~exist([pipelinefilename '.html'], 'file')
 end
 
 % save stat
-savename_ttest = [subject filenameout];
-savename_ttest = fullfile(savedir, savename_ttest);
-save(savename_ttest, 'stat')
+savename_stat = [subject filenameout];
+savename_stat = fullfile(savedir, savename_stat);
+save(savename_stat, 'stat', 'conditions'); % save trial indexes too
 
 
 end
