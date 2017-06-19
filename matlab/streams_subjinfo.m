@@ -225,7 +225,7 @@ switch name
     % this one was lost due to a dsq error? : fullfile(subject.audiodir, 'fn001155.wav');
     
     subject.id = '71926';
-    subject.eogv.badcomps = [1 8];
+    subject.eogv.badcomps = {[1 8], [1 8]};
     %subject.cac = [1 5.5 4.5];
     subject.cac = [1 3.2 4.6 5.4];
   case 's10'
