@@ -40,6 +40,7 @@ cfg.style = 'straight';
 % cfg.colormap = flipud(colormap(gray));
 cfg.colorbar = 'yes';
 cfg.parameter = 'stat';
+cfg.zlim = 'maxabs';
 
 for i = 1:numel(foi)
     
