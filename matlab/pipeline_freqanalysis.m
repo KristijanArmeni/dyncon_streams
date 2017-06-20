@@ -4,7 +4,7 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-subjects = strsplit(sprintf('s%.2d ', 1:10));
+subjects = strsplit(sprintf('s%.2d ', 9));
 subjects = subjects(~cellfun(@isempty, subjects));
 
 s6 = strcmp(subjects, 's06');
@@ -13,7 +13,7 @@ subjects(s6) = []; % s06 dataset does not exist, empty it to prevent errors
 num_sub = numel(subjects);
 display(subjects);
 
-runpipeline = 'dpss8';
+runpipeline = 'hanning';
 
 switch runpipeline
     
