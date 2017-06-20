@@ -1,4 +1,4 @@
-function streams_dics(cfgfreq, subject, ivar)
+function streams_dics(cfgfreq, cfgdics, subject, ivar)
 % streams_dics() performs epoching (1s), freqanalysis and source
 % reconstruction on preprocessed data
 
@@ -77,7 +77,7 @@ freq_high = ft_selectdata(cfg, freq);
 
 cfg                     = []; 
 cfg.method              = 'dics';
-cfg.frequency           = 50;  
+cfg.frequency           = cfgdics.freq;  
 cfg.grid                = sourcemodel;
 cfg.grid.leadfield      = leadfield.leadfield;
 cfg.headmodel           = headmodel;
