@@ -3,9 +3,9 @@ function [comp]  = streams_componentanalysis_fastica(subject)
 %   Detailed explanation goes here
 
 datadir = '/project/3011044.02/preproc/meg';
-d = [subject '_meg.mat'];
+d = [subject '_meg2.mat'];
 datafile = fullfile(datadir, d);
-compfile = fullfile(datadir, [subject '_comp.mat']);
+compfile = fullfile(datadir, [subject '_comp2.mat']);
 
 load(datafile);
 
