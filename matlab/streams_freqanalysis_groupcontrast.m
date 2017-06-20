@@ -2,7 +2,7 @@ function streams_freqanalysis_groupcontrast(ivar, foi)
 
 %% Initialize
 % directories
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject/tertiel-split';
+datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject/tertile-split';
 savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group/tertile-split';
 
 % define subject array

@@ -1,105 +1,19 @@
-%% Initialize
-% directories
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject/lexfreq';
-savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group/lexfreq';
-
-% define subject array
-subjects = strsplit(sprintf('s%.2d ', 11:28));
-subjects = subjects(~cellfun(@isempty, subjects));
-
-s6 = strcmp(subjects, 's06'); % doesn't exist
-subjects(s6) = [];
-s9 = strcmp(subjects, 's09'); % not computed
-subjects(s9) = [];
-
-num_sub = numel(subjects);
-
-% for loading freq structures
-prefix = [subjects{1} '-' subjects{end}];
-ivar = 'log10wf';
-foi = '30-90';
-
-filename_stat = [ivar '_' foi '.mat'];
-
-% create strings for saving
-savename_stat_all = fullfile(datadir, [prefix '_' filename_stat]);
-savename_stat_group = fullfile(savedir, [prefix '_' ivar '_' foi '.mat']);
-
-stat_all = cell(num_sub, 1);
-
-%% Combine subject-specific structures
-if ~exist(savename_stat_all, 'file')
-
-    fprintf('Loading the following datafiles: %s over %d subjects \n\n', filename_stat, num_sub)
-
-    for k = 1:num_sub
-
-        subject = subjects{k};
-
-        file_T = fullfile(datadir, [subject '_' filename_stat]);
-        load(file_T)
-        
-        stat_all{k} = stat;
-
-    end
-
-    fprintf('Have this now: \n');
-    display(stat_all);
-    display(stat_all{1});
-    
-    save(savename_stat_all, 'stat_all');
-    fprintf('Saving %s... \n', savename_stat_all)
-
-else 
-    fprintf('Loading %s: \n', savename_stat_all);
-    load(savename_stat_all)
+clear all
+if ~ft_hastoolbox('qsub',1)
+    addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-%% Freq statistics
-fprintf('Doing second level stats on: \n\n')
+ivar = 'log10wf';
+freqs = {'4-8', '12-20', '30-90'};
 
-% import preproc data for grad information in neighbourhoud chan definition
-load('/project/3011044.02/preproc/meg/s01_meg.mat');
-neighdata = stat_all{1};
-neighdata.grad = data.grad;
+% subject loop
+for j = 1:numel(freqs)
 
-% Create the null structure
-data_N = stat_all;
-for k = 1:numel(data_N); data_N{k}.stat(:,:) = 0; end
+    foi    = freqs{j};
+    qsubfeval('streams_freqanalysis_groupcontrast', ivar, foi, ...
+                                          'memreq', 1024^3 * 12,...
+                                          'timreq', 240*60,...
+                                          'batchid', 'streams_features');
 
-% specify design matrix
-design = zeros(2, 2*num_sub);
-design(1, 1:num_sub) = 1:num_sub;
-design(1, num_sub + 1:num_sub*2) = 1:num_sub;
-design(2, 1:num_sub) = 1;
-design(2, num_sub + 1:num_sub*2) = 2;
 
-% second-level t-test
-cfg = [];
-
-% define which chans can form clusters
-cfg_neighb.method    = 'template';
-% cfg_neighb.feedback  = 'yes';
-cfg.neighbours       = ft_prepare_neighbours(cfg_neighb, neighdata);
-
-% specify stat options
-cfg.method           = 'montecarlo';
-cfg.parameter        = 'stat';
-cfg.correctm         = 'cluster';
-cfg.statistic        = 'depsamplesT';
-cfg.tail             = 0; % two-sided test
-cfg.clustertail      = 0;
-cfg.alpha            = 0.025; % adjust alpha-level for two-sided test 
-cfg.clusteralpha     = 0.025; % adjust cluster alpha-level for two-sided test 
-cfg.numrandomization = 1000;
-cfg.design = design;
-cfg.uvar = 1;
-cfg.ivar = 2;
-
-stat_group = ft_freqstatistics(cfg, stat_all{:}, data_N{:});
-
-%% Saving
-
-fprintf('Saving %s... \n', savename_stat_group)
-
-save(savename_stat_group, 'stat_group');
+end
