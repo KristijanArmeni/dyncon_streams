@@ -6,7 +6,7 @@ if ischar(subject)
 end
 
 savedir = '/project/3011044.02/analysis/freqanalysis';
-savedir2 = '/project/3011044.02/analysis/freqanalysis/ivars';
+savedirivars = '/project/3011044.02/analysis/freqanalysis/ivars';
 datadir = '/project/3011044.02/preproc';
 
 % filter_range = ft_getopt(optarg, 'filter_range');
@@ -51,8 +51,8 @@ end
 savenamefreq = [subject.name '_' taperinfo];
 savenamefreq = fullfile(savedir, savenamefreq);
 
-savenameivars = [subject.name '_ivars2'];
-savenameivars = fullfile(savedir2, savenameivars);
+savenameivars = [subject.name '_ivars'];
+savenameivars = fullfile(savedirivars, savenameivars);
 
 save(savenamefreq, 'freq');
 save(savenameivars, 'ivars');
