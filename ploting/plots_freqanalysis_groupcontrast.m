@@ -1,5 +1,5 @@
 
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast/group/lexfreq'; 
+datadir = '/project/3011044.02/analysis/freqanalysis/contrast/group/tertile-split'; 
 
 % define subject array
 subjects = strsplit(sprintf('s%.2d ', 1:28));
@@ -17,49 +17,59 @@ prefix = 's01-s28';
 ivar = 'log10wf';
 foi = {'4-8', '12-20', '30-90'};
 
-% %% Plots
-% cfg = [];
-% cfg.layout = 'CTF275_helmet.mat';
-%     
-% frequency = foi{3};
-% filename = fullfile(datadir, [prefix '_' ivar '_' frequency]);
-% fprintf('Loading %s... \n\n', filename)
-% 
-% load(filename)
-% 
-% figure('Name', ivar ,'NumberTitle','off');
-% ft_clusterplot(cfg, stat_group);
-% title([frequency ' Hz'])
-% c = colorbar;
-% ylabel(c, 't-value')
+plotcluster = 1;
 
 %% Plots
-cfg = [];
-cfg.layout = 'CTF275_helmet.mat';
-cfg.style = 'straight';
-% cfg.colormap = flipud(colormap(gray));
-cfg.colorbar = 'yes';
-cfg.parameter = 'stat';
-cfg.zlim = 'maxabs';
 
-for i = 1:numel(foi)
+% cluster plot
+if plotcluster
     
-    frequency = foi{i};
-    
+    cfg = [];
+    cfg.layout = 'CTF275_helmet.mat';
+
+    frequency = foi{3};
     filename = fullfile(datadir, [prefix '_' ivar '_' frequency]);
-
     fprintf('Loading %s... \n\n', filename)
 
     load(filename)
-    
+
     figure('Name', ivar ,'NumberTitle','off');
-    cfg.parameter = 'stat';
-    cfg.comment = 'no';
-    ft_topoplotER(cfg, stat_group);
+    ft_clusterplot(cfg, stat_group);
     title([frequency ' Hz'])
     c = colorbar;
     ylabel(c, 't-value')
-%     pos = get(c, 'pos');
-%     set(c,'position',[pos(1)+0.10 pos(2)+ 0.25 pos(3) pos(4)*0.25])
 
+% topoplot
+else 
+
+    cfg = [];
+    cfg.layout = 'CTF275_helmet.mat';
+    cfg.style = 'straight';
+    % cfg.colormap = flipud(colormap(gray));
+    cfg.colorbar = 'yes';
+    cfg.parameter = 'stat';
+    cfg.zlim = 'maxabs';
+
+    for i = 1:numel(foi)
+
+        frequency = foi{i};
+
+        filename = fullfile(datadir, [prefix '_' ivar '_' frequency]);
+
+        fprintf('Loading %s... \n\n', filename)
+
+        load(filename)
+
+        figure('Name', ivar ,'NumberTitle','off');
+        cfg.parameter = 'stat';
+        cfg.comment = 'no';
+        ft_topoplotER(cfg, stat_group);
+        title([frequency ' Hz'])
+        c = colorbar;
+        ylabel(c, 't-value')
+    %     pos = get(c, 'pos');
+    %     set(c,'position',[pos(1)+0.10 pos(2)+ 0.25 pos(3) pos(4)*0.25])
+
+    end
+    
 end
