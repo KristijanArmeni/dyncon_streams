@@ -5,7 +5,7 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-subjects = strsplit(sprintf('s%.2d ', 1:10));
+subjects = strsplit(sprintf('s%.2d ', 14));
 subjects = subjects(~cellfun(@isempty, subjects));
 
 s6 = strcmp(subjects, 's06');

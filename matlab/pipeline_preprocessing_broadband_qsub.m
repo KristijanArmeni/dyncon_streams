@@ -48,9 +48,9 @@ savenameaudio = fullfile(savedir, savenameaudio);
 %     ft_analysispipeline(cfgt, data);
 % end
     
-% save(savenamemeg, 'data');
+save(savenamemeg, 'data');
 save(savenameeeg, 'eeg');
-% save(savenameaudio, 'audio');
+save(savenameaudio, 'audio');
 
 
 end
