@@ -13,6 +13,7 @@ cfg = [];
 cfg.length = epochlength;
 featuredata = ft_redefinetrial(cfg, featuredata);
 
+%% ADDITIONAL CLEANING STEP
 % use some heuristic to remove trials that, across the channel array, have
 % high variance in the individual epochs
 tmp = ft_channelnormalise([], data);
