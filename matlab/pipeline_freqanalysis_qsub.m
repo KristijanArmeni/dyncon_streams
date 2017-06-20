@@ -5,8 +5,8 @@ if ischar(subject)
    subject = streams_subjinfo(subject);
 end
 
-savedir = '/project/3011044.02/analysis/freqanalysis/nocomp';
-% savedir2 = '/project/3011044.02/analysis/freqanalysis/ivars';
+savedir = '/project/3011044.02/analysis/freqanalysis';
+savedir2 = '/project/3011044.02/analysis/freqanalysis/ivars';
 datadir = '/project/3011044.02/preproc';
 
 % filter_range = ft_getopt(optarg, 'filter_range');
@@ -20,19 +20,26 @@ filename_language = fullfile(datadir, 'language', [subject.name '_' audiofile '_
 load(filename_meg)
 load(filename_language)
 
+%% add grad info for s09 (two datasets)
+if strcmp(subject.name, 's09')
+%     dataset = subject.dataset{1};
+%     data.grad = ft_read_sens(dataset, 'senstype', 'meg');  
+end
+
 %% Frequency analysis
 
 epochlength     = ft_getopt(optarg, 'epochlength');
 taper           = ft_getopt(optarg, 'taper');
 tapsmooth       = ft_getopt(optarg, 'tapsmooth');
 
-[freq, ~, ~, ~] = streams_freqanalysis(data, featuredata, epochlength, taper, tapsmooth);
+[freq, ~, ~, ivars] = streams_freqanalysis(data, featuredata, epochlength, taper, tapsmooth);
 
 %% save the output
 
 taperinfo = [taper num2str(tapsmooth)];
 % save the info on preprocessing options used
-pipelinefilename = fullfile(savedir, ['s01_' taperinfo]);
+datecreated = char(datetime('today', 'Format', 'dd_MM_yy'));
+pipelinefilename = fullfile(savedir, ['s11_' taperinfo '_' datecreated]);
 
 if ~exist([pipelinefilename '.html'], 'file')
     cfgt = [];
@@ -44,9 +51,9 @@ end
 savenamefreq = [subject.name '_' taperinfo];
 savenamefreq = fullfile(savedir, savenamefreq);
 
-% savenameivars = [subject.name '_ivars2'];
-% savenameivars = fullfile(savedir2, savenameivars);
+savenameivars = [subject.name '_ivars2'];
+savenameivars = fullfile(savedir2, savenameivars);
 
 save(savenamefreq, 'freq');
-% save(savenameivars, 'ivars');
+save(savenameivars, 'ivars');
 
