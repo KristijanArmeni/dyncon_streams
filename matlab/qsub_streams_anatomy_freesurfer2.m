@@ -4,8 +4,8 @@ function qsub_streams_anatomy_freesurfer2(subject)
 
 
 % Fressurfer script2
-shell_script      = '/home/language/kriarm/pro/streams/code/streams/matlab/streams_anatomy_freesurfer2.sh';
-mri_dir           = '/home/language/kriarm/pro/streams/data/MRI/preproc';
+shell_script      = '/project/3011044.02/scripts/meg-pipeline/matlab/streams_anatomy_freesurfer2.sh';
+mri_dir           = '/project/3011044.02/preproc/anatomy';
 subject_dir       = subject;
 
 % streams_anatomy_freesurfer2.sh
