@@ -11,7 +11,7 @@ if ischar(subject)
 end
 
 subject_code                = subject.name;
-anatomy_savedir             = fullfile('~/pro/streams/data/MRI/preproc'); %just for test, should be: '/home/language/jansch/projects/streams/data/anatomy'
+anatomy_savedir             = fullfile('/project/3011044.02/preproc/anatomy'); 
 resliced_filename           = fullfile(anatomy_savedir, [subject_code, '_mni_resliced' '.mgz']);
 transformation_matrix_mni   = fullfile(anatomy_savedir, [subject_code, '_transform_vox2mni.mat']);
 
@@ -19,7 +19,7 @@ transformation_matrix_mni   = fullfile(anatomy_savedir, [subject_code, '_transfo
 mri_resliced_mni = ft_read_mri(resliced_filename);
 
 % check if the transformation matrix exist, if so read it in 
-if exist(transformation_matrix_mni, 'file');
+if exist(transformation_matrix_mni, 'file')
 
   load(transformation_matrix_mni);
   

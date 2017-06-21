@@ -11,7 +11,7 @@ end
 
 % directories and filenames
 subject_code                 = subject.name;
-anatomy_dir                  = fullfile('~/pro/streams/data/MRI/preproc'); %just for test, should be: '/home/language/jansch/projects/streams/data/anatomy'
+anatomy_dir                  = fullfile('/project/3011044.02/preproc/anatomy/'); %just for test, should be: '/home/language/jansch/projects/streams/data/anatomy'
 resliced_mni_filename        = fullfile(anatomy_dir, [subject_code, '_mni_resliced.mgz']);
 mri_skullstrip               = fullfile(anatomy_dir, [subject_code, '_skullstrip']);
 

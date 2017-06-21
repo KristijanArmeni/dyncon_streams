@@ -9,12 +9,12 @@ if ischar(subject);
 end
 
 subject_code          = subject.name;
-anatomy_preproc_dir   = fullfile('/home/language/kriarm/pro/streams/data/MRI/preproc'); % temporary dir
+anatomy_preproc_dir   = fullfile('/project/3011044.02/preproc/anatomy'); % temporary dir
 mgz_filename          = fullfile(anatomy_preproc_dir, [subject_code '_mri.mgz']); 
 resliced_filename     = fullfile(anatomy_preproc_dir, [subject_code '_mni_resliced.mgz']);
 
 % check if the .mgz file exists, if not create on spot
-if ~exist(mgz_filename, 'file');
+if ~exist(mgz_filename, 'file')
   
   fprintf('No .mgz found in %s\n', anatomy_preproc_dir);
   fprintf('Creating .mgz file via streams_anatomy_dicom2mgz\n');

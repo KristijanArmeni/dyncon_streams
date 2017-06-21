@@ -9,17 +9,19 @@ end
 
 subject_code = subject.name;
 subject_number = str2num(subject.name(2:end));
-anatomy_savedir = fullfile('~/pro/streams/data/MRI/preproc'); %just for test, should be: '/home/language/jansch/projects/streams/data/anatomy'
+anatomy_savedir = fullfile('/project/3011044.02/preproc/anatomy');
 
 % select the last dicom file in subject's mri directory
 if subject_number <= 10 % pilot data have different directory structure
   dicom_dir  = fullfile(subject.mridir, subject.id, 'dicom');
 else 
-  dicom_dir  = fullfile(subject.mridir, subject.id);
+  dicom_dir  = fullfile(subject.mridir);
 end
 
-dicom_list = dir(dicom_dir);
-dicom_file = fullfile(dicom_dir, dicom_list(end).name);
+dicom_subdir = dir(dicom_dir);
+dicom_subdir = dicom_subdir(end).name;
+dicom_list = dir(fullfile(dicom_dir, dicom_subdir)); % choose the second folder with anatomical dicoms
+dicom_file = fullfile(dicom_dir, dicom_subdir, dicom_list(end).name);
 
 % read in the dicom files
 mri   = ft_read_mri(dicom_file);
