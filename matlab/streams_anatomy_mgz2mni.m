@@ -4,7 +4,7 @@ function streams_anatomy_mgz2mni(subject)
 % perfroms reslicing to 256x256x256 space. It saves the reliced volume and the transformation matrix. 
 
 %% Initialize the variables
-if ischar(subject);
+if ischar(subject)
   subject = streams_subjinfo(subject);
 end
 

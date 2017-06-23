@@ -4,7 +4,7 @@ if ischar(subject)
   subject = streams_subjinfo(subject);
 end
 
-mri_dir           = '/home/language/kriarm/pro/streams/data/MRI/preproc';
+mri_dir           = '/project/3011044.02/preproc/anatomy';
 subject_code      = subject.name;
 
 pname = fullfile(mri_dir, subject_code, 'mri');

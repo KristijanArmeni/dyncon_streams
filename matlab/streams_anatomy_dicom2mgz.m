@@ -12,11 +12,8 @@ subject_number = str2num(subject.name(2:end));
 anatomy_savedir = fullfile('/project/3011044.02/preproc/anatomy');
 
 % select the last dicom file in subject's mri directory
-if subject_number <= 10 % pilot data have different directory structure
-  dicom_dir  = fullfile(subject.mridir, subject.id, 'dicom');
-else 
-  dicom_dir  = fullfile(subject.mridir);
-end
+dicom_dir  = fullfile(subject.mridir);
+
 
 dicom_subdir = dir(dicom_dir);
 dicom_subdir = dicom_subdir(end).name;
@@ -27,7 +24,7 @@ dicom_file = fullfile(dicom_dir, dicom_subdir, dicom_list(end).name);
 mri   = ft_read_mri(dicom_file);
 
 % filename for saving
-mgz_filename = fullfile(anatomy_savedir, [subject_code, '_mri' '.mgz']); % sXX_mri_resliced.mgz
+mgz_filename = fullfile(anatomy_savedir, [subject_code, '_mri' '.mgz']);
 
 % save the images in the mgz format
 cfg             = [];
