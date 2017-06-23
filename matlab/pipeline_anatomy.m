@@ -1,7 +1,7 @@
 %% MRI PREPROCESSING, HEADMODEL, SOURCEMODEL
 
 % PREPOCESSING
-subject = 's15';
+subject = 's28';
 
 % converting dicoms to mgz format
 streams_anatomy_dicom2mgz(subject);
@@ -18,7 +18,7 @@ streams_anatomy_skullstrip(subject);
 if ~ft_hastoolbox('qsub',1)
     addpath /home/common/matlab/fieldtrip/qsub;
 end
-subjects = {'s12' 's13' 's14' 's15' 's16' 's17' 's18' 's19' 's20' 's21' 's22' 's23' 's24' 's25' 's26'};
+subjects = {'s18' 's15' 's27' 's28'};
 
 for i = 1:numel(subjects)
   
@@ -41,13 +41,11 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/common/matlab/fieldtrip/qsub;
 end
 
-subjects = strsplit(sprintf('s%.2d ', 12:27));
+subjects = strsplit(sprintf('s%.2d ', [15,18,28]));
 subjects = subjects(~cellfun(@isempty, subjects));
 
 s6 = strcmp(subjects, 's06');
 subjects(s6) = []; % s06 dataset does not exist, empty it to prevent errors
-s9 = strcmp(subjects, 's09');
-subjects(s9) = []; % s06 dataset does not exist, empty it to prevent errors
 
 num_sub = numel(subjects);
 display(subjects);
@@ -67,14 +65,12 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/common/matlab/fieldtrip/qsub;
 end
 
-subjects = strsplit(sprintf('s%.2d ', 12:27));
+subjects = strsplit(sprintf('s%.2d ', 12:26));
 subjects = subjects(~cellfun(@isempty, subjects));
+excludestrings = {'s06', 's15', 's18', 's27', 's28'};
+exclude = ismember(subjects, excludestrings);
 
-s6 = strcmp(subjects, 's06');
-subjects(s6) = []; % s06 dataset does not exist, empty it to prevent errors
-s9 = strcmp(subjects, 's09');
-subjects(s9) = []; % s06 dataset does not exist, empty it to prevent errors
-
+subjects(exclude) = [];
 num_sub = numel(subjects);
 display(subjects);
 
