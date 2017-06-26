@@ -5,7 +5,7 @@ if ischar(subject)
 end
 
 subject_code                = subject.name;
-anatomy_savedir             = fullfile('~/pro/streams/data/MRI/preproc'); %just for test, should be: '/home/language/jansch/projects/streams/data/anatomy'
+anatomy_savedir             = fullfile('/project/3011044.02/preproc/anatomy'); %just for test, should be: '/home/language/jansch/projects/streams/data/anatomy'
 headmodel_filename          = fullfile(anatomy_savedir, [subject_code, '_headmodel' '.mat']);
 
 mni_resliced_filename       = fullfile(anatomy_savedir, [subject_code, '_mni_resliced' '.mgz']);
