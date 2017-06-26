@@ -6,7 +6,7 @@ datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject/tertile-sp
 savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group/tertile-split';
 
 % define subject array
-subjects = strsplit(sprintf('s%.2d ', 1:28));
+subjects = strsplit(sprintf('s%.2d ', 2:28));
 subjects = subjects(~cellfun(@isempty, subjects));
 
 s6 = strcmp(subjects, 's06'); % doesn't exist
@@ -87,20 +87,20 @@ cfg.neighbours       = ft_prepare_neighbours(cfg_neighb, neighdata);
 % specify stat options
 cfg.method           = 'montecarlo';
 cfg.parameter        = 'stat';
-cfg.correctm         = 'cluster';
 cfg.statistic        = 'depsamplesT';
-cfg.tail             = 0; % two-sided test
-cfg.clustertail      = 0;
-cfg.alpha            = 0.025; % adjust alpha-level for two-sided test
-cfg.correcttail = 'prob';  
+% cfg.correctm         = 'cluster';
+% cfg.tail             = 0; % two-sided test
+% cfg.clustertail      = 0;
+% cfg.alpha            = 0.025; % adjust alpha-level for two-sided test
+% cfg.correcttail = 'prob';  
 % cfg.clusteralpha     = 0.025; % adjust cluster alpha-level for two-sided test 
-cfg.numrandomization = 10000;
+cfg.numrandomization = 0;
 cfg.design = design;
 cfg.uvar = 1;
 cfg.ivar = 2;
 
 % optional:
-cfg.avgoverfreq = 'yes';
+cfg.avgoverfreq = 'no';
 %cfg.frequency = [40 60];
 
 stat_group = ft_freqstatistics(cfg, stat_all{:}, data_N{:});
