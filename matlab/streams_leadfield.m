@@ -17,11 +17,11 @@ atlas_dir                    = fullfile('/project/3011044.02/preproc/atlas');
 headmodel_filename           = fullfile(anatomy_dir, [subject_code, '_headmodel.mat']);
 sourcemodel_filename         = fullfile(anatomy_dir, [subject_code, '_sourcemodel.mat']);
 parcellation                 = fullfile(atlas_dir, '374/atlas_subparc374_8k.mat');
-datafile                     = fullfile(meg_dir, sprintf('%s_1078_01-03_30Hz_meg.mat', subject_code));
+datafile                     = fullfile(meg_dir, sprintf('%s_meg.mat', subject_code));
 
 %for saving
 leadfield_filename           = fullfile(anatomy_dir, [subject_code, '_leadfield.mat']);
-leadfield_parcellated        = fullfile(anatomy_dir, [subject_code, '_leadfield_parc.mat']);
+% leadfield_parcellated        = fullfile(anatomy_dir, [subject_code, '_leadfield_parc.mat']);
 
 
 %% Full leadfield
@@ -51,8 +51,8 @@ save(leadfield_filename, 'leadfield');
 
 %% Parcellated leadfield
 
-leadfield_parc = streams_parcellate_leadfield(leadfield, atlas);
-save(leadfield_parcellated, 'leadfield_parc');
+% leadfield_parc = streams_parcellate_leadfield(leadfield, atlas);
+% save(leadfield_parcellated, 'leadfield_parc');
 
 end
 
