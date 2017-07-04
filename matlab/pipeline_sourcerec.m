@@ -4,42 +4,43 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-
 %% INITIALIZE
-subjects = strsplit(sprintf('s%.2d ', 1:28));
-subjects = subjects(~cellfun(@isempty, subjects));
 
-s6 = strcmp(subjects, 's06');
-subjects(s6) = []; % s06 dataset does not exist, empty it to prevent errors
-s9 = strcmp(subjects, 's09');
-subjects(s9) = []; % s06 dataset does not exist, empty it to prevent errors
-
-num_sub = numel(subjects);
-display(subjects);
-
-ivars = {'log10perp', 'entropy'};
+[subjects, num_sub] = streams_util_subjectstring(2:28, {'s06', 's09', 's01'});
+ivars = {'log10perp'};
+foilim = {[40 40]};
 
 %% SUBJECT LOOP
 
-cfgfreq.foilim = [40 40];
-cfgfreq.tapsmofrq = 10;
-cfgfreq.taper = 'dpss';
+for k = 1:numel(foilim)
 
-cfgdics.freq = 40;
-
-for i = 1:num_sub
+    cfgfreq.foilim = foilim{k};
+    freq = cfgfreq.foilim(1);
+    
+    if freq < 8; taper = 'hanning'; end
+    if freq > 8 && freq < 30; taper = 'dpss'; tapsmofrq = 4; end
+    if freq > 30 && freq < 90; taper = 'dpss'; tapsmofrq = 8; end
    
-    subject = subjects{i};
+    cfgfreq.taper = taper;
+    if strcmp(taper, 'dpss'); cfgfreq.tapsmofrq = tapsmofrq; end
     
-    for ii = 1:numel(ivars)
+    cfgdics.freq = cfgfreq.foilim(1);
+
+    for i = 1:numel(ivars)
+
+    ivar = ivars{i};
+    
+        for kk = 1:num_sub
+
+        subject = subjects{kk};
+        qsubfeval('streams_dics', cfgfreq, cfgdics, subject, ivar, ...
+                  'memreq', 1024^3 * 12,...
+                  'timreq', 240*60,...
+                  'batchid', 'streams_dics', ...
+                  'matlabcmd', 'matlab2016b');
         
-    ivar = ivars{ii};
-    
-    qsubfeval('streams_dics', cfgfreq, cfgdics, subject, ivar, ...
-              'memreq', 1024^3 * 12,...
-              'timreq', 240*60,...
-              'batchid', 'streams_features');
-          
+        end
+        
     end
     
 end
