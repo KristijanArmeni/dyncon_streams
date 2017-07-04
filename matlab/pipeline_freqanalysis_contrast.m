@@ -3,7 +3,7 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-subjects = strsplit(sprintf('s%.2d ', 1:28));
+subjects = strsplit(sprintf('s%.2d ', 2:28));
 subjects = subjects(~cellfun(@isempty, subjects));
 
 s6 = strcmp(subjects, 's06');
@@ -13,7 +13,7 @@ subjects(s9) = [];
 
 num_sub = numel(subjects);
 display(subjects);
-ivars = {'log10wf'};
+ivars = {'entropy', 'log10perp', 'log10wf'};
 runpipeline = 'tertile';
 
 switch runpipeline
@@ -28,8 +28,8 @@ switch runpipeline
         for k = 1:numel(subjects)
 
             subject = subjects{k};
-            filename = 'hanning';
-            qsubfeval('pipeline_freqanalysis_contrast_tertile_qsub', subject, filename, ivarexp, ...
+            inputargs = {'ivarexp', ivarexp, 'filename', 'dpss4', 'dohigh', 1};
+            qsubfeval('pipeline_freqanalysis_contrast_tertile_qsub', subject, inputargs, ...
                                                                 'memreq', 1024^3 * 5,...
                                                                 'timreq', 30*60,...
                                                                 'batchid', 'streams_freq');
