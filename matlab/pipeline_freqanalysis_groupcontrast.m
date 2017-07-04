@@ -4,7 +4,7 @@ if ~ft_hastoolbox('qsub',1)
 end
 
 ivar = 'log10wf';
-freqs = {'4-8', '12-20', '30-90'};
+freqs = {'20-30', '30-60', '60-90'};
 
 % subject loop
 for j = 1:numel(freqs)
