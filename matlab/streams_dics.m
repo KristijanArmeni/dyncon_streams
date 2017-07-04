@@ -2,7 +2,7 @@ function streams_dics(cfgfreq, cfgdics, subject, ivar)
 % streams_dics() performs epoching (1s), freqanalysis and source
 % reconstruction on preprocessed data
 
-%% INITIALIZE
+%% INITIALIZ
 
 dir = '/project/3011044.02';
 preprocfile = fullfile(dir, 'preproc/meg', [subject '_meg.mat']);
@@ -16,6 +16,7 @@ conditionsfile = fullfile(dir, 'analysis/freqanalysis/contrast/subject/tertile-s
 % saving dir
 savedir = fullfile(dir, 'analysis', 'dics', 'firstlevel');
 
+% ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
 %% LOAD
 
 load(preprocfile) % meg data
@@ -53,11 +54,11 @@ cfg.method    = 'mtmfft';
 cfg.output    = 'fourier';
 cfg.keeptrials = 'yes';
 cfg.taper     = cfgfreq.taper;
-cfg.tapsmofrq = cfgfreq.tapsmofrq;
+if strcmp(cfgfreq.taper, 'dpss'); cfg.tapsmofrq = cfgfreq.tapsmofrq; end
 cfg.foilim    = cfgfreq.foilim;
 
 freq = ft_freqanalysis(cfg, data);
-
+clear data;
 %% SPLIT THE DATA
 
 low_column = strcmp(conditions.label, 'low');
@@ -94,7 +95,9 @@ F           = cat(1,source_both.avg.filter{source_both.inside}); % common spatia
 
 % now do something hacky to efficiently compute the single trial power
 % estimates at the source level:
-ntap = freq.cumtapcnt(1);  % number of tapers used
+ntap = freq.cumtapcnt(1); % number of tapers used
+clear freq; 
+
 nrpth = numel(freq_high.cumtapcnt); % number of trials
 xh = repmat(1:nrpth,[ntap 1]);
 xh = xh(:);
@@ -111,6 +114,7 @@ source_high = removefields(source_both, {'avg' 'cfg'});
 source_low  = removefields(source_both, {'avg' 'cfg'});
 
 npos = size(source_both.pos,1);
+clear source_both;
 
 tmppow = abs(F*transpose(freq_low.fourierspctrm)).^2;
 for k = 1:nrptl
@@ -161,8 +165,8 @@ if ~strcmp(ivar, 'log10wf') % if ivarexp is lex. fr. itself skip this step
     cfg  = [];
     cfg.confound = trialinfoh.trial(:, confounds);
     cfg.beta = 'no';
-    source_high3 = ft_regressconfound(cfg, rmfield(source_high, 'tri'));
-    source_high3.tri = tri;
+    source_high = ft_regressconfound(cfg, rmfield(source_high, 'tri'));
+    source_high.tri = tri;
 
     cfg  = [];
     cfg.confound = trialinfol.trial(:, confounds);
@@ -174,7 +178,7 @@ end
 
 %% DO THE FIRST-LEVEL CONTRAST
 
-design = [ones(1,size(trialinfoh.trial, 1)) ones(1,size(trialinfol.trial, 1))*2];
+statdesign = [ones(1,size(trialinfoh.trial, 1)) ones(1,size(trialinfol.trial, 1))*2];
 
 % independent between trials t-test
 cfg = [];
@@ -182,14 +186,28 @@ cfg.method = 'montecarlo';
 cfg.statistic = 'indepsamplesT'; % for each subject do between trials (independent) t-test
 cfg.parameter = 'pow';
 cfg.numrandomization = 0;
-cfg.frequency = foi;
-cfg.design = design;
+% cfg.frequency = foi;
+cfg.design = statdesign;
 stat = ft_sourcestatistics(cfg, source_high, source_low);
 
 %% SAVING 
+% ivar = [ivar '-raw'];
 
-savename = fullfile(savedir, ivar, [subject '_stat']);
+dicsfreq = num2str(cfgdics.freq);
+savename = fullfile(savedir, ivar, [subject '_' ivar '_' dicsfreq]);
+pipelinesavename = fullfile(savedir, ivar, ['s02' '_' ivar '_' dicsfreq]);
+
+datecreated = char(datetime('today', 'Format', 'dd-MM-yy'));
+pipelinefilename = [pipelinesavename '_' datecreated];
+
+if ~exist([pipelinefilename '.html'], 'file')
+    cfgt = [];
+    cfgt.filename = pipelinefilename;
+    cfgt.filetype = 'html';
+    ft_analysispipeline(cfgt, stat);
+end
+
 save(savename, 'stat');
-
+% ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
 
 end
