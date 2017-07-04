@@ -65,9 +65,9 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/common/matlab/fieldtrip/qsub;
 end
 
-subjects = strsplit(sprintf('s%.2d ', 12:26));
+subjects = strsplit(sprintf('s%.2d ', [15, 18, 28, 27]));
 subjects = subjects(~cellfun(@isempty, subjects));
-excludestrings = {'s06', 's15', 's18', 's27', 's28'};
+excludestrings = {'s06'};
 exclude = ismember(subjects, excludestrings);
 
 subjects(exclude) = [];
@@ -84,10 +84,6 @@ for k = 1:num_sub
 end
 
 
-% Coregistration check
-streams_anatomy_coregistration_qc(subject);
-
-
 %%  Sourcemodel
 
 for h = 1:numel(subjects)
@@ -102,7 +98,6 @@ end
 
 %% Headmodel
 
-subjects = {'s04' 's05' 's07' 's08' 's09' 's10'};
 for i = 1:numel(subjects)
    
   subject = subjects{i};
@@ -112,9 +107,27 @@ for i = 1:numel(subjects)
 
 end
 
+
+%%  Coregistration check
+
+subjects = strsplit(sprintf('s%.2d ', [2:28]));
+subjects = subjects(~cellfun(@isempty, subjects));
+excludestrings = {'s06'};
+exclude = ismember(subjects, excludestrings);
+
+subjects(exclude) = [];
+num_sub = numel(subjects);
+display(subjects);
+
+for i = 1:num_sub
+    
+    subject = subjects{i};
+    streams_anatomy_coregistration_qc(subject);
+
+end
+
 %% Leadfield parcellation
 
-subjects = {'s03' 's04' 's05' 's07' 's08' 's09' 's10'};
 for h = 1:numel(subjects)
 
   subject = subjects{h};
