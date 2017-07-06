@@ -19,8 +19,8 @@ savedir = fullfile(dir, 'analysis', 'dics', 'firstlevel');
 % ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
 %% LOAD
 
-load(preprocfile) % meg data
-load(headmodelfile)
+load(preprocfile); % meg data
+load(headmodelfile);
 load(leadfieldfile);
 load(sourcemodelfile);
 load(conditionsfile, 'conditions'); % logical colums
@@ -59,23 +59,8 @@ cfg.foilim    = cfgfreq.foilim;
 
 freq = ft_freqanalysis(cfg, data);
 clear data;
-%% SPLIT THE DATA
 
-low_column = strcmp(conditions.label, 'low');
-high_column = strcmp(conditions.label, 'high');
-
-trl_indx_low = conditions.trial(:, low_column);
-trl_indx_high = conditions.trial(:, high_column);
-
-cfg = [];
-cfg.trials = trl_indx_low;
-freq_low = ft_selectdata(cfg, freq);
-
-cfg = [];
-cfg.trials = trl_indx_high;
-freq_high = ft_selectdata(cfg, freq);
-
-%% DICS
+%% COMMON FILTER
 
 cfg                     = []; 
 cfg.method              = 'dics';
@@ -93,42 +78,32 @@ cfg.dics.fixedori       = 'yes';
 source_both = ft_sourceanalysis(cfg, ft_checkdata(freq,'cmbrepresentation','fullfast')); % trick to speed up the computation
 F           = cat(1,source_both.avg.filter{source_both.inside}); % common spatial filters per location
 
+
+%% SINGLE TRIAL POWER ESTIMATE
+
 % now do something hacky to efficiently compute the single trial power
 % estimates at the source level:
 ntap = freq.cumtapcnt(1); % number of tapers used
-clear freq; 
 
-nrpth = numel(freq_high.cumtapcnt); % number of trials
-xh = repmat(1:nrpth,[ntap 1]);
-xh = xh(:);
-yh = 1:(nrpth*ntap);
-Ph = sparse(yh,xh,ones(numel(xh),1)./ntap);
+nrpt = numel(freq.cumtapcnt); % number of trials
+x = repmat(1:nrpt,[ntap 1]);
+x = x(:);
+y = 1:(nrpt*ntap);
+P = sparse(y,x,ones(numel(x),1)./ntap);
 
-nrptl = numel(freq_low.cumtapcnt);
-xl = repmat(1:nrptl,[ntap 1]);
-xl = xl(:);
-yl = 1:(nrptl*ntap);
-Pl = sparse(yl,xl,ones(numel(xl),1)./ntap);
-
-source_high = removefields(source_both, {'avg' 'cfg'});
-source_low  = removefields(source_both, {'avg' 'cfg'});
+source = removefields(source_both, {'avg' 'cfg'});
 
 npos = size(source_both.pos,1);
 clear source_both;
 
-tmppow = abs(F*transpose(freq_low.fourierspctrm)).^2;
-for k = 1:nrptl
-    source_low.trial(k,1).pow = zeros(npos, 1);
-    source_low.trial(k,1).pow(source_low.inside) = tmppow*Pl(:,k);
+tmppow = abs(F*transpose(freq.fourierspctrm)).^2;
+clear freq
+for k = 1:nrpt
+    source.trial(k,1).pow = zeros(npos, 1);
+    source.trial(k,1).pow(source.inside) = tmppow*P(:,k);
 end
 clear tmppow;
 
-tmppow = abs(F*transpose(freq_high.fourierspctrm)).^2;
-for k = 1:nrpth
-    source_high.trial(k,1).pow = zeros(npos, 1);
-    source_high.trial(k,1).pow(source_high.inside) = tmppow*Ph(:,k);
-end
-clear tmppow;
 
 %% REGRESS OUT WORD FREQUENCY DATA
 
@@ -136,49 +111,52 @@ datadirivars = '/project/3011044.02/analysis/freqanalysis/ivars';
 fileivars = fullfile(datadirivars, [subject '_ivars2' '.mat']);
 load(fileivars);
 
-% determine nan trials (for ft_regressconfound()) in both conditions
-trialskeeph = ~isnan(ivars.trial(trl_indx_high, 2));
-trialskeepl = ~isnan(ivars.trial(trl_indx_low, 2));
+% determine nan trials (for ft_regressconfound())
+trialskeep = ~isnan(ivars.trial(:, 2));
 
-% remove the nan trials from the data
+% remove the nan trials from the condfound colums
+trialinfo.trial = ivars.trial(trialskeep, :);
+trialinfo.label = ivars.label;
+
+% remove the nan trials from the data (so that they are the same as
+% confound vectors for ft_regressconfound)
 cfg = [];
-cfg.trials = trialskeeph;
-source_high = ft_selectdata(cfg, source_high);
-cfg.trials = trialskeepl;
-source_low  = ft_selectdata(cfg, source_low);
+cfg.trials = trialskeep;
+source = ft_selectdata(cfg, source); % this adds 'pow' field
 
-% remove the nan trials also from the condfound coluns per conditiosn
-tmp = ivars.trial(trl_indx_high,:);
-trialinfoh.trial = tmp(trialskeeph, :);
-trialinfoh.label = ivars.label;
-
-tmp = ivars.trial(trl_indx_low,:);
-trialinfol.trial = tmp(trialskeepl, :);
-trialinfol.label = ivars.label;
-
-tri = source_high.tri;
+tri = source.tri;
 if ~strcmp(ivar, 'log10wf') % if ivarexp is lex. fr. itself skip this step
     
     nuisance_vars = {'log10wf'}; % take lexical frequency as nuissance
-    confounds = ismember(trialinfoh.label, nuisance_vars); % logical with 1 in the columns for nuisance vars
+    confounds = ismember(trialinfo.label, nuisance_vars); % logical with 1 in the columns for nuisance vars
 
     cfg  = [];
-    cfg.confound = trialinfoh.trial(:, confounds);
+    cfg.confound = trialinfo.trial(:, confounds);
     cfg.beta = 'no';
-    source_high = ft_regressconfound(cfg, rmfield(source_high, 'tri'));
-    source_high.tri = tri;
-
-    cfg  = [];
-    cfg.confound = trialinfol.trial(:, confounds);
-    cfg.beta = 'no';
-    source_low = ft_regressconfound(cfg, rmfield(source_low, 'tri'));
-    source_low.tri = tri;
+    source = ft_regressconfound(cfg, rmfield(source, 'tri'));
+    source.tri = tri;
     
 end
 
-%% DO THE FIRST-LEVEL CONTRAST
+%% SPLIT THE DATA
 
-statdesign = [ones(1,size(trialinfoh.trial, 1)) ones(1,size(trialinfol.trial, 1))*2];
+low_column = strcmp(conditions.label, 'low');
+high_column = strcmp(conditions.label, 'high');
+
+trl_indx_low = conditions.trial(:, low_column);
+trl_indx_high = conditions.trial(:, high_column);
+
+cfg = [];
+cfg.trials = trl_indx_low;
+source_low = ft_selectdata(cfg, source);
+
+cfg = [];
+cfg.trials = trl_indx_high;
+source_high = ft_selectdata(cfg, source);
+
+%% FIRST-LEVEL CONTRAST
+
+statdesign = [ones(1, size(source_high.pow, 1)) ones(1, size(source_low.pow, 1))*2];
 
 % independent between trials t-test
 cfg = [];
@@ -186,7 +164,6 @@ cfg.method = 'montecarlo';
 cfg.statistic = 'indepsamplesT'; % for each subject do between trials (independent) t-test
 cfg.parameter = 'pow';
 cfg.numrandomization = 0;
-% cfg.frequency = foi;
 cfg.design = statdesign;
 stat = ft_sourcestatistics(cfg, source_high, source_low);
 
