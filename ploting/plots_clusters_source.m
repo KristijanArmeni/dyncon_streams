@@ -48,11 +48,19 @@ legend('surrogate', 'empirical');
 cfg = [];
 cfg.method = 'surface';
 cfg.funparameter = 'stat';
-cfg.maskstyle = 'rgba2rgb';
+cfg.maskstyle = 'colormix';
 cfg.maskparameter = 'stat';
-cfg.camlight = 'yes';
+cfg.camlight = 'no';
 ft_sourceplot(cfg, stat);
 title([foi '-' ivar]);
+
+view(90, 90);
+h = light;
+view(0, 0);
+h = light;
+view(150, 20);
+set(h, 'Position', [0 1 0])
+
 
 % figure('Name', ivar ,'NumberTitle','off');
 % subplot(3,1,3)
