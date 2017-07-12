@@ -41,6 +41,14 @@ featuredata = ft_selectdata(cfg, featuredata);
 
 selected_features = {'perplexity', 'entropy', 'log10wf'};
 featureavg = streams_averagefeature(featuredata, selected_features);
+clear featuredata;
+
+%% THROW OUT THE NANS HERE
+
+log10wf = strcmp(featureavg.label, 'log10wf');
+trialskeep = ~isnan(featureavg.trial(:, log10wf));
+
+featureavg.trial = featureavg.trial(trialskeep, :); % select non-nan trials in all columns
 
 %% DO THE TERTILE SPLIT
 
@@ -81,7 +89,7 @@ fid = fopen([savenamedatefull '.txt'], 'wt');
 fprintf(fid, dummy);
 fclose(fid);
 
-save(savename, 'featureavg', 'contrast')
+save(savename, 'featureavg', 'contrast', 'trialskeep')
 
 %% subfunctions
 function featuredataout = streams_averagefeature(featuredatain, selected_features)
@@ -89,11 +97,12 @@ function featuredataout = streams_averagefeature(featuredatain, selected_feature
 % pipeline_preprocessing_language.m and averages single trial values
 
 featuredataout.label{1, 1} = 'story'; % this is the preprocessed trialinfo
+featuredataout.trial(:, 1) = featuredatain.trialinfo; % assign story numbers
 
     for k = 1:numel(selected_features)
 
         feature = selected_features{k};
-        chan_indx = find(strcmp(featuredatain.label, feature)); % find the correct index
+        chan_indx = strcmp(featuredatain.label, feature); % find the correct index
 
         tmp = cellfun(@(x) x(chan_indx,:), featuredatain.trial(:), 'UniformOutput', 0); % choose the correct row in every cell
 
