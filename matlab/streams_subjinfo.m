@@ -466,6 +466,12 @@ if ~strcmp(name, 's01')
   subject.trl = streams_definetrial(subject.dataset, name);
 end
 
+if str2double(name(2:end))>=11
+  % check whether the order of the audiofiles matches the scrambled order
+  % of the trials
+  subject.audiofile = subject.audiofile(subject.trl(:,end)./10);
+end
+
 % get squid artifacts
 cfg = streams_artifact_squidjumps(subject);
 if ~iscell(cfg)
