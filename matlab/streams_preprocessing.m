@@ -148,9 +148,9 @@ for k = 1:numel(seltrl)
   %% AUDIO AVG
   if dospeechenvelope
       
-      audio_orig = audio; % save the original audio file
+      audio_orig = audio; % save the original audio channel from MEG
       
-      wavfile = fullfile(audiodir, f, [f, '.wav']);
+      wavfile = fullfile(audiodir, f, [f, '.wav']); % stimulus wavfile
       delay = subject.delay(seltrl(k))./1000;
 
       audio_new = streams_broadbandenvelope(audio_orig, wavfile, delay);
@@ -162,7 +162,7 @@ for k = 1:numel(seltrl)
       end
 
       cfg.channel  = {'audio_avg', 'audio'};
-      audio_new        = ft_preprocessing(cfg, audio_new); % read in the audio data
+      audio_new        = ft_preprocessing(cfg, audio_new); 
 
       % Add original UADC004 channel back to audio
       audio = ft_appenddata([], audio_orig, audio_new);
@@ -217,6 +217,7 @@ for k = 1:numel(seltrl)
   %% RESAMPLING
   
   if fsample < 1200
+    
     % subtract first time point for memory purposes
     for kk = 1:numel(data.trial)
       firsttimepoint(kk,1) = data.time{kk}(1);
@@ -224,6 +225,7 @@ for k = 1:numel(seltrl)
       eeg.time{kk}         = eeg.time{kk}-eeg.time{kk}(1);
       audio.time{kk}       = audio.time{kk}-audio.time{kk}(1);
     end
+    
     cfg = [];
     cfg.demean  = 'no';
     cfg.detrend = 'no';
@@ -262,8 +264,6 @@ else
 end
 clear tmpdata tmpdataf
 
-
-
 %% Subfunction
 function out = streams_broadbandenvelope(audio, wavfile, delay)
 
@@ -275,10 +275,10 @@ function out = streams_broadbandenvelope(audio, wavfile, delay)
   % precomputed delays.
   audio_broadband.time{1} = audio_broadband.time{1} + delay;
   
-  i1 = nearest(audio.time{1},audio_broadband.time{1}(1));
-  i2 = nearest(audio.time{1},audio_broadband.time{1}(end));
-  i3 = nearest(audio_broadband.time{1},audio.time{1}(1));
-  i4 = nearest(audio_broadband.time{1},audio.time{1}(end));
+  i1 = nearest(audio.time{1}, audio_broadband.time{1}(1));
+  i2 = nearest(audio.time{1}, audio_broadband.time{1}(end));
+  i3 = nearest(audio_broadband.time{1}, audio.time{1}(1));
+  i4 = nearest(audio_broadband.time{1}, audio.time{1}(end));
   
   % add the correctly aligned average envelope signal to the 'audio' data structure
   audio.trial{1}(2,:) = 0;
@@ -287,10 +287,10 @@ function out = streams_broadbandenvelope(audio, wavfile, delay)
   avg_ind = find(all(ismember(audio_broadband.label, 'audio_avg'), 2)); % find index of 'audio_avg' in audio_wav.label
   aud_ind = find(all(ismember(audio_broadband.label, 'audio'), 2)); % find index of 'audio' channel in audio_wav.label
   
-  audio.trial{1}(2,i1:i2) = audio_broadband.trial{1}(avg_ind,i3:i4); % assign audio_avg channel
-  audio.trial{1}(3,i1:i2) = audio_broadband.trial{1}(aud_ind,i3:i4); % assign audio channel
-  audio.label(2,1) = audio_broadband.label(avg_ind); %add label as well
-  audio.label(3,1) = audio_broadband.label(aud_ind);
+  audio.trial{1}(2, i1:i2) = audio_broadband.trial{1}(avg_ind, i3:i4); % assign audio_avg channel
+  audio.trial{1}(3, i1:i2) = audio_broadband.trial{1}(aud_ind, i3:i4); % assign audio channel
+  audio.label(2, 1) = audio_broadband.label(avg_ind); %add label as well
+  audio.label(3, 1) = audio_broadband.label(aud_ind);
   
   out = audio;
  
