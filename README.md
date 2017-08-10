@@ -12,7 +12,7 @@ This repository hosts the code that was used for analysis pipeline in the projec
 
 The pipeline relies on the following software toolboxes
 
-* [Fieldtrip](Fieldtrip)
+* [Fieldtrip][Fieldtrip]
 
 [Fieldtrip]:www.fieldtriptoolbox.org
 
