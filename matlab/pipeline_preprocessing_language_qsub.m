@@ -7,13 +7,12 @@ fsample = ft_getopt(optarg, 'fsample');
 features = ft_getopt(optarg, 'features');
 
 % construct naming variables
-savename = [subject.name '_' audiofile '_feature_' [num2str(fsample) 'hz']];
-fullname = fullfile(savedir, savename);
+savename = fullfile(savedir, subject.name);
 
-datecreated = char(datetime('today', 'Format', 'dd_MM_yy'));
-pipelinefilename = fullfile(savedir, ['s01_all_feature_' num2str(fsample) 'hz_' datecreated]);
+datecreated = char(datetime('today', 'Format', 'dd-MM-yy'));
+pipelinefilename = fullfile(savedir, ['s01_' datecreated]);
 
-% preprocess language data
+%% preprocess language data
 featuredata = streams_preprocessing_language(subject, ...
                                               'audiofile', audiofile, ...
                                               'feature', features, ...
@@ -21,7 +20,7 @@ featuredata = streams_preprocessing_language(subject, ...
                                               'addnoise', 0);
 
                                           
-% save the info on preprocessing options used
+%% save the info on preprocessing options used
 if ~exist([pipelinefilename '.html'], 'file')
     cfgt = [];
     cfgt.filename = pipelinefilename;
@@ -29,7 +28,7 @@ if ~exist([pipelinefilename '.html'], 'file')
     ft_analysispipeline(cfgt, featuredata);
 end
 
-save(fullname, 'featuredata')
+save(savename, 'featuredata')
 
 end
 
