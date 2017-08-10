@@ -4,7 +4,6 @@ function [data] = streams_rejectcomponent(subject)
 
 subjectfull = streams_subjinfo(subject);
 datadir = '/project/3011044.02/preproc/meg';
-savedir = '/project/3011044.02/preproc/meg/clean-epoched/fastica2';
 
 datafile = fullfile(datadir, [subject '_meg.mat']);
 compfile = fullfile(datadir, [subject '_comp.mat']);
@@ -24,7 +23,7 @@ cfg = [];
 cfg.length = 1;
 data = ft_redefinetrial(cfg, data);
 
-savename = fullfile(savedir, [subject '_clean']);
+savename = fullfile(datadir, [subject '_meg-clean']);
 save(savename, 'data');
 end
 
