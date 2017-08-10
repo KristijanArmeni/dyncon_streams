@@ -14,7 +14,7 @@ The pipeline relies on the following software toolboxes
 
 * [Fieldtrip][Fieldtrip]
 
-[Fieldtrip]:www.fieldtriptoolbox.org
+[Fieldtrip]: http://fieldtriptoolbox.org
 
 
 
