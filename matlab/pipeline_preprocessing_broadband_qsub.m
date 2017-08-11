@@ -9,7 +9,7 @@ fsample = ft_getopt(optarg, 'fsample');
 
 %% Preprocessing, band-pass filtering, and downsampling
                         
-[data, eeg, audio] = streams_preprocessing(subject, ...
+[data, ~, audio] = streams_preprocessing(subject, ...
                             'audiofile', audiofile, ...
                             'lpfreq', [], ...
                             'hpfreq', [], ...
@@ -31,25 +31,25 @@ fsample = ft_getopt(optarg, 'fsample');
 savenamemeg = [subject.name '_meg'];
 savenamemeg = fullfile(savedir, savenamemeg);
 
-savenameeeg = [subject.name '_eeg'];
-savenameeeg = fullfile(savedir, savenameeeg);
+% savenameeeg = [subject.name '_eeg'];
+% savenameeeg = fullfile(savedir, savenameeeg);
 
 savenameaudio = [subject.name '_aud'];
 savenameaudio = fullfile(savedir, savenameaudio);
 
-% datecreated = char(datetime('today', 'Format', 'dd_MM_yy'));
-% pipelinefilename = fullfile(savedir, ['s11_meg_' datecreated]);
-% 
-% % save the pipeline if not yet saved
-% if ~exist([pipelinefilename '.html'], 'file')
-%     cfgt = [];
-%     cfgt.filename = pipelinefilename;
-%     cfgt.filetype = 'html';
-%     ft_analysispipeline(cfgt, data);
-% end
+datecreated = char(datetime('today', 'Format', 'dd-MM-yy'));
+pipelinefilename = fullfile(savedir, ['s01_meg_' datecreated]);
+
+% save the pipeline if not yet saved
+if ~exist([pipelinefilename '.html'], 'file')
+    cfgt = [];
+    cfgt.filename = pipelinefilename;
+    cfgt.filetype = 'html';
+    ft_analysispipeline(cfgt, data);
+end
     
 save(savenamemeg, 'data');
-save(savenameeeg, 'eeg');
+% save(savenameeeg, 'eeg');
 save(savenameaudio, 'audio');
 
 
