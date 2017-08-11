@@ -8,10 +8,11 @@ This repository hosts the code that was used for analysis pipeline in the projec
   * external (external code)
 * language (for processing language stimuli used in the experiment)
 * ploting (code for ploting the results)
+* old (code no longer used, obsolete or replaced)
 
 ### Toolboxes used
 
-The pipeline relies on the following software toolboxes and software:
+The pipeline relies on the following matlab toolboxes and software:
 
 * [Fieldtrip][Fieldtrip] (for MEG data analysis)
 * [Freesurfer][Freesurfer] (for cortical sheet reconstruction in source analysis)
