@@ -1,4 +1,4 @@
-function pipeline_freqanalysis_qsub(subject, audiofile, optarg)
+function pipeline_freqanalysis_qsub(subject, optarg)
 
 % Initialization
 if ischar(subject)
@@ -6,19 +6,15 @@ if ischar(subject)
 end
 
 savedir = '/project/3011044.02/analysis/freqanalysis';
-savedirivars = '/project/3011044.02/analysis/freqanalysis/ivars';
 datadir = '/project/3011044.02/preproc';
 
 % filter_range = ft_getopt(optarg, 'filter_range');
-sampling_rate = ft_getopt(optarg, 'sr');
 
-filename_meg = [subject.name '_' 'meg'];
-filename_meg = fullfile(datadir, 'meg', filename_meg);  % megdata
-filename_language = fullfile(datadir, 'language', [subject.name '_' audiofile '_feature_' sampling_rate]); %featuredata
+filename_meg = [subject.name '_' 'meg-clean'];
+filename_meg = fullfile(datadir, 'meg', filename_meg);           % megdata
 
 % load in the data
 load(filename_meg)
-load(filename_language)
 
 %% add grad info for s09 (two datasets)
 if strcmp(subject.name, 's09')
@@ -28,18 +24,19 @@ end
 
 %% Frequency analysis
 
-epochlength     = ft_getopt(optarg, 'epochlength');
+% epochlength     = ft_getopt(optarg, 'epochlength'); now done in
+% rejectcomponent
 taper           = ft_getopt(optarg, 'taper');
 tapsmooth       = ft_getopt(optarg, 'tapsmooth');
 
-[freq, ~, ~, ivars] = streams_freqanalysis(data, featuredata, epochlength, taper, tapsmooth);
+[freq, ~] = streams_freqanalysis(data, taper, tapsmooth);
 
 %% save the output
 
 taperinfo = [taper num2str(tapsmooth)];
 % save the info on preprocessing options used
-datecreated = char(datetime('today', 'Format', 'dd_MM_yy'));
-pipelinefilename = fullfile(savedir, ['s11_' taperinfo '_' datecreated]);
+datecreated = char(datetime('today', 'Format', 'dd-MM-yy'));
+pipelinefilename = fullfile(savedir, ['s02_' taperinfo '_' datecreated]);
 
 if ~exist([pipelinefilename '.html'], 'file')
     cfgt = [];
@@ -51,9 +48,5 @@ end
 savenamefreq = [subject.name '_' taperinfo];
 savenamefreq = fullfile(savedir, savenamefreq);
 
-savenameivars = [subject.name '_ivars'];
-savenameivars = fullfile(savedirivars, savenameivars);
-
 save(savenamefreq, 'freq');
-save(savenameivars, 'ivars');
 

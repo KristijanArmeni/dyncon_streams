@@ -2,19 +2,11 @@ function streams_freqanalysis_groupcontrast(ivar, foi)
 
 %% Initialize
 % directories
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject/tertile-split';
-savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group/tertile-split';
+datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject/';
+savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group/';
 
 % define subject array
-subjects = strsplit(sprintf('s%.2d ', 2:28));
-subjects = subjects(~cellfun(@isempty, subjects));
-
-s6 = strcmp(subjects, 's06'); % doesn't exist
-subjects(s6) = [];
-s9 = strcmp(subjects, 's09'); % not computed
-subjects(s9) = [];
-
-num_sub = numel(subjects);
+[subjects, num_sub] = streams_util_subjectstring(2:28, {'s06', 's09'});
 
 % for loading freq structures
 prefix = [subjects{1} '-' subjects{end}];
@@ -61,7 +53,7 @@ end
 fprintf('Doing second level stats on: \n\n')
 
 % import preproc data for grad information in neighbourhoud chan definition
-load('/project/3011044.02/preproc/meg/s01_meg.mat');
+load('/project/3011044.02/preproc/meg/s02_meg-clean.mat');
 neighdata = stat_all{1};
 neighdata.grad = data.grad;
 
