@@ -1,17 +1,19 @@
 function streams_definecontrast(subject)
 
 % streams_definecontrast(subject) averages language data from featuredata
-% and computes tertile split for entropy, perplexity and word frequency
+% obtained from streams_preprocessing_language() and computes tertile split
+% for entropy, perplexity and word frequency. It saves the ouput to:
+% '/project/3011044.02/analysis/lng-contrast/'
+%
 
 %% INITIALIZE 
 
-datadir = '/project/3011044.02/preproc/language';
-savedir = '/project/3011044.02/analysis/lng-contrast/';
+datadir  = '/project/3011044.02/preproc/language';
+savedir  = '/project/3011044.02/analysis/lng-contrast';
 savename = fullfile(savedir, subject);
 
-suffix = 'all_feature_300hz'; % load in the 300 Hz downsampled data
-filename = [subject '_' suffix];
-languagepreproc = fullfile(datadir, filename);
+% load in the recomputed data (after the critical bugfix)
+languagepreproc = fullfile(datadir, subject);
 
 load(languagepreproc) % loads in the featuredata variable
 
@@ -21,31 +23,30 @@ cfg = [];
 cfg.length = 1; % make a single trial 300 samples long
 featuredata = ft_redefinetrial(cfg, featuredata);
 
-%% ADHOC TRIAL REMOVAL (TO MATCH THE ACTUAL DATA)
+%% ADHOC TRIAL REMOVAL (TO MATCH THE MEG DATA)
 
-datafile = fullfile('/project/3011044.02/preproc/meg', [subject, '_meg']); % load in preprocessed meg data
+datafile = fullfile('/project/3011044.02/preproc/meg', [subject, '_meg-clean']); % load in preprocessed meg data
+data = []; % to prevent dynamic error assignment (?)
 load(datafile);
-
-cfg = [];
-cfg.length = 1;
-data = ft_redefinetrial(cfg, data);
 
 sel = streams_cleanadhoc(data); % select trials with high variance (as was done for freqanalysis
 clear data;
 
 cfg = [];
-cfg.trials = sel; % make sure featuredata has the same trials as data
+cfg.trials  = sel; % make sure featuredata has the same trials as MEG data
 featuredata = ft_selectdata(cfg, featuredata);
 
 %% AVERAGE FEATURE
 
 selected_features = {'perplexity', 'entropy', 'log10wf'};
+
 featureavg = streams_averagefeature(featuredata, selected_features);
+
 clear featuredata;
 
 %% THROW OUT THE NANS HERE
 
-log10wf = strcmp(featureavg.label, 'log10wf');
+log10wf    = strcmp(featureavg.label, 'log10wf');
 trialskeep = ~isnan(featureavg.trial(:, log10wf));
 
 featureavg.trial = featureavg.trial(trialskeep, :); % select non-nan trials in all columns
@@ -91,7 +92,8 @@ fclose(fid);
 
 save(savename, 'featureavg', 'contrast', 'trialskeep')
 
-%% subfunctions
+%% SUBFUNCTIONS
+
 function featuredataout = streams_averagefeature(featuredatain, selected_features)
 % streams_averagefeature() takes the output of
 % pipeline_preprocessing_language.m and averages single trial values
@@ -110,19 +112,6 @@ featuredataout.trial(:, 1) = featuredatain.trialinfo; % assign story numbers
         featuredataout.label{k + 1, 1} = feature;
     end
 
-end
-
-function sel = streams_cleanadhoc(datain)
-
-% remove trials that, across the channel array, have high variance in the individual epochs
-tmp = ft_channelnormalise([], datain);
-S   = cellfun(@std,tmp.trial, repmat({[]},[1 numel(tmp.trial)]), repmat({2},[1 numel(tmp.trial)]), 'uniformoutput', false);
-S   = cat(2,S{:});
-
-sel = find(~(sum(S>2)>=5 | sum(S>3)>0)); % at least five channels for which the individual 
-% trials's STD is exceeding 2, where the value of 2 is the relative STD of that chnnel's trial, relative to the whole dataset
-
-clear tmp;
 end
 
 end
