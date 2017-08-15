@@ -10,7 +10,9 @@ function streams_definecontrast(subject)
 
 datadir  = '/project/3011044.02/preproc/language';
 savedir  = '/project/3011044.02/analysis/lng-contrast';
-savename = fullfile(savedir, subject);
+megfile = fullfile('/project/3011044.02/preproc/meg', [subject, '_meg-clean']); % load in preprocessed meg data
+savename = fullfile(savedir, subject);  % for the contrast structure
+savename2 = fullfile(datadir, subject); % save the new featuredata
 
 % load in the recomputed data (after the critical bugfix)
 languagepreproc = fullfile(datadir, subject);
@@ -25,31 +27,30 @@ featuredata = ft_redefinetrial(cfg, featuredata);
 
 %% ADHOC TRIAL REMOVAL (TO MATCH THE MEG DATA)
 
-datafile = fullfile('/project/3011044.02/preproc/meg', [subject, '_meg-clean']); % load in preprocessed meg data
 data = []; % to prevent dynamic error assignment (?)
-load(datafile);
+load(megfile);
 
 sel = streams_cleanadhoc(data); % select trials with high variance (as was done for freqanalysis
-clear data;
 
 cfg = [];
 cfg.trials  = sel; % make sure featuredata has the same trials as MEG data
 featuredata = ft_selectdata(cfg, featuredata);
+data        = ft_selectdata(cfg, data);
 
 %% AVERAGE FEATURE
 
 selected_features = {'perplexity', 'entropy', 'log10wf'};
 
-featureavg = streams_averagefeature(featuredata, selected_features);
-
-clear featuredata;
+% put average feature information into .trialinfo and labels into
+% .trialinfolabel
+featuredata = streams_averagefeature(featuredata, selected_features);
 
 %% THROW OUT THE NANS HERE
 
-log10wf    = strcmp(featureavg.label, 'log10wf');
-trialskeep = ~isnan(featureavg.trial(:, log10wf));
-
-featureavg.trial = featureavg.trial(trialskeep, :); % select non-nan trials in all columns
+% log10wf    = strcmp(featureavg.label, 'log10wf');
+% trialskeep = ~isnan(featureavg.trial(:, log10wf));
+% 
+% featureavg.trialinfo = featureavg.trial(trialskeep, :); % select non-nan trials in all columns
 
 %% DO THE TERTILE SPLIT
 
@@ -60,8 +61,8 @@ for i = 1:numvars
     ivarexp = selected_features{i};
     
     % find channel index
-    col_exp = strcmp(featureavg.label(:), ivarexp);
-    ivar_exp = featureavg.trial(:, col_exp); % pick the appropriate language variable (mean complexity for each trial)
+    col_exp = strcmp(featuredata.trialinfolabel(:), ivarexp);
+    ivar_exp = featuredata.trialinfo(:, col_exp); % pick the appropriate language variable (mean complexity for each trial)
 
     q = quantile(ivar_exp, [0.33 0.66]); % extract the two quantile values
     low_tertile = q(1);
@@ -71,35 +72,44 @@ for i = 1:numvars
     trl_indx_low = ivar_exp < low_tertile; % this gives a logical vector
     trl_indx_high = ivar_exp > high_tertile; 
 
-    % create contrast structure
-    contrast(i).subject     = subject;
-    contrast(i).ivar        = ivarexp;
+    % create the contrast structure
+    contrast(i).indepvar    = ivarexp;
+    contrast(i).label       = {'low', 'high'}; 
     contrast(i).trial       = [trl_indx_low, trl_indx_high];
-    contrast(i).label       = {'low', 'high'};
     
 end
 
 %% SAVING
 
-savenamedate = fullfile(savedir, 's02');
-datecreated = char(datetime('today', 'Format', 'dd-MM-yy'));
-savenamedatefull = [savenamedate '_' datecreated];
-dummy = 'this is just a time stamp';
+savenamedate      = fullfile(savedir, 's02');
+savenamedate2     = fullfile(datadir, 's02'); % for preproc/language
+datecreated       = char(datetime('today', 'Format', 'dd-MM-yy'));
+savenamedatefull  = [savenamedate '_' datecreated];
+savenamedatefull2 = [savenamedate2 '_' datecreated];
+dummy             = 'this is just a time stamp for streams_definecontrast()';
 
 fid = fopen([savenamedatefull '.txt'], 'wt');
 fprintf(fid, dummy);
 fclose(fid);
 
-save(savename, 'featureavg', 'contrast', 'trialskeep')
+fid = fopen([savenamedatefull2 '.txt'], 'wt');
+fprintf(fid, dummy);
+fclose(fid);
+
+% save contrast, featuredata with new trialinfo and meg data
+save(savename, 'contrast')
+save(savename2, 'featuredata');
+save(megfile, 'data');
 
 %% SUBFUNCTIONS
 
 function featuredataout = streams_averagefeature(featuredatain, selected_features)
 % streams_averagefeature() takes the output of
-% pipeline_preprocessing_language.m and averages single trial values
+% streams_preprocessing.m (featuredata struct) and averages single trial values
 
-featuredataout.label{1, 1} = 'story'; % this is the preprocessed trialinfo
-featuredataout.trial(:, 1) = featuredatain.trialinfo; % assign story numbers
+featuredataout = featuredatain;
+featuredataout.trialinfolabel{1, 1} = 'story'; % this is the preprocessed trialinfo
+featuredataout.trialinfo(:, 1) = featuredatain.trialinfo; % assign story numbers
 
     for k = 1:numel(selected_features)
 
@@ -108,10 +118,15 @@ featuredataout.trial(:, 1) = featuredatain.trialinfo; % assign story numbers
 
         tmp = cellfun(@(x) x(chan_indx,:), featuredatain.trial(:), 'UniformOutput', 0); % choose the correct row in every cell
 
-        featuredataout.trial(:, k + 1) = cellfun(@nanmean, tmp(:)); % take the mean, ignoring nans
-        featuredataout.label{k + 1, 1} = feature;
+        featuredataout.trialinfo(:, k + 1) = cellfun(@nanmean, tmp(:)); % take the mean, ignoring nans
+        featuredataout.trialinfolabel{k + 1, 1} = feature;
     end
-
+    
+    % add information about the number of nan's
+    featuredataout.trialinfo(:, 5) = cellfun(@(x) sum(isnan(x)), tmp(:));
+    featuredataout.trialinfolabel{5, 1} = 'numNan';
+    
+    
 end
 
 end
