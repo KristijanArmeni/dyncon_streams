@@ -4,17 +4,19 @@ function streams_dics(cfgfreq, cfgdics, subject, ivar)
 
 %% INITIALIZ
 
-dir = '/project/3011044.02';
-preprocfile = fullfile(dir, 'preproc/meg', [subject '_meg.mat']);
-headmodelfile = fullfile(dir, 'preproc/anatomy', [subject '_headmodel.mat']);
-leadfieldfile = fullfile(dir, 'preproc/anatomy', [subject '_leadfield.mat']);
-sourcemodelfile = fullfile(dir, 'preproc/anatomy', [subject '_sourcemodel.mat']);
+dir             = '/project/3011044.02/preproc';
+
+preprocfile     = fullfile(dir, 'meg', [subject '_meg-clean.mat']);
+featurefile     = fullfile(dir, 'language', [subject '.mat']);
+headmodelfile   = fullfile(dir, 'anatomy', [subject '_headmodel.mat']);
+leadfieldfile   = fullfile(dir, 'anatomy', [subject '_leadfield.mat']);
+sourcemodelfile = fullfile(dir, 'anatomy', [subject '_sourcemodel.mat']);
 
 % conditions file, frequency band doesn't matter here
-conditionsfile = fullfile(dir, 'analysis/freqanalysis/contrast/subject/tertile-split', [subject '_' ivar '_12-20.mat']); 
+conditionsfile = fullfile('/project/3011044.02/analysis/lng-contrast/', [subject '.mat']); 
 
 % saving dir
-savedir = fullfile(dir, 'analysis', 'dics', 'firstlevel');
+savedir = fullfile(dir, 'analysis', 'dics', 'subject');
 
 % ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
 %% LOAD
@@ -23,29 +25,8 @@ load(preprocfile); % meg data
 load(headmodelfile);
 load(leadfieldfile);
 load(sourcemodelfile);
-load(conditionsfile, 'conditions'); % logical colums
-
-%% EPOCH
-
-cfg = [];
-cfg.length = 1;
-data = ft_redefinetrial(cfg, data);
-
-%% ADDITIONAL CLEANING STEP
-% use some heuristic to remove trials that, across the channel array, have
-% high variance in the individual epochs
-tmp = ft_channelnormalise([], data);
-S   = cellfun(@std,tmp.trial, repmat({[]},[1 numel(tmp.trial)]), repmat({2},[1 numel(tmp.trial)]), 'uniformoutput', false);
-S   = cat(2,S{:});
-
-sel = find(~(sum(S>2)>=5 | sum(S>3)>0)); % at least five channels for which the individual 
-% trials's STD is exceeding 2, where the value of 2 is the relative STD of that chnnel's trial, relative to the whole dataset
-
-cfg = [];
-cfg.trials = sel;
-data = ft_selectdata(cfg, data);
-% featuredata = ft_selectdata(cfg, featuredata);
-clear tmp;
+load(conditionsfile); % struct with field .trial where logical colums for contrast are stored
+load(featurefile);
 
 %% DO FREQANALYSIS
 
@@ -58,7 +39,7 @@ if strcmp(cfgfreq.taper, 'dpss'); cfg.tapsmofrq = cfgfreq.tapsmofrq; end
 cfg.foilim    = cfgfreq.foilim;
 
 freq = ft_freqanalysis(cfg, data);
-clear data;
+
 
 %% COMMON FILTER
 
@@ -77,7 +58,6 @@ cfg.dics.fixedori       = 'yes';
 
 source_both = ft_sourceanalysis(cfg, ft_checkdata(freq,'cmbrepresentation','fullfast')); % trick to speed up the computation
 F           = cat(1,source_both.avg.filter{source_both.inside}); % common spatial filters per location
-
 
 %% SINGLE TRIAL POWER ESTIMATE
 
@@ -98,40 +78,41 @@ clear source_both;
 
 tmppow = abs(F*transpose(freq.fourierspctrm)).^2;
 clear freq
+
 for k = 1:nrpt
     source.trial(k,1).pow = zeros(npos, 1);
     source.trial(k,1).pow(source.inside) = tmppow*P(:,k);
 end
-clear tmppow;
 
+% remove some stuff that's clogging wm
+clear tmppow;
+clear sourcemodel leadfield headmodel cfg;
+clear F P S;
 
 %% REGRESS OUT WORD FREQUENCY DATA
 
-datadirivars = '/project/3011044.02/analysis/freqanalysis/ivars';
-fileivars = fullfile(datadirivars, [subject '_ivars2' '.mat']);
-load(fileivars);
+% remove the nan trials from the source data to make them the same as
+% confound vectors (for ft_regressconfound)
 
-% determine nan trials (for ft_regressconfound())
-trialskeep = ~isnan(ivars.trial(:, 2));
+selected_column        = strcmp(featuredata.trialinfolabel, 'log10wf');
+trialskeep             = logical(~isnan(featuredata.trialinfo(:, selected_column)));
+trialinfolabel         = featuredata.trialinfolabel; % store this because ft_selectdata discards it
 
-% remove the nan trials from the condfound colums
-trialinfo.trial = ivars.trial(trialskeep, :);
-trialinfo.label = ivars.label;
+cfg         = [];
+cfg.trials  = trialskeep; %
+source      = ft_selectdata(cfg, source); % this adds 'pow' field
+featuredata = ft_selectdata(cfg, featuredata);
 
-% remove the nan trials from the data (so that they are the same as
-% confound vectors for ft_regressconfound)
-cfg = [];
-cfg.trials = trialskeep;
-source = ft_selectdata(cfg, source); % this adds 'pow' field
+featuredata.trialinfolabel    = trialinfolabel; % plug trialinfolabel back in
 
 tri = source.tri;
 if ~strcmp(ivar, 'log10wf') % if ivarexp is lex. fr. itself skip this step
     
     nuisance_vars = {'log10wf'}; % take lexical frequency as nuissance
-    confounds = ismember(trialinfo.label, nuisance_vars); % logical with 1 in the columns for nuisance vars
+    confounds = ismember(featuredata.trialinfolabel, nuisance_vars); % logical with 1 in the columns for nuisance vars
 
     cfg  = [];
-    cfg.confound = trialinfo.trial(:, confounds);
+    cfg.confound = featuredata.trialinfo(:, confounds); %pick the log10wf column
     cfg.beta = 'no';
     source = ft_regressconfound(cfg, rmfield(source, 'tri'));
     source.tri = tri;
@@ -140,11 +121,14 @@ end
 
 %% SPLIT THE DATA
 
-low_column = strcmp(conditions.label, 'low');
-high_column = strcmp(conditions.label, 'high');
+ivarsel = strcmp({contrast.indepvar}, ivar); % use the precomputed contrasts
+contrastsel = contrast(ivarsel); % chose a subset of the struct array
 
-trl_indx_low = conditions.trial(:, low_column);
-trl_indx_high = conditions.trial(:, high_column);
+low_column = strcmp(contrastsel.label, 'low');
+high_column = strcmp(contrastsel.label, 'high');
+
+trl_indx_low = contrastsel.trial(trialskeep, low_column);
+trl_indx_high = contrastsel.trial(trialskeep, high_column);
 
 cfg = [];
 cfg.trials = trl_indx_low;
@@ -154,9 +138,15 @@ cfg = [];
 cfg.trials = trl_indx_high;
 source_high = ft_selectdata(cfg, source);
 
+clear source; % not needed anymore
+
 %% FIRST-LEVEL CONTRAST
 
-statdesign = [ones(1, size(source_high.pow, 1)) ones(1, size(source_low.pow, 1))*2];
+% desing matrix
+numobs_high = sum(trl_indx_high); % count the number of ones in this vector
+numobs_low  = sum(trl_indx_low);
+
+statdesign = [ones(1, numobs_high) ones(1, numobs_low)*2];
 
 % independent between trials t-test
 cfg = [];

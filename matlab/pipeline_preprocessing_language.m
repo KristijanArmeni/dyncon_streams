@@ -4,10 +4,7 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-subjects = strsplit(sprintf('s%d ', 11:28));
-subjects = subjects(~cellfun(@isempty, subjects));
-display(subjects);
-num_sub = numel(subjects);
+[subjects, num_sub] = streams_util_subjectstring(1:10, {'s06'});
 
 pipeline = '2';
 
@@ -35,7 +32,7 @@ switch pipeline
         subject    = streams_subjinfo(subjects{j});
         audiofile = 'all';
         optarg = {'fsample', 300, ...
-                  'features', {'nchar' 'log10wf' 'depind' 'perplexity' 'log10perp' 'entropy' 'entropyred'}};
+                  'features', {'nchar' 'log10wf' 'perplexity' 'entropy'}};
 
         qsubfeval('pipeline_preprocessing_language_qsub', subject, audiofile, optarg, ...
                           'memreq', 1024^3 * 3,...

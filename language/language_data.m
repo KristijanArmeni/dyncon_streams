@@ -1,5 +1,5 @@
 
-datadir = '/project/3011044.02/data/language/';
+datadir = '/project/3011044.02/raw/data/language/';
 
 subtlex_table_filename = fullfile(datadir, 'worddata_subtlex.mat');
 subtlex_firstrow_filename = fullfile(datadir, 'worddata_subtlex_firstrow.mat');
@@ -53,11 +53,11 @@ for i = 1:num_stories
     
 end
 
-% log transform perplexity values
-perplexity_col = find(strcmp(data(1, :), 'perplexity'));
-data(2: end, 7) = cellfun(@log10, data(2:end, perplexity_col), 'UniformOutput', 0);
-
-data(1, perplexity_col) = {'lg10perp'};
+% % log transform perplexity values
+% perplexity_col = find(strcmp(data(1, :), 'perplexity'));
+% data(2: end, 7) = cellfun(@log10, data(2:end, perplexity_col), 'UniformOutput', 0);
+% 
+% data(1, perplexity_col) = {'lg10perp'};
 data(1, 8) = {'lg10wf'}; % create the column for subtlex wordfrequencies
 data(1, 9) = {'nchar'};
 
@@ -98,8 +98,8 @@ subtlex_words = subtlex_data(:, subtlex_word_column);
         row = find(strcmp(subtlex_words, word)); 
 
         if ~isempty(row) 
-            
-             data{j, 8} = subtlex_data{row, subtlex_frequency_column}; % lookup the according frequency values
+             % lookup the according frequency values
+             data{j, 8} = subtlex_data{row, subtlex_frequency_column}; 
              data{j, 9} = subtlex_data{row, subtlex_wlen_column};
              
         else % if it is a punctuation mark or a proper name etc., write nan (punctuation marks etc. do not appear in the subtlex table)

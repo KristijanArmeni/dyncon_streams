@@ -1,51 +1,111 @@
-function [stat, freq_high, freq_low] = streams_freqanalysis_contrast(freq, ivars, ivarsel, ivarctrl, contrast_type, foi)
-%UNTITLED4 Summary of this function goes here
-%   Detailed explanation goes here
+function streams_freqanalysis_contrast(subject, inputargs)
 
-% find channel index
-chan_idx = strcmp(ivars.label(:), ivarsel);
-chan_ctrl = strcmp(ivars.label(:), ivarctrl);
-ivar_vector = ivars.trial(:, chan_idx); % pick the appropriate language variable
-ivar_control = ivars.trial(:, chan_ctrl);
+%% intialize
 
-q = quantile(ivar_vector, [0.25 0.50 0.75]); % extract the three quantile values
-% median split
-ic1 = ivar_control(ivar_vector > q(2));
-ic2 = ivar_control(ivar_vector < q(2));
+ivarexp         = ft_getopt(inputargs, 'ivarexp'); % the first input must not be called 'varargin', else matlab complains
+dohigh          = ft_getopt(inputargs, 'dohigh', 0);
+filename        = ft_getopt(inputargs, 'filename');
 
-[ivar_sel_strat1, ivar_sel_strat2] = ft_stratify([], ic1', ic2');
+datadir         = '/project/3011044.02/analysis/freqanalysis';
+conditionsfile  = fullfile('/project/3011044.02/analysis/lng-contrast/', [subject '.mat']);
+savedir         = '/project/3011044.02/analysis/freqanalysis/contrast/subject/';
 
-% index trials that fall into each of the quartile ranges
-% qr1 = ivar_vector <= q(1);
-% qr2 = ivar_vector > q(1) & ivar_vector <= q(2);
-% qr3 = ivar_vector > q(2) & ivar_vector <= q(3);
-% qr4 = ivar_vector > q(3);
-% 
-% if strcmp(contrast_type, 'outer')
-%     trials_low = qr1; % first quartile
-%     trials_high = qr4; % second quartile
-% elseif strcmp(contrast_type, 'inner')
-%     trials_low = qr2; % second quartile
-%     trials_high = qr3; % third quartile
-% end
+filefreq        = fullfile(datadir, [subject '_' filename '.mat']); %MEG power spectra .mat files
+
+load(filefreq) % loads in the freq variable
+load(conditionsfile) % loads in the contrast structure
+
+taper = freq.cfg.previous.taper;
+isdpss = strcmp(taper, 'dpss');
+
+% check the amount of smoothing used
+if isdpss; tapsmofrq = freq.cfg.previous.tapsmofrq; end
+
+% determine the foi based on which taper and smooth was used on the data
+if     isdpss && tapsmofrq == 8 && dohigh; foi = [60 90];
+elseif isdpss && tapsmofrq == 8;           foi = [30 60];
+elseif isdpss && tapsmofrq == 4 && dohigh; foi = [20 30];
+elseif isdpss && tapsmofrq == 4;           foi = [12 20];
+else;                                      foi = [4 8];
+end
+
+%% throw out nan trials based on log10wf column
+
+% select trials which have a value assigned in featureavg (needed for
+% regressconfound)
 
 cfg = [];
-cfg.trials = trials_low;
+cfg.trials = trialskeep; % 'trialskeep' computed in streams_definecontrast()
+freq = ft_selectdata(cfg, freq);
+
+
+%% regress out lexical frequency
+
+if ~strcmp(ivarexp, 'log10wf') % if ivarexp is lex. fr. itself skip this step
+    
+    nuisance_vars = {'log10wf'}; % take lexical frequency as nuissance
+    confounds     = ismember(featureavg.label, nuisance_vars); % logical with 1 in the columns for nuisance vars
+
+    cfg  = [];
+    cfg.confound  = featureavg.trial(:, confounds);
+    cfg.beta      = 'no';
+    freq          = ft_regressconfound(cfg, freq);
+
+end
+
+%% Split the data into high and low conditions
+
+% use the 'contrast' struct, precomputed in streams_definecontrast()
+ivarsel = strcmp({contrast.ivar}, ivarexp); % use the correct struct dimeension
+contrastsel = contrast(ivarsel); % chose a subset of the struct array
+
+low_column = strcmp(contrastsel.label, 'low');
+high_column = strcmp(contrastsel.label, 'high');
+
+trl_indx_low = contrastsel.trial(:, low_column);
+trl_indx_high = contrastsel.trial(:, high_column);
+
+% select data
+cfg = [];
+cfg.trials = trl_indx_low';
 freq_low = ft_selectdata(cfg, freq);
 
 cfg = [];
-cfg.trials = trials_high;
+cfg.trials = trl_indx_high;
 freq_high = ft_selectdata(cfg, freq);
 
-%% compute a t-statistic for the high/low comparison
+%% INDEPENDENT T-TEST
 
+design = [ones(1,size(freq_high.trialinfo,1)) ones(1,size(freq_low.trialinfo,1))*2];
+
+% independent between trials t-test
 cfg = [];
 cfg.method = 'montecarlo';
 cfg.statistic = 'indepsamplesT'; % for each subject do between trials (independent) t-test
 cfg.numrandomization = 0;
 cfg.frequency = foi;
-cfg.design = [ones(1,size(freq_high.trialinfo,1)) ones(1,size(freq_low.trialinfo,1))*2];
+cfg.design = design;
 stat = ft_freqstatistics(cfg, freq_high, freq_low);
 
+%% SAVE
+
+foistr = [num2str(foi(1)) '-' num2str(foi(2))];
+filenameout = ['_' ivarexp '_' foistr];
+
+% save the info on preprocessing options used
+pipelinefilename = fullfile(savedir, ['s01' filenameout]);
+
+if ~exist([pipelinefilename '.html'], 'file')
+    cfgt = [];
+    cfgt.filename = pipelinefilename;
+    cfgt.filetype = 'html';
+    ft_analysispipeline(cfgt, stat);
 end
 
+% save stat
+savename_stat = [subject filenameout];
+savename_stat = fullfile(savedir, savename_stat);
+save(savename_stat, 'stat'); % save trial indexes too
+
+
+end

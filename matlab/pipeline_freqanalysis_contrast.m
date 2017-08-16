@@ -1,116 +1,22 @@
 
-if ~ft_hastoolbox('qsub',1)
-    addpath /home/kriarm/git/fieldtrip/qsub;
-end
+[subjects, num_sub] = streams_util_subjectstring(2:28, {'s06'});
 
-subjects = strsplit(sprintf('s%.2d ', 2:28));
-subjects = subjects(~cellfun(@isempty, subjects));
+ivars = {'entropy', 'perplexity', 'log10wf'};
 
-s6 = strcmp(subjects, 's06');
-subjects(s6) = []; % s06 dataset does not exist, empty it to prevent errors
-s9 = strcmp(subjects, 's09');
-subjects(s9) = [];
+%% SUBJECT AND VARIABLE LOOP
 
-num_sub = numel(subjects);
-display(subjects);
-ivars = {'entropy', 'log10perp', 'log10wf'};
-runpipeline = 'tertile';
+for i = 1:numel(ivars)
 
-switch runpipeline
-    
-   case 'tertile'
-   sprintf('Doing the %s contrast...\n\n', runpipeline)
-    
-    for i = 1:numel(ivars)
-
-        ivarexp = ivars{i};
-
-        for k = 1:numel(subjects)
-
-            subject = subjects{k};
-            inputargs = {'ivarexp', ivarexp, 'filename', 'dpss4', 'dohigh', 1};
-            qsubfeval('pipeline_freqanalysis_contrast_tertile_qsub', subject, inputargs, ...
-                                                                'memreq', 1024^3 * 5,...
-                                                                'timreq', 30*60,...
-                                                                'batchid', 'streams_freq');
-        end
-
-    end
-    
-    case 'regress'
-    sprintf('Doing the %s contrast...\n\n', runpipeline)
-    
-    for i = 1:numel(ivars)
-
-        ivarexp = ivars{i};
-
-        for k = 1:numel(subjects)
-
-            subject = subjects{k};
-            filename = 'hanning';
-            qsubfeval('pipeline_freqanalysis_contrast_qsub', subject, filename, ivarexp, ...
-                                                                'memreq', 1024^3 * 8,...
-                                                                'timreq', 30*60,...
-                                                                'batchid', 'streams_freq');
-        end
-
-    end
-   
-    case 'lexfreq'
-    sprintf('Doing the %s contrast...\n\n', runpipeline)
-
-    ivarexp = 'log10wf';
+    ivarexp = ivars{i};
 
     for k = 1:numel(subjects)
 
-            subject = subjects{k};
-            filename = 'hanning';
-            qsubfeval('pipeline_freqanalysis_contrast_lexfreq_qsub', subject, filename, ivarexp, ...
-                                                                'memreq', 1024^3 * 4,...
-                                                                'timreq', 30*60,...
-                                                                'batchid', 'streams_freq');
-
+        subject = subjects{k};
+        inputargs = {'ivarexp', ivarexp, 'filename', 'dpss8', 'dohigh', 1};
+        qsubfeval('streams_freqanalysis_contrast', subject, inputargs, ...
+                                                            'memreq', 1024^3 * 5,...
+                                                            'timreq', 30*60);
     end
 
-
-    
-    case 'innerqr'
-    sprintf('Doing the %s contrast...\n\n', runpipeline)
-    for i = 1:numel(ivars)
-
-        ivarexp = ivars{i};
-
-        for k = 1:numel(subjects)
-
-                subject = subjects{k};
-                filename = 'hanning';
-                qsubfeval('pipeline_freqanalysis_contrast_innerqr_qsub', subject, filename, ivarexp, ...
-                                                                    'memreq', 1024^3 * 4,...
-                                                                    'timreq', 30*60,...
-                                                                    'batchid', 'streams_freq');
-
-        end
-
-    end
-   
-   case 'outerqr'
-    sprintf('Doing the %s contrast...\n\n', runpipeline)
-    for i = 1:numel(ivars)
-
-        ivarexp = ivars{i};
-
-        for k = 1:numel(subjects)
-
-                subject = subjects{k};
-                filename = 'dpss8';
-                qsubfeval('pipeline_freqanalysis_contrast_outerqr_qsub', subject, filename, ivarexp, ...
-                                                                    'memreq', 1024^3 * 4,...
-                                                                    'timreq', 30*60,...
-                                                                    'batchid', 'streams_freq');
-
-        end
-
-   end
-        
-    
 end
+    

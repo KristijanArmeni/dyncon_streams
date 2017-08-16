@@ -102,9 +102,9 @@ else
 
 end
 
-audiodir = '/project/3011044.02/lab/pilot/stim/audio';
-subtlex_table_filename = '/project/3011044.02/data/language/worddata_subtlex.mat';
-subtlex_firstrow_filename = '/project/3011044.02/data/language/worddata_subtlex_firstrow.mat';
+audiodir                    = '/project/3011044.02/lab/pilot/stim/audio';
+subtlex_table_filename      = '/project/3011044.02/raw/data/language/worddata_subtlex.mat';
+subtlex_firstrow_filename   = '/project/3011044.02/raw/data/language/worddata_subtlex_firstrow.mat';
 subtlex_data = [];          % declare the variables, it throws a dynamic assignment error otherwise
 subtlex_firstrow = [];
 
@@ -112,7 +112,7 @@ subtlex_firstrow = [];
 load(subtlex_firstrow_filename);
 load(subtlex_table_filename);
 
-% do the basic processing per audiofile
+%% do the basic processing per audiofile
 for k = 1:numel(seltrl)
   
   [~, f, ~] = fileparts(selaudio{k});
@@ -206,9 +206,9 @@ function [combineddata] = add_subtlex(combineddata, subtlex_data, subtlex_firstr
 
 num_words = size(combineddata, 1);
 
-word_column = find(strcmp(subtlex_firstrow, 'spelling'));
-wlen_column = find(strcmp(subtlex_firstrow, 'nchar'));
-frequency_column = find(strcmp(subtlex_firstrow, 'Lg10WF'));
+word_column         = strcmp(subtlex_firstrow, 'spelling');
+wlen_column         = strcmp(subtlex_firstrow, 'nchar');
+frequency_column    = strcmp(subtlex_firstrow, 'Lg10WF');
 
 subtlex_words = subtlex_data(:, word_column);
 
@@ -219,14 +219,16 @@ subtlex_words = subtlex_data(:, word_column);
         word = word{1};
         row = find(strcmp(subtlex_words, word)); % find the row index in subtlex data
 
-        if ~isempty(row) % if it is a punctuation mark (subtlex doesn't give values for punctuation marks)
+        if ~isempty(row) 
             
              combineddata(j).log10wf = subtlex_data{row, frequency_column}; % lookup the according frequency values
-             combineddata(j).nchar = subtlex_data{row, wlen_column};
+             combineddata(j).nchar   = subtlex_data{row, wlen_column};
              
-        else
+        else % write 'nan' if it is a punctuation mark or a proper name (subtlex doesn't give values in this case)
+            
             combineddata(j).log10wf = nan;
-            combineddata(j).nchar = nan; % write nan
+            combineddata(j).nchar   = nan;
+            
         end
 
     end

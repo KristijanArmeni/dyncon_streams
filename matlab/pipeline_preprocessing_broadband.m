@@ -5,14 +5,7 @@ if ~ft_hastoolbox('qsub',1)
     addpath /home/kriarm/git/fieldtrip/qsub;
 end
 
-subjects = strsplit(sprintf('s%.2d ', 14));
-subjects = subjects(~cellfun(@isempty, subjects));
-
-s6 = strcmp(subjects, 's06');
-subjects(s6) = []; % s06 dataset does not exist, empty it to prevent errors
-
-num_sub = numel(subjects);
-display(subjects);
+[subjects, num_sub] = streams_util_subjectstring(2:28, {'s06'});
 
 pipeline = '2';
 

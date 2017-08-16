@@ -1,4 +1,4 @@
-function [data, eeg, audio] = streams_preprocessing(subject, varargin)
+function [data, eeg, audio, featuredata] = streams_preprocessing(subject, varargin)
 
 % streams_preprocessing() 
 
@@ -24,6 +24,8 @@ dosns           = ft_getopt(varargin, 'dosns', 0);
 dospeechenvelope = ft_getopt(varargin, 'dospeechenvelope', 0);
 filter_audio    = ft_getopt(varargin, 'filter_audio', 'no');
 filter_audiobdb = ft_getopt(varargin, 'filter_audiobdb', 'no');
+feature         = ft_getopt(varargin, 'feature');
+addnoise    = ft_getopt(varargin, 'addnoise', 0);
 
 %% check whether all required user specified input is there
 
@@ -96,11 +98,23 @@ else
 
 end
 
-%% do the basic processing per audiofile
+%% PREPROCESSING LOOP PER AUDIOFILE
 
 audiodir = '/project/3011044.02/lab/pilot/stim/audio';
+subtlex_table_filename      = '/project/3011044.02/raw/data/language/worddata_subtlex.mat';
+subtlex_firstrow_filename   = '/project/3011044.02/raw/data/language/worddata_subtlex_firstrow.mat';
+subtlex_data = [];          % declare the variables, it throws a dynamic assignment error otherwise
+subtlex_firstrow = [];
+
+% load in the files that contain word frequency information
+load(subtlex_firstrow_filename);
+load(subtlex_table_filename);
 
 for k = 1:numel(seltrl)
+  
+  %%%%%%%%%%%%%%%%%%%%%%%%%%
+  % MEG AND AUDIO DATA     %
+  %%%%%%%%%%%%%%%%%%%%%%%%%% 
   
   [~,f,~] = fileparts(selaudio{k});
 
@@ -148,9 +162,9 @@ for k = 1:numel(seltrl)
   %% AUDIO AVG
   if dospeechenvelope
       
-      audio_orig = audio; % save the original audio file
+      audio_orig = audio; % save the original audio channel from MEG
       
-      wavfile = fullfile(audiodir, f, [f, '.wav']);
+      wavfile = fullfile(audiodir, f, [f, '.wav']); % stimulus wavfile
       delay = subject.delay(seltrl(k))./1000;
 
       audio_new = streams_broadbandenvelope(audio_orig, wavfile, delay);
@@ -162,7 +176,7 @@ for k = 1:numel(seltrl)
       end
 
       cfg.channel  = {'audio_avg', 'audio'};
-      audio_new        = ft_preprocessing(cfg, audio_new); % read in the audio data
+      audio_new        = ft_preprocessing(cfg, audio_new); 
 
       % Add original UADC004 channel back to audio
       audio = ft_appenddata([], audio_orig, audio_new);
@@ -182,7 +196,7 @@ for k = 1:numel(seltrl)
   
 %% ARTIFACT REJECTION
   
-  % reject artifacts
+  % reject muscle & SQUID artifacts
   cfg                  = [];
   cfg.artfctdef        = subject.artfctdef;
   cfg.artfctdef.reject = 'partial';
@@ -202,6 +216,7 @@ for k = 1:numel(seltrl)
     data            = ft_denoise_sns(cfg, data);
   end
 
+  
 %% LOW PASS FILTERING
   
   if ~isempty(lpfreq)
@@ -217,6 +232,7 @@ for k = 1:numel(seltrl)
   %% RESAMPLING
   
   if fsample < 1200
+    
     % subtract first time point for memory purposes
     for kk = 1:numel(data.trial)
       firsttimepoint(kk,1) = data.time{kk}(1);
@@ -224,6 +240,7 @@ for k = 1:numel(seltrl)
       eeg.time{kk}         = eeg.time{kk}-eeg.time{kk}(1);
       audio.time{kk}       = audio.time{kk}-audio.time{kk}(1);
     end
+    
     cfg = [];
     cfg.demean  = 'no';
     cfg.detrend = 'no';
@@ -241,12 +258,48 @@ for k = 1:numel(seltrl)
     end
   end
   
-  % add to structs for outputting
-  tmpdata{k}  = data;
-  tmpdeeg{k} = eeg;
-  tmpaudio{k} = audio;
-  clear data dataeog audio;
+  %%%%%%%%%%%%%%%%%%%%%%%%%%
+  % LANGUAGE PREPROCESSING %
+  %%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  % create combineddata data structure
+  dondersfile  = fullfile(audiodir, f, [f,'.donders']);
+  textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
+  combineddata = combine_donders_textgrid(dondersfile, textgridfile);
+  
+  % Compute the log log_transform perplexity
+  for i = 1:numel(combineddata)
+    
+    combineddata(i).log10perp = log10(combineddata(i).perplexity);
 
+  end
+  
+  % add frequency info and word length
+  combineddata = add_subtlex(combineddata, subtlex_data,  subtlex_firstrow);
+  
+  % create language predictor based on language model output
+  if iscell(feature)
+      
+    for m = 1:numel(feature)
+      featuredata{m} = create_featuredata(combineddata, feature{m}, data, addnoise);
+    end
+    
+    featuredata = ft_appenddata([], featuredata{:});
+  
+  else
+      
+    % single feature
+    featuredata = create_featuredata(combineddata, feature, data);
+  
+  end
+  
+  % add to structs for outputting
+  tmpfeature{k}  = featuredata;
+  tmpdata{k}     = data;
+  tmpdeeg{k}     = eeg;
+  tmpaudio{k}    = audio;
+  clear data dataeog audio featuredata;
+  
 end
 
 %% APPENDING FOR OUPUT
@@ -254,17 +307,21 @@ end
 if numel(tmpdata) > 1
   data        = ft_appenddata([], tmpdata{:});
   eeg         = ft_appenddata([], tmpdeeg{:});
-  audio        = ft_appenddata([], tmpaudio{:});
+  audio       = ft_appenddata([], tmpaudio{:});
+  feature     = ft_appenddata([], tmpfeature{:});
 else
   data        = tmpdata{1};
-  eeg     = tmpdeeg{1};
+  eeg         = tmpdeeg{1};
   audio       = tmpaudio{1};
+  feature     = tmpfeature{1};
 end
 clear tmpdata tmpdataf
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SUBFUNCTIONS           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-%% Subfunction
+% COMUPTING SUMMED AVERAGE SPEECH ENVELOPE
 function out = streams_broadbandenvelope(audio, wavfile, delay)
 
   % now we get the audio signal from the wavfile, at the same Fs as the
@@ -275,10 +332,10 @@ function out = streams_broadbandenvelope(audio, wavfile, delay)
   % precomputed delays.
   audio_broadband.time{1} = audio_broadband.time{1} + delay;
   
-  i1 = nearest(audio.time{1},audio_broadband.time{1}(1));
-  i2 = nearest(audio.time{1},audio_broadband.time{1}(end));
-  i3 = nearest(audio_broadband.time{1},audio.time{1}(1));
-  i4 = nearest(audio_broadband.time{1},audio.time{1}(end));
+  i1 = nearest(audio.time{1}, audio_broadband.time{1}(1));
+  i2 = nearest(audio.time{1}, audio_broadband.time{1}(end));
+  i3 = nearest(audio_broadband.time{1}, audio.time{1}(1));
+  i4 = nearest(audio_broadband.time{1}, audio.time{1}(end));
   
   % add the correctly aligned average envelope signal to the 'audio' data structure
   audio.trial{1}(2,:) = 0;
@@ -287,10 +344,89 @@ function out = streams_broadbandenvelope(audio, wavfile, delay)
   avg_ind = find(all(ismember(audio_broadband.label, 'audio_avg'), 2)); % find index of 'audio_avg' in audio_wav.label
   aud_ind = find(all(ismember(audio_broadband.label, 'audio'), 2)); % find index of 'audio' channel in audio_wav.label
   
-  audio.trial{1}(2,i1:i2) = audio_broadband.trial{1}(avg_ind,i3:i4); % assign audio_avg channel
-  audio.trial{1}(3,i1:i2) = audio_broadband.trial{1}(aud_ind,i3:i4); % assign audio channel
-  audio.label(2,1) = audio_broadband.label(avg_ind); %add label as well
-  audio.label(3,1) = audio_broadband.label(aud_ind);
+  audio.trial{1}(2, i1:i2) = audio_broadband.trial{1}(avg_ind, i3:i4); % assign audio_avg channel
+  audio.trial{1}(3, i1:i2) = audio_broadband.trial{1}(aud_ind, i3:i4); % assign audio channel
+  audio.label(2, 1) = audio_broadband.label(avg_ind); %add label as well
+  audio.label(3, 1) = audio_broadband.label(aud_ind);
   
   out = audio;
+end
+
+% ADD SUBTLEX INFORMATION 
+function [combineddata] = add_subtlex(combineddata, subtlex_data, subtlex_firstrow)
+
+num_words = size(combineddata, 1);
+
+word_column         = strcmp(subtlex_firstrow, 'spelling');
+wlen_column         = strcmp(subtlex_firstrow, 'nchar');
+frequency_column    = strcmp(subtlex_firstrow, 'Lg10WF');
+
+subtlex_words = subtlex_data(:, word_column);
+
+    % add frequency information to combineddata structure
+    for j = 1:num_words
+
+        word = combineddata(j).word;
+        word = word{1};
+        row = find(strcmp(subtlex_words, word)); % find the row index in subtlex data
+
+        if ~isempty(row) 
+            
+             combineddata(j).log10wf = subtlex_data{row, frequency_column}; % lookup the according frequency values
+             combineddata(j).nchar   = subtlex_data{row, wlen_column};
+             
+        else % write 'nan' if it is a punctuation mark or a proper name (subtlex doesn't give values in this case)
+            
+            combineddata(j).log10wf = nan;
+            combineddata(j).nchar   = nan;
+            
+        end
+
+    end
+    
+end
+
+% ADD SUBTLEX INFORMATION 
+function [featuredata] = create_featuredata(combineddata, feature, data, addnoise)
+
+% create FT-datastructure with the feature as a channel
+[time, featurevector] = get_time_series(combineddata, feature, data.fsample);
+
+if addnoise
+  
+  steps = unique(featurevector);
+  steps_sel = isfinite(steps);  % indicate all non-Nan values
+  steps = steps(steps_sel);     % select all non-Nan values
+  steps = steps(find(steps));   % select all non-zero values
+  
+  range = 0.1*min(diff(steps));
+  num_samples = size(featurevector, 2);
+
+  noise = range.*rand(1, num_samples);
+  noise(~isfinite(featurevector)) = NaN;
+  featurevector = featurevector + noise;
+
+end
+  
+featuredata   = ft_selectdata(data, 'channel', data.label(1)); % ensure that it only has 1 channel
+featuredata.label{1} = feature;
+    for kk = 1:numel(featuredata.trial)
+      if featuredata.time{kk}(1)>=0
+        begsmp = nearest(time, featuredata.time{kk}(1));
+      else
+        begsmp = nearest(data.time{kk}+featuredata.time{kk}(1), 0);
+      end
+      endsmp = (begsmp-1+numel(featuredata.time{kk}));
+      if endsmp<=numel(featurevector)
+        featuredata.trial{kk} = featurevector(begsmp:endsmp);
+      else
+        endsmp = numel(featurevector);
+        nsmp   = endsmp-begsmp+1;
+        featuredata.trial{kk}(:) = nan;
+        featuredata.trial{kk}(1:nsmp) = featurevector(begsmp:endsmp);
+      end
+    end
+end
+
+end
  
