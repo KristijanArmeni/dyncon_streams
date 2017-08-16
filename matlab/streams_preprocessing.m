@@ -308,12 +308,12 @@ if numel(tmpdata) > 1
   data        = ft_appenddata([], tmpdata{:});
   eeg         = ft_appenddata([], tmpdeeg{:});
   audio       = ft_appenddata([], tmpaudio{:});
-  feature     = ft_appenddata([], tmpfeature{:});
+  featuredata     = ft_appenddata([], tmpfeature{:});
 else
   data        = tmpdata{1};
   eeg         = tmpdeeg{1};
   audio       = tmpaudio{1};
-  feature     = tmpfeature{1};
+  featuredata     = tmpfeature{1};
 end
 clear tmpdata tmpdataf
 
