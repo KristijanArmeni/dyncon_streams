@@ -411,24 +411,23 @@ end
   
 featuredata   = ft_selectdata(data, 'channel', data.label(1)); % ensure that it only has 1 channel
 featuredata.label{1} = feature;
-    for kk = 1:numel(featuredata.trial)
-      if featuredata.time{kk}(1)>=0
-        begsmp1 = 1;
-        begsmp2 = nearest(time, featuredata.time{kk}(1));
-      else
-        begsmp1 = nearest(data.time{kk},0);
-        begsmp2 = 1;
-      end
-      endsmp2 = (begsmp2-1+numel(featuredata.time{kk}));
-      if endsmp2<=numel(featurevector)
-        featuredata.trial{kk} = featurevector(begsmp2:endsmp2);
-      else
-        endsmp2 = numel(featurevector);
-        nsmp    = endsmp2-begsmp2+1;
-        featuredata.trial{kk}(:) = nan;
-        featuredata.trial{kk}(begsmp1-1+(1:nsmp)) = featurevector(begsmp2:endsmp2);
-      end
-    end
+for kk = 1:numel(featuredata.trial)
+  if featuredata.time{kk}(1)>=0
+    begsmp1 = 1;
+    begsmp2 = nearest(time, featuredata.time{kk}(1));
+    
+    endsmp1 = min(numel(featuredata.time{kk}), numel(featurevector)-begsmp2+1);
+    endsmp2 = endsmp1-begsmp1+begsmp2;
+  else
+    begsmp1 = nearest(data.time{kk},0);
+    begsmp2 = 1;
+  
+    endsmp2 = min(numel(featuredata.time{kk})-begsmp1+1, numel(featurevector));
+    endsmp1 = endsmp2-begsmp2+begsmp1;
+  end
+  featuredata.trial{kk}(:) = nan;
+  featuredata.trial{kk}(begsmp1:endsmp1) = featurevector(begsmp2:endsmp2);
+end
 end
 
 end
