@@ -174,9 +174,10 @@ for k = 1:numel(seltrl)
         cfg.bpfilter = 'no';
         cfg.hpfilter = 'no';
       end
-
+ 
+      cfg = [];
       cfg.channel  = {'audio_avg', 'audio'};
-      audio_new        = ft_preprocessing(cfg, audio_new); 
+      audio_new    = ft_selectdata(cfg, audio_new); 
 
       % Add original UADC004 channel back to audio
       audio = ft_appenddata([], audio_orig, audio_new);
