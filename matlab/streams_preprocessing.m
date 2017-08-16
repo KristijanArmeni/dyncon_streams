@@ -289,7 +289,7 @@ for k = 1:numel(seltrl)
   else
       
     % single feature
-    featuredata = create_featuredata(combineddata, feature, data);
+    featuredata = create_featuredata(combineddata, feature, data, addnoise);
   
   end
   
