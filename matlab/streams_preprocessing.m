@@ -413,18 +413,20 @@ featuredata   = ft_selectdata(data, 'channel', data.label(1)); % ensure that it 
 featuredata.label{1} = feature;
     for kk = 1:numel(featuredata.trial)
       if featuredata.time{kk}(1)>=0
-        begsmp = nearest(time, featuredata.time{kk}(1));
+        begsmp1 = 1;
+        begsmp2 = nearest(time, featuredata.time{kk}(1));
       else
-        begsmp = nearest(data.time{kk}+featuredata.time{kk}(1), 0);
+        begsmp1 = nearest(data.time{kk},0);
+        begsmp2 = 1;
       end
-      endsmp = (begsmp-1+numel(featuredata.time{kk}));
-      if endsmp<=numel(featurevector)
-        featuredata.trial{kk} = featurevector(begsmp:endsmp);
+      endsmp2 = (begsmp2-1+numel(featuredata.time{kk}));
+      if endsmp2<=numel(featurevector)
+        featuredata.trial{kk} = featurevector(begsmp2:endsmp2);
       else
-        endsmp = numel(featurevector);
-        nsmp   = endsmp-begsmp+1;
+        endsmp2 = numel(featurevector);
+        nsmp    = endsmp2-begsmp2+1;
         featuredata.trial{kk}(:) = nan;
-        featuredata.trial{kk}(1:nsmp) = featurevector(begsmp:endsmp);
+        featuredata.trial{kk}(begsmp1-1+(1:nsmp)) = featurevector(begsmp2:endsmp2);
       end
     end
 end

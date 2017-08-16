@@ -50,9 +50,9 @@ words2 = [donders_data.word]';
 sel = 0;
 for i=1:numel(words2)
   % select the matching words, exclude '.'
-  if strcmp(words2{i},'.')
-    continue;
-  end
+  %if strcmp(words2{i},'.')
+  %  continue;
+  %end
   tmp = strcmp(words2{i}, words1);
   tmp(1:sel) = false;
   sel = find(tmp,1,'first');
