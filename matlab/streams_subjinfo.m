@@ -469,8 +469,8 @@ end
 % reorder audiofile strings in line with which they were presented (applies
 % only to subjects s11-s28
 if str2double(name(2:end)) >= 11
-    
-    subject.audiofile(:, end) = subject.audiofile(subject.trl(:, end)./10); % create one-valued ints
+  subject.audiofile(:, end) = subject.audiofile(subject.trl(:, end)./10); % create one-valued ints
+end    
     
 % get squid artifacts
 cfg = streams_artifact_squidjumps(subject);
