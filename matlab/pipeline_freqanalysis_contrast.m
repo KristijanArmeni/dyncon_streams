@@ -12,7 +12,7 @@ for i = 1:numel(ivars)
     for k = 1:numel(subjects)
 
         subject = subjects{k};
-        inputargs = {'ivarexp', ivarexp, 'filename', 'dpss8', 'dohigh', 1};
+        inputargs = {'ivarexp', ivarexp, 'filename', 'hanning', 'dohigh', 1};
         qsubfeval('streams_freqanalysis_contrast', subject, inputargs, ...
                                                             'memreq', 1024^3 * 5,...
                                                             'timreq', 30*60);
