@@ -1,4 +1,4 @@
-function [data, featuredata, contrast] = streams_epochdefinecontrast(subject, varargin)
+function [data, featuredata, contrast] = streams_epochdefinecontrast(subject, opt)
 
 % streams_definecontrast(subject) averages language data from featuredata
 % obtained from streams_preprocessing_language() and computes tertile split
@@ -8,7 +8,7 @@ function [data, featuredata, contrast] = streams_epochdefinecontrast(subject, va
 
 %% INITIALIZE 
 
-save     = ft_getopt(varargin, 'save', 0);
+save     = ft_getopt(opt, 'save', 0);
 
 datadir  = '/project/3011044.02/preproc/meg';
 savedir  = '/project/3011044.02/analysis/lng-contrast';
