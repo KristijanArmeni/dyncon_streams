@@ -1,6 +1,6 @@
 ## Documentation
 ---
-This is a brief documentation of the currently used in the [analysis pipeline][analysis pipeline] for the Streams project. These are customly written matlab routines which rely on heavily [Fieldtrip][Fieldtrip] subroutines and functionality. Please see the Fieldtrip [reference documentation][Fieldtrip documentation] for details.
+This is a brief documentation of the currently used [analysis pipeline][analysis pipeline] for the Streams project. These are customly written matlab routines which rely on heavily [Fieldtrip][Fieldtrip] subroutines and functionality. Please see the Fieldtrip [reference documentation][Fieldtrip documentation] for details.
 
 ### MEG preprocessing
 ---
@@ -64,7 +64,7 @@ Dependencies: [Freesurfer][Freesurfer], [Workbench][Workbench]
     * `create_featuredata.m`
    
     
-* `streams_define_contrast.m`
+* `streams_epochdefinecontrast.m`
   * `streams_averagefeature.m`
 
 #### Subtlex data
