@@ -15,7 +15,7 @@ savedir  = '/project/3011044.02/analysis/lng-contrast';
 megfile  = fullfile('/project/3011044.02/preproc/meg', [subject, '_meg-clean']); % load in preprocessed meg data
 languagepreproc = fullfile(datadir, [subject, '_featuredata.mat']); % recomputed data (after the critical bugfix)
 
-savename = fullfile(savedir, subject);  % for the contrast structure
+savename = fullfile(savedir, [subject '.mat']);  % for the contrast structure
 
 %% LOADING
 
@@ -47,10 +47,25 @@ selected_features = {'perplexity', 'entropy', 'log10wf'};
 % .trialinfolabel
 featuredata = streams_averagefeature(featuredata, selected_features);
 
+%% REMOVE NAN TRIALS
+
+selected_column        = strcmp(featuredata.trialinfolabel, 'log10wf');
+trialskeep             = logical(~isnan(featuredata.trialinfo(:, selected_column))); % keep only non-nan trials
+
+trialinfolabel         = featuredata.trialinfolabel; % store this because ft_selectdata below discards it
+
+cfg          = [];
+cfg.trials   = trialskeep;
+
+data         = ft_selectdata(cfg, data);
+featuredata  = ft_selectdata(cfg, featuredata);
+
+featuredata.trialinfolabel    = trialinfolabel; % plug trialinfolabel back in
+
 %% DO THE TERTILE SPLIT
 
 % load or compute the contrast
-if exist('savename', 'file')
+if exist(savename, 'file')
     load(savename)
 else
     numvars = numel(selected_features);
@@ -60,15 +75,15 @@ else
         ivarexp = selected_features{i};
 
         % find channel index
-        col_exp = strcmp(featuredata.trialinfolabel(:), ivarexp);
+        col_exp  = strcmp(featuredata.trialinfolabel(:), ivarexp);
         ivar_exp = featuredata.trialinfo(:, col_exp); % pick the appropriate language variable (mean complexity for each trial)
 
         q = quantile(ivar_exp, [0.33 0.66]); % extract the two quantile values
-        low_tertile = q(1);
+        low_tertile  = q(1);
         high_tertile = q(2);
 
         % split into high and low tertile groups
-        trl_indx_low = ivar_exp < low_tertile; % this gives a logical vector
+        trl_indx_low  = ivar_exp < low_tertile; % this gives a logical vector
         trl_indx_high = ivar_exp > high_tertile; 
 
         % create the contrast structure
