@@ -32,21 +32,6 @@ end
 opt = {'save', 0};
 [~, featuredata, contrast] = streams_epochdefinecontrast(subject, opt);
 
-%% throw out nan trials based on log10wf column
-
-selected_column        = strcmp(featuredata.trialinfolabel, 'log10wf');
-trialskeep             = logical(~isnan(featuredata.trialinfo(:, selected_column))); % keep only non-nan trials
-
-trialinfolabel         = featuredata.trialinfolabel; % store this because ft_selectdata below discards it
-
-cfg          = [];
-cfg.trials   = trialskeep;
-
-freq         = ft_selectdata(cfg, freq);
-featuredata  = ft_selectdata(cfg, featuredata);
-
-featuredata.trialinfolabel    = trialinfolabel; % plug trialinfolabel back in
-
 %% regress out lexical frequency
 
 if ~strcmp(ivarexp, 'log10wf') % if ivarexp is lex. fr. itself skip this step
