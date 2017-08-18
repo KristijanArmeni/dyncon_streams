@@ -7,36 +7,42 @@ function streams_dics(cfgfreq, cfgdics, subject, ivar)
 dir             = '/project/3011044.02/preproc';
 
 preprocfile     = fullfile(dir, 'meg', [subject '_meg-clean.mat']);
-featurefile     = fullfile(dir, 'language', [subject '.mat']);
+featurefile     = fullfile(dir, 'meg', [subject '_featuredata.mat']);
 headmodelfile   = fullfile(dir, 'anatomy', [subject '_headmodel.mat']);
 leadfieldfile   = fullfile(dir, 'anatomy', [subject '_leadfield.mat']);
 sourcemodelfile = fullfile(dir, 'anatomy', [subject '_sourcemodel.mat']);
 
 % conditions file, frequency band doesn't matter here
-conditionsfile = fullfile('/project/3011044.02/analysis/lng-contrast/', [subject '.mat']); 
-
-% saving dir
-savedir = fullfile(dir, 'analysis', 'dics', 'subject');
+contrastfile    = fullfile('/project/3011044.02/analysis/lng-contrast/', [subject '.mat']); 
 
 % ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
 %% LOAD
 
-load(preprocfile); % meg data
+load(preprocfile);    % meg data
 load(headmodelfile);
 load(leadfieldfile);
 load(sourcemodelfile);
-load(conditionsfile); % struct with field .trial where logical colums for contrast are stored
+load(contrastfile);   % struct with field .trial where logical colums for contrast are stored
 load(featurefile);
+
+%% ADDITIONAL CLEANING STEP & EPOCHING
+
+opt = {'save', 0};
+[data, featuredata, contrast] = streams_epochdefinecontrast(subject, opt);
 
 %% DO FREQANALYSIS
 
 cfg = [];
-cfg.method    = 'mtmfft';
-cfg.output    = 'fourier';
-cfg.keeptrials = 'yes';
-cfg.taper     = cfgfreq.taper;
-if strcmp(cfgfreq.taper, 'dpss'); cfg.tapsmofrq = cfgfreq.tapsmofrq; end
-cfg.foilim    = cfgfreq.foilim;
+cfg.method        = 'mtmfft';
+cfg.output        = 'fourier';
+cfg.keeptrials    = 'yes';
+cfg.taper         = cfgfreq.taper;
+
+if strcmp(cfgfreq.taper, 'dpss')
+    cfg.tapsmofrq = cfgfreq.tapsmofrq;
+end
+
+cfg.foilim        = cfgfreq.foilim;
 
 freq = ft_freqanalysis(cfg, data);
 
@@ -66,10 +72,10 @@ F           = cat(1,source_both.avg.filter{source_both.inside}); % common spatia
 ntap = freq.cumtapcnt(1); % number of tapers used
 
 nrpt = numel(freq.cumtapcnt); % number of trials
-x = repmat(1:nrpt,[ntap 1]);
-x = x(:);
-y = 1:(nrpt*ntap);
-P = sparse(y,x,ones(numel(x),1)./ntap);
+x    = repmat(1:nrpt,[ntap 1]);
+x    = x(:);
+y    = 1:(nrpt*ntap);
+P    = sparse(y,x,ones(numel(x),1)./ntap);
 
 source = removefields(source_both, {'avg' 'cfg'});
 
@@ -80,7 +86,7 @@ tmppow = abs(F*transpose(freq.fourierspctrm)).^2;
 clear freq
 
 for k = 1:nrpt
-    source.trial(k,1).pow = zeros(npos, 1);
+    source.trial(k,1).pow                = zeros(npos, 1);
     source.trial(k,1).pow(source.inside) = tmppow*P(:,k);
 end
 
@@ -91,51 +97,37 @@ clear F P S;
 
 %% REGRESS OUT WORD FREQUENCY DATA
 
-% remove the nan trials from the source data to make them the same as
-% confound vectors (for ft_regressconfound)
-
-selected_column        = strcmp(featuredata.trialinfolabel, 'log10wf');
-trialskeep             = logical(~isnan(featuredata.trialinfo(:, selected_column)));
-trialinfolabel         = featuredata.trialinfolabel; % store this because ft_selectdata discards it
-
-cfg         = [];
-cfg.trials  = trialskeep; %
-source      = ft_selectdata(cfg, source); % this adds 'pow' field
-featuredata = ft_selectdata(cfg, featuredata);
-
-featuredata.trialinfolabel    = trialinfolabel; % plug trialinfolabel back in
-
 tri = source.tri;
 if ~strcmp(ivar, 'log10wf') % if ivarexp is lex. fr. itself skip this step
     
     nuisance_vars = {'log10wf'}; % take lexical frequency as nuissance
-    confounds = ismember(featuredata.trialinfolabel, nuisance_vars); % logical with 1 in the columns for nuisance vars
+    confounds     = ismember(featuredata.trialinfolabel, nuisance_vars); % logical with 1 in the columns for nuisance vars
 
-    cfg  = [];
+    cfg          = [];
     cfg.confound = featuredata.trialinfo(:, confounds); %pick the log10wf column
-    cfg.beta = 'no';
-    source = ft_regressconfound(cfg, rmfield(source, 'tri'));
-    source.tri = tri;
+    cfg.beta     = 'no';
+    source       = ft_regressconfound(cfg, rmfield(source, 'tri'));
+    source.tri   = tri;
     
 end
 
 %% SPLIT THE DATA
 
-ivarsel = strcmp({contrast.indepvar}, ivar); % use the precomputed contrasts
-contrastsel = contrast(ivarsel); % chose a subset of the struct array
+ivarsel       = strcmp({contrast.indepvar}, ivar); % use the precomputed contrasts
+contrastsel   = contrast(ivarsel); % chose a subset of the struct array
 
-low_column = strcmp(contrastsel.label, 'low');
-high_column = strcmp(contrastsel.label, 'high');
+low_column    = strcmp(contrastsel.label, 'low');
+high_column   = strcmp(contrastsel.label, 'high');
 
-trl_indx_low = contrastsel.trial(trialskeep, low_column);
+trl_indx_low  = contrastsel.trial(trialskeep, low_column);
 trl_indx_high = contrastsel.trial(trialskeep, high_column);
 
-cfg = [];
-cfg.trials = trl_indx_low;
-source_low = ft_selectdata(cfg, source);
+cfg         = [];
+cfg.trials  = trl_indx_low;
+source_low  = ft_selectdata(cfg, source);
 
-cfg = [];
-cfg.trials = trl_indx_high;
+cfg         = [];
+cfg.trials  = trl_indx_high;
 source_high = ft_selectdata(cfg, source);
 
 clear source; % not needed anymore
@@ -146,31 +138,33 @@ clear source; % not needed anymore
 numobs_high = sum(trl_indx_high); % count the number of ones in this vector
 numobs_low  = sum(trl_indx_low);
 
-statdesign = [ones(1, numobs_high) ones(1, numobs_low)*2];
+statdesign  = [ones(1, numobs_high) ones(1, numobs_low)*2];
 
 % independent between trials t-test
-cfg = [];
-cfg.method = 'montecarlo';
-cfg.statistic = 'indepsamplesT'; % for each subject do between trials (independent) t-test
-cfg.parameter = 'pow';
-cfg.numrandomization = 0;
-cfg.design = statdesign;
+cfg                     = [];
+cfg.method              = 'montecarlo';
+cfg.statistic           = 'indepsamplesT'; % for each subject do between trials (independent) t-test
+cfg.parameter           = 'pow';
+cfg.numrandomization    = 0;
+cfg.design              = statdesign;
+
 stat = ft_sourcestatistics(cfg, source_high, source_low);
 
 %% SAVING 
-% ivar = [ivar '-raw'];
 
-dicsfreq = num2str(cfgdics.freq);
-savename = fullfile(savedir, ivar, [subject '_' ivar '_' dicsfreq]);
-pipelinesavename = fullfile(savedir, ivar, ['s02' '_' ivar '_' dicsfreq]);
+savedir            = '/project/3011044.02/analysis/dics/subject';
 
-datecreated = char(datetime('today', 'Format', 'dd-MM-yy'));
-pipelinefilename = [pipelinesavename '_' datecreated];
+dicsfreq           = num2str(cfgdics.freq);
+savename           = fullfile(savedir, [subject '_' ivar '_' dicsfreq]);
+pipelinesavename   = fullfile(savedir, ['s02' '_' ivar '_' dicsfreq]);
+
+datecreated        = char(datetime('today', 'Format', 'dd-MM-yy'));
+pipelinefilename   = [pipelinesavename '_' datecreated];
 
 if ~exist([pipelinefilename '.html'], 'file')
-    cfgt = [];
-    cfgt.filename = pipelinefilename;
-    cfgt.filetype = 'html';
+    cfgt           = [];
+    cfgt.filename  = pipelinefilename;
+    cfgt.filetype  = 'html';
     ft_analysispipeline(cfgt, stat);
 end
 
