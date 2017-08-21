@@ -23,9 +23,9 @@ fsample         = ft_getopt(varargin, 'fsample', 30);
 dosns           = ft_getopt(varargin, 'dosns', 0);
 dospeechenvelope = ft_getopt(varargin, 'dospeechenvelope', 0);
 filter_audio    = ft_getopt(varargin, 'filter_audio', 'no');
-filter_audiobdb = ft_getopt(varargin, 'filter_audiobdb', 'no');
 feature         = ft_getopt(varargin, 'feature');
-addnoise    = ft_getopt(varargin, 'addnoise', 0);
+dofeature       = ft_getopt(varargin, 'dofeature', 0);
+addnoise        = ft_getopt(varargin, 'addnoise', 0);
 
 %% check whether all required user specified input is there
 
@@ -98,6 +98,13 @@ else
 
 end
 
+% in case dofeature is not specifified
+if ~isempty(feature)
+    dofeature = 1;
+else
+    featuredata = []; % apparently output variables must be assigned
+end
+
 %% PREPROCESSING LOOP PER AUDIOFILE
 
 audiodir = '/project/3011044.02/lab/pilot/stim/audio';
@@ -167,21 +174,8 @@ for k = 1:numel(seltrl)
       wavfile = fullfile(audiodir, f, [f, '.wav']); % stimulus wavfile
       delay = subject.delay(seltrl(k))./1000;
 
-      audio_new = streams_broadbandenvelope(audio_orig, wavfile, delay);
+      audio = streams_broadbandenvelope(audio_orig, wavfile, delay);
 
-      % Now apply the same bandpass filter to this broadband envelope as well.
-      if strcmp(filter_audiobdb, 'no')
-        cfg.bpfilter = 'no';
-        cfg.hpfilter = 'no';
-      end
- 
-      cfg = [];
-      cfg.channel  = {'audio_avg', 'audio'};
-      audio_new    = ft_selectdata(cfg, audio_new); 
-
-      % Add original UADC004 channel back to audio
-      audio = ft_appenddata([], audio_orig, audio_new);
-      
   end
 
 %% BANDSTOP FILTERING FOR LINE NOISE
@@ -262,44 +256,48 @@ for k = 1:numel(seltrl)
   %%%%%%%%%%%%%%%%%%%%%%%%%%
   % LANGUAGE PREPROCESSING %
   %%%%%%%%%%%%%%%%%%%%%%%%%%
-  
-  % create combineddata data structure
-  dondersfile  = fullfile(audiodir, f, [f,'.donders']);
-  textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
-  combineddata = combine_donders_textgrid(dondersfile, textgridfile);
-  
-  % Compute the log log_transform perplexity
-  for i = 1:numel(combineddata)
-    
-    combineddata(i).log10perp = log10(combineddata(i).perplexity);
+  if dofeature
+      
+      % create combineddata data structure
+      dondersfile  = fullfile(audiodir, f, [f,'.donders']);
+      textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
+      combineddata = combine_donders_textgrid(dondersfile, textgridfile);
 
-  end
-  
-  % add frequency info and word length
-  combineddata = add_subtlex(combineddata, subtlex_data,  subtlex_firstrow);
-  
-  % create language predictor based on language model output
-  if iscell(feature)
+      % Compute the log log_transform perplexity
+      for i = 1:numel(combineddata)
+
+        combineddata(i).log10perp = log10(combineddata(i).perplexity);
+
+      end
+
+      % add frequency info and word length
+      combineddata = add_subtlex(combineddata, subtlex_data,  subtlex_firstrow);
+
+      % create language predictor based on language model output
+      if iscell(feature)
+
+        for m = 1:numel(feature)
+          featuredata{m} = create_featuredata(combineddata, feature{m}, data, addnoise);
+        end
+
+        featuredata = ft_appenddata([], featuredata{:});
+
+      else
+
+        % single feature
+        featuredata = create_featuredata(combineddata, feature, data, addnoise);
+
+      end
       
-    for m = 1:numel(feature)
-      featuredata{m} = create_featuredata(combineddata, feature{m}, data, addnoise);
-    end
-    
-    featuredata = ft_appenddata([], featuredata{:});
-  
-  else
-      
-    % single feature
-    featuredata = create_featuredata(combineddata, feature, data, addnoise);
-  
   end
-  
   % add to structs for outputting
-  tmpfeature{k}  = featuredata;
+  if dofeature
+    tmpfeature{k}  = featuredata;
+  end
   tmpdata{k}     = data;
-  tmpdeeg{k}     = eeg;
+  tmpeeg{k}      = eeg;
   tmpaudio{k}    = audio;
-  clear data dataeog audio featuredata;
+  clear data eeg audio;
   
 end
 
@@ -307,16 +305,23 @@ end
 
 if numel(tmpdata) > 1
   data        = ft_appenddata([], tmpdata{:});
-  eeg         = ft_appenddata([], tmpdeeg{:});
+  eeg         = ft_appenddata([], tmpeeg{:});
   audio       = ft_appenddata([], tmpaudio{:});
-  featuredata     = ft_appenddata([], tmpfeature{:});
+  
+  if dofeature
+    featuredata     = ft_appenddata([], tmpfeature{:});
+  end
+  
 else
   data        = tmpdata{1};
-  eeg         = tmpdeeg{1};
+  eeg         = tmpeeg{1};
   audio       = tmpaudio{1};
-  featuredata     = tmpfeature{1};
+  
+  if dofeature
+    featuredata     = tmpfeature{1};
+  end
 end
-clear tmpdata tmpdataf
+clear tmpdata tmpaudio tmpeeg tmpfeature
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 % SUBFUNCTIONS           %
