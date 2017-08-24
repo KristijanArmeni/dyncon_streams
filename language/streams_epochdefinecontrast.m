@@ -8,14 +8,14 @@ function [data, featuredata, contrast] = streams_epochdefinecontrast(subject, op
 
 %% INITIALIZE 
 
-save     = ft_getopt(opt, 'save', 0);
+dosave          = ft_getopt(opt, 'save', 0);
 
-datadir  = '/project/3011044.02/preproc/meg';
-savedir  = '/project/3011044.02/analysis/lng-contrast';
-megfile  = fullfile('/project/3011044.02/preproc/meg', [subject, '_meg-clean']); % load in preprocessed meg data
+datadir         = '/project/3011044.02/preproc/meg';
+savedir         = '/project/3011044.02/analysis/lng-contrast/';
+megfile         = fullfile('/project/3011044.02/preproc/meg', [subject, '_meg-clean']); % load in preprocessed meg data
 languagepreproc = fullfile(datadir, [subject, '_featuredata.mat']); % recomputed data (after the critical bugfix)
 
-savename = fullfile(savedir, [subject '.mat']);  % for the contrast structure
+savename        = fullfile(savedir, [subject '.mat']);  % for the contrast structure
 
 %% LOADING
 
@@ -25,17 +25,19 @@ load(languagepreproc) % loads in the featuredata variable
 
 %% EPOCH FEATURE and MEG DATA
 
-cfg = [];
+cfg         = [];
 cfg.length  = 1; % make a single trial 300 samples long
+
 featuredata = ft_redefinetrial(cfg, featuredata);
 data        = ft_redefinetrial(cfg, data);
 
 %% ADHOC TRIAL REMOVAL
 
-sel = streams_cleanadhoc(data); % select trials with high variance (as was done for freqanalysis
+sel          = streams_cleanadhoc(data); % select trials with high variance (as was done for freqanalysis
 
-cfg = [];
+cfg          = [];
 cfg.trials   = sel; % make sure featuredata has the same trials as MEG data
+
 featuredata  = ft_selectdata(cfg, featuredata);
 data         = ft_selectdata(cfg, data);
 
@@ -43,9 +45,8 @@ data         = ft_selectdata(cfg, data);
 
 selected_features = {'perplexity', 'entropy', 'log10wf'};
 
-% put average feature information into .trialinfo and labels into
-% .trialinfolabel
-featuredata = streams_averagefeature(featuredata, selected_features);
+% put average feature information into .trialinfo and labels into .trialinfolabel
+featuredata       = streams_averagefeature(featuredata, selected_features);
 
 %% REMOVE NAN TRIALS
 
@@ -90,14 +91,32 @@ else
         contrast(i).indepvar    = ivarexp;
         contrast(i).label       = {'low', 'high'}; 
         contrast(i).trial       = [trl_indx_low, trl_indx_high];
+        
+        % do the prunned contrast
+        sel_column = strcmp(featuredata.trialinfolabel, 'numNan');
+        threshold  = 0.30;
 
+        prunned_trls = round(featuredata.trialinfo(:, sel_column)./300, 2) < threshold; % snippets with less than 0.30 % nans
+        
+        ivar_exp2 = featuredata.trialinfo(prunned_trls, col_exp); % pick the appropriate language variable and snippets
+
+        q = quantile(ivar_exp2, [0.33 0.66]); % extract the new quantile values based only on snippets with < threshold nans
+        low_tertile2  = q(1);
+        high_tertile2 = q(2);
+        
+        trl_indx_low2   = all([prunned_trls, ivar_exp < low_tertile2], 2);  % select 0.3 < NaN high complexity trials
+        trl_indx_high2  = all([prunned_trls, ivar_exp > high_tertile2], 2); % select 0.3 < NaN low complexity trials
+        
+        contrast(i).label2       = {'low2', 'high2'};
+        contrast(i).trial2       = [trl_indx_low2, trl_indx_high2];
+        
     end
 
 end
 
 %% SAVING
 
-if save
+if dosave
 
     savenamedate      = fullfile(savedir, 's02');
     datecreated       = char(datetime('today', 'Format', 'dd-MM-yy'));
@@ -119,23 +138,23 @@ function featuredataout = streams_averagefeature(featuredatain, selected_feature
 % streams_averagefeature() takes the output of
 % streams_preprocessing.m (featuredata struct) and averages single trial values
 
-featuredataout = featuredatain;
+featuredataout                      = featuredatain;
 featuredataout.trialinfolabel{1, 1} = 'story'; % this is the preprocessed trialinfo
-featuredataout.trialinfo(:, 1) = featuredatain.trialinfo; % assign story numbers
+featuredataout.trialinfo(:, 1)      = featuredatain.trialinfo; % assign story numbers
 
     for k = 1:numel(selected_features)
 
-        feature = selected_features{k};
+        feature   = selected_features{k};
         chan_indx = strcmp(featuredatain.label, feature); % find the correct index
 
         tmp = cellfun(@(x) x(chan_indx,:), featuredatain.trial(:), 'UniformOutput', 0); % choose the correct row in every cell
 
-        featuredataout.trialinfo(:, k + 1) = cellfun(@nanmean, tmp(:)); % take the mean, ignoring nans
+        featuredataout.trialinfo(:, k + 1)      = cellfun(@nanmean, tmp(:)); % take the mean, ignoring nans
         featuredataout.trialinfolabel{k + 1, 1} = feature;
     end
     
     % add information about the number of nan's
-    featuredataout.trialinfo(:, 5) = cellfun(@(x) sum(isnan(x)), tmp(:));
+    featuredataout.trialinfo(:, 5)      = cellfun(@(x) sum(isnan(x)), tmp(:));
     featuredataout.trialinfolabel{5, 1} = 'numNan';
     
     
