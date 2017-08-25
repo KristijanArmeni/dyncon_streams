@@ -1,9 +1,6 @@
-function streams_freqanalysis_groupcontrast(ivar, foi)
+function streams_freqanalysis_groupcontrast(ivar, foi, datadir, savedir)
 
 %% Initialize
-% directories
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject/';
-savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group/';
 
 % define subject array
 [subjects, num_sub] = streams_util_subjectstring(2:28, {'s06', 's09'});
