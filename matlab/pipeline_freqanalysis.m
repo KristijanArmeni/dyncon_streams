@@ -1,7 +1,7 @@
 
 [subjects, num_sub] = streams_util_subjectstring(2:28, {'s06', 's09'});
 
-runpipeline = 'dpss8';
+runpipeline = 'dpss4';
 
 switch runpipeline
     
@@ -15,8 +15,7 @@ switch runpipeline
         optarg = {'taper', 'dpss', 'tapsmooth', 4};
         qsubfeval('pipeline_freqanalysis_qsub', subject, optarg, ...
                                                           'memreq', 1024^3 * 12,...
-                                                          'timreq', 240*60,...
-                                                          'batchid', 'streams_features');
+                                                          'timreq', 240*60);
 
 
     end
@@ -46,8 +45,7 @@ switch runpipeline
         optarg = {'taper', 'hanning', 'tapsmooth', []};
         qsubfeval('pipeline_freqanalysis_qsub', subject, optarg, ...
                                                           'memreq', 1024^3 * 12,...
-                                                          'timreq', 240*60,...
-                                                          'batchid', 'streams_features');
+                                                          'timreq', 240*60);
 
 
     end

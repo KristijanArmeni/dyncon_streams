@@ -1,8 +1,11 @@
 
-ivars = {'entropy', 'perplexity'};
-freqs = {'4-8', '12-20', '20-30', '30-60', '60-90'};
+ivars = {'entropy', 'perplexity', 'log10wf'};
+freqs = {'4-8', '12-20', '20-30'};
 
-% subject loop
+datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject3/';
+savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group3/';
+
+% variable and frequency loop
 for j = 1:numel(freqs)
 
     foi    = freqs{j};
@@ -11,10 +14,9 @@ for j = 1:numel(freqs)
         
         ivar = ivars{i};
         
-        qsubfeval('streams_freqanalysis_groupcontrast', ivar, foi, ...
+        qsubfeval('streams_freqanalysis_groupcontrast', ivar, foi, datadir, savedir, ...
                                           'memreq', 1024^3 * 12,...
-                                          'timreq', 240*60,...
-                                          'batchid', 'streams_features');
+                                          'timreq', 240*60);
     end
 
 end
