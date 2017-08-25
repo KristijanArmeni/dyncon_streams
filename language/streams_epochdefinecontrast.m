@@ -26,7 +26,7 @@ load(languagepreproc) % loads in the featuredata variable
 %% EPOCH FEATURE and MEG DATA
 
 cfg         = [];
-cfg.length  = 1; % make a single trial 300 samples long
+cfg.length  = 0.5; % make a single trial 150 samples long !!TEMPORARY
 
 featuredata = ft_redefinetrial(cfg, featuredata);
 data        = ft_redefinetrial(cfg, data);
@@ -64,10 +64,10 @@ featuredata  = ft_selectdata(cfg, featuredata);
 featuredata.trialinfolabel    = trialinfolabel; % plug trialinfolabel back in
 
 %% DO THE TERTILE SPLIT
-
+doload = 0; %% TEMPORARY
 % load or compute the contrast
-if exist(savename, 'file')
-    load(savename)
+if doload
+    load(savename);
 else
     numvars = numel(selected_features);
 
@@ -93,10 +93,11 @@ else
         contrast(i).trial       = [trl_indx_low, trl_indx_high];
         
         % do the prunned contrast
-        sel_column = strcmp(featuredata.trialinfolabel, 'numNan');
-        threshold  = 0.30;
-
-        prunned_trls = round(featuredata.trialinfo(:, sel_column)./300, 2) < threshold; % snippets with less than 0.30 % nans
+        sel_column   = strcmp(featuredata.trialinfolabel, 'numNan');
+        threshold    = 0.30;
+        total_points = numel(data.time{1}); % depends on epoching and sampling rate
+        
+        prunned_trls = round(featuredata.trialinfo(:, sel_column)./total_points, 2) < threshold; % snippets with less than 0.30 % nans
         
         ivar_exp2 = featuredata.trialinfo(prunned_trls, col_exp); % pick the appropriate language variable and snippets
 
