@@ -26,7 +26,7 @@ load(languagepreproc) % loads in the featuredata variable
 %% EPOCH FEATURE and MEG DATA
 
 cfg         = [];
-cfg.length  = 0.5; % make a single trial 150 samples long !!TEMPORARY
+cfg.length  = 1; % make a single trial 150 samples long !!TEMPORARY
 
 featuredata = ft_redefinetrial(cfg, featuredata);
 data        = ft_redefinetrial(cfg, data);
@@ -39,7 +39,7 @@ cfg          = [];
 cfg.trials   = sel; % make sure featuredata has the same trials as MEG data
 
 featuredata  = ft_selectdata(cfg, featuredata);
-data         = ft_selectdata(cfg, data);
+data         = ft_selectdata(cfg, data);         
 
 %% AVERAGE FEATURE
 
@@ -50,7 +50,7 @@ featuredata       = streams_averagefeature(featuredata, selected_features);
 
 %% REMOVE NAN TRIALS
 
-selected_column        = strcmp(featuredata.trialinfolabel, 'log10wf');
+selected_column        = strcmp(featuredata.trialinfolabel, 'log10wf'); % this column is used as a confound and must not have Nans
 trialskeep             = logical(~isnan(featuredata.trialinfo(:, selected_column))); % keep only non-nan trials
 
 trialinfolabel         = featuredata.trialinfolabel; % store this because ft_selectdata below discards it
@@ -59,7 +59,7 @@ cfg          = [];
 cfg.trials   = trialskeep;
 
 data         = ft_selectdata(cfg, data);
-featuredata  = ft_selectdata(cfg, featuredata);
+featuredata  = ft_selectdata(cfg, featuredata); % this also removes Nans in .trialinfo cells with lex. freq. info (needed for ft_regressconfound)
 
 featuredata.trialinfolabel    = trialinfolabel; % plug trialinfolabel back in
 
@@ -119,15 +119,6 @@ end
 
 if dosave
 
-    savenamedate      = fullfile(savedir, 's02');
-    datecreated       = char(datetime('today', 'Format', 'dd-MM-yy'));
-    savenamedatefull  = [savenamedate '_' datecreated];
-    dummy             = 'this is just a time stamp for streams_definecontrast()';
-
-    fid = fopen([savenamedatefull '.txt'], 'wt');
-    fprintf(fid, dummy);
-    fclose(fid);
-
     % save contrast, featuredata with new trialinfo and meg data
     save(savename, 'contrast')
 
@@ -154,9 +145,11 @@ featuredataout.trialinfo(:, 1)      = featuredatain.trialinfo; % assign story nu
         featuredataout.trialinfolabel{k + 1, 1} = feature;
     end
     
+    total_columns = numel(featuredataout.trialinfolabel);
+    
     % add information about the number of nan's
-    featuredataout.trialinfo(:, 5)      = cellfun(@(x) sum(isnan(x)), tmp(:));
-    featuredataout.trialinfolabel{5, 1} = 'numNan';
+    featuredataout.trialinfo(:, total_columns + 1)       = cellfun(@(x) sum(isnan(x)), tmp(:));
+    featuredataout.trialinfolabel{total_columns + 1, 1}  = 'numNan';
     
     
 end
