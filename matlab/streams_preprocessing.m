@@ -14,18 +14,19 @@ if ischar(subject)
 end
 
 % make a local version of the variable input arguments
-bpfreq          = ft_getopt(varargin, 'bpfreq');
-hpfreq          = ft_getopt(varargin, 'hpfreq');
-lpfreq          = ft_getopt(varargin, 'lpfreq'); % before the post-envelope computation downsampling
-dftfreq         = ft_getopt(varargin, 'dftfreq', [49 51; 99 101; 149 151]);
-audiofile       = ft_getopt(varargin, 'audiofile', 'all');
-fsample         = ft_getopt(varargin, 'fsample', 30);
-dosns           = ft_getopt(varargin, 'dosns', 0);
-dospeechenvelope = ft_getopt(varargin, 'dospeechenvelope', 0);
-filter_audio    = ft_getopt(varargin, 'filter_audio', 'no');
-feature         = ft_getopt(varargin, 'feature');
-dofeature       = ft_getopt(varargin, 'dofeature', 0);
-addnoise        = ft_getopt(varargin, 'addnoise', 0);
+bpfreq            = ft_getopt(varargin, 'bpfreq');
+hpfreq            = ft_getopt(varargin, 'hpfreq');
+lpfreq            = ft_getopt(varargin, 'lpfreq'); % before the post-envelope computation downsampling
+dftfreq           = ft_getopt(varargin, 'dftfreq', [49 51; 99 101; 149 151]);
+audiofile         = ft_getopt(varargin, 'audiofile', 'all');
+fsample           = ft_getopt(varargin, 'fsample', 30);
+dosns             = ft_getopt(varargin, 'dosns', 0);
+dospeechenvelope  = ft_getopt(varargin, 'dospeechenvelope', 0);
+bp_speechenvelope = ft_getopt(varargin, 'bp_speechenvelope', 0);
+filter_audio      = ft_getopt(varargin, 'filter_audio', 'no');
+feature           = ft_getopt(varargin, 'feature');
+dofeature         = ft_getopt(varargin, 'dofeature', 0);
+addnoise          = ft_getopt(varargin, 'addnoise', 0);
 
 %% check whether all required user specified input is there
 
@@ -102,15 +103,15 @@ end
 if ~isempty(feature)
     dofeature = 1;
 else
-    featuredata = []; % apparently output variables must be assigned
+    featuredata = {}; % apparently output variables must be assigned
 end
 
 %% PREPROCESSING LOOP PER AUDIOFILE
 
-audiodir = '/project/3011044.02/lab/pilot/stim/audio';
+audiodir                    = '/project/3011044.02/lab/pilot/stim/audio';
 subtlex_table_filename      = '/project/3011044.02/raw/data/language/worddata_subtlex.mat';
 subtlex_firstrow_filename   = '/project/3011044.02/raw/data/language/worddata_subtlex_firstrow.mat';
-subtlex_data = [];          % declare the variables, it throws a dynamic assignment error otherwise
+subtlex_data     = [];          % declare the variables, it throws a dynamic assignment error otherwise
 subtlex_firstrow = [];
 
 % load in the files that contain word frequency information
@@ -175,7 +176,27 @@ for k = 1:numel(seltrl)
       delay = subject.delay(seltrl(k))./1000;
 
       audio = streams_broadbandenvelope(audio_orig, wavfile, delay);
+        
+      if bp_speechenvelope
+          
+          cfg = [];
+          cfg.channel = 'audio_avg';
+          audio_avg = ft_selectdata(cfg, audio);
+          
+          cfg            = [];
+          cfg.channel    = 'audio_avg';
+          cfg.bpfilter   = 'yes';
+          cfg.bpfreq     = bpfreq;
+          cfg.bpfilttype = 'firws';
+          cfg.usefftfilt = 'yes';
 
+          audio = ft_preprocessing(cfg, audio);
+          audio.label = {'audio_avg_bp'};
+          
+          audio = ft_appenddata([], audio, audio_avg);
+          
+      end
+      
   end
 
 %% BANDSTOP FILTERING FOR LINE NOISE
@@ -275,7 +296,8 @@ for k = 1:numel(seltrl)
 
       % create language predictor based on language model output
       if iscell(feature)
-
+        
+        featuredata = cell(1, numel(feature));
         for m = 1:numel(feature)
           featuredata{m} = create_featuredata(combineddata, feature{m}, data, addnoise);
         end
@@ -304,6 +326,7 @@ end
 %% APPENDING FOR OUPUT
 
 if numel(tmpdata) > 1
+    
   data        = ft_appenddata([], tmpdata{:});
   eeg         = ft_appenddata([], tmpeeg{:});
   audio       = ft_appenddata([], tmpaudio{:});
@@ -313,6 +336,7 @@ if numel(tmpdata) > 1
   end
   
 else
+    
   data        = tmpdata{1};
   eeg         = tmpeeg{1};
   audio       = tmpaudio{1};
@@ -320,6 +344,7 @@ else
   if dofeature
     featuredata     = tmpfeature{1};
   end
+  
 end
 clear tmpdata tmpaudio tmpeeg tmpfeature
 
@@ -392,7 +417,7 @@ subtlex_words = subtlex_data(:, word_column);
     
 end
 
-% ADD SUBTLEX INFORMATION 
+% Create box-shape predictors 
 function [featuredata] = create_featuredata(combineddata, feature, data, addnoise)
 
 % create FT-datastructure with the feature as a channel
