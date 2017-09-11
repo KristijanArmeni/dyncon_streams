@@ -1,4 +1,4 @@
-function [data, featuredata, contrast] = streams_epochdefinecontrast(subject, opt)
+function [depdata, data, featuredata, audio, split] = streams_epochdefinecontrast(data, featuredata, audio, opt)
 
 % streams_definecontrast(subject) averages language data from featuredata
 % obtained from streams_preprocessing_language() and computes tertile split
@@ -8,28 +8,43 @@ function [data, featuredata, contrast] = streams_epochdefinecontrast(subject, op
 
 %% INITIALIZE 
 
-dosave          = ft_getopt(opt, 'save', 0);
+altmean           = ft_getopt(opt, 'altmean', 0);
+language_features = ft_getopt(opt, 'language_features');
+audio_features    = ft_getopt(opt, 'audio_features');
+contrastvars      = ft_getopt(opt, 'contrastvars', 'perplexity');
 
-datadir         = '/project/3011044.02/preproc/meg';
-savedir         = '/project/3011044.02/analysis/lng-contrast/';
-megfile         = fullfile('/project/3011044.02/preproc/meg', [subject, '_meg-clean']); % load in preprocessed meg data
-languagepreproc = fullfile(datadir, [subject, '_featuredata.mat']); % recomputed data (after the critical bugfix)
+%% NORMALIZE THE AUDIO CHANNEL DATA per story
 
-savename        = fullfile(savedir, [subject '.mat']);  % for the contrast structure
+% select auditory envelope channel
+cfg         = [];
+cfg.channel = audio_features{1};
+audio       = ft_selectdata(cfg, audio);
 
-%% LOADING
+stories = audio.trialinfo(diff([0;audio.trialinfo])~=0); % select unique story IDs
+tmpaudio = cell(1, numel(stories));
 
-data = []; % to prevent dynamic error assignment (?)
-load(megfile);
-load(languagepreproc) % loads in the featuredata variable
+for kk = 1:numel(stories)
+  
+  cfg  = [];
+  cfg.trials   = find(audio.trialinfo == stories(kk));
+  tmpaudio{kk} = ft_selectdata(cfg, audio); % select only a single story
+  
+  cfg2 = [];
+  cfg2.demean = 'no';
+  tmpaudio{kk} = ft_channelnormalise(cfg2, tmpaudio{kk});
+
+end
+
+audio = ft_appenddata([], tmpaudio{:});
 
 %% EPOCH FEATURE and MEG DATA
 
 cfg         = [];
-cfg.length  = 1; % make a single trial 150 samples long !!TEMPORARY
+cfg.length  = 1; 
 
 featuredata = ft_redefinetrial(cfg, featuredata);
 data        = ft_redefinetrial(cfg, data);
+audio       = ft_redefinetrial(cfg, audio);
 
 %% ADHOC TRIAL REMOVAL
 
@@ -40,117 +55,141 @@ cfg.trials   = sel; % make sure featuredata has the same trials as MEG data
 
 featuredata  = ft_selectdata(cfg, featuredata);
 data         = ft_selectdata(cfg, data);         
+audio        = ft_selectdata(cfg, audio);
 
 %% AVERAGE FEATURE
 
-selected_features = {'perplexity', 'entropy', 'log10wf'};
-
 % put average feature information into .trialinfo and labels into .trialinfolabel
-featuredata       = streams_averagefeature(featuredata, selected_features);
+featuredata       = streams_averagefeature(featuredata, language_features, altmean);
+audio             = streams_averagefeature(audio, audio_features, altmean);
+
+% append together
+
+audio.time    = featuredata.time;    % make time info the same else appenddata fails
+audio.fsample = featuredata.fsample;
+
+depdata                = ft_appenddata([], featuredata, audio);
+
+% add averaging information back in
+audio_col = strcmp(audio.trialinfolabel, audio_features);
+
+depdata.trialinfo      = [featuredata.trialinfo, audio.trialinfo(:, audio_col)];
+depdata.trialinfolabel = [featuredata.trialinfolabel; audio.trialinfolabel(audio_col)];
 
 %% REMOVE NAN TRIALS
 
-selected_column        = strcmp(featuredata.trialinfolabel, 'log10wf'); % this column is used as a confound and must not have Nans
-trialskeep             = logical(~isnan(featuredata.trialinfo(:, selected_column))); % keep only non-nan trials
+selected_column = strcmp(depdata.trialinfolabel, 'log10wf'); % this column is used as a confound and must not have Nans
+trialskeep      = logical(~isnan(depdata.trialinfo(:, selected_column))); % keep only non-nan trials
 
-trialinfolabel         = featuredata.trialinfolabel; % store this because ft_selectdata below discards it
+trialinfolabel  = depdata.trialinfolabel; % store this because ft_selectdata below discards it
 
 cfg          = [];
 cfg.trials   = trialskeep;
 
 data         = ft_selectdata(cfg, data);
-featuredata  = ft_selectdata(cfg, featuredata); % this also removes Nans in .trialinfo cells with lex. freq. info (needed for ft_regressconfound)
+depdata      = ft_selectdata(cfg, depdata); % this also removes Nans in .trialinfo cells with lex. freq. info (needed for ft_regressconfound)
 
-featuredata.trialinfolabel    = trialinfolabel; % plug trialinfolabel back in
+depdata.trialinfolabel = trialinfolabel; % plug trialinfolabel back in
 
 %% DO THE TERTILE SPLIT
+
 doload = 0; %% TEMPORARY
 % load or compute the contrast
 if doload
     load(savename);
 else
-    numvars = numel(selected_features);
-
-    for i = 1:numvars
-
-        ivarexp = selected_features{i};
-
-        % find channel index
-        col_exp  = strcmp(featuredata.trialinfolabel(:), ivarexp);
-        ivar_exp = featuredata.trialinfo(:, col_exp); % pick the appropriate language variable (mean complexity for each trial)
-
-        q = quantile(ivar_exp, [0.33 0.66]); % extract the two quantile values
-        low_tertile  = q(1);
-        high_tertile = q(2);
-
-        % split into high and low tertile groups
-        trl_indx_low  = ivar_exp < low_tertile; % this gives a logical vector
-        trl_indx_high = ivar_exp > high_tertile; 
-
-        % create the contrast structure
-        contrast(i).indepvar    = ivarexp;
-        contrast(i).label       = {'low', 'high'}; 
-        contrast(i).trial       = [trl_indx_low, trl_indx_high];
+    
+    for i = 1:numel(contrastvars)
         
-        % do the prunned contrast
-        sel_column   = strcmp(featuredata.trialinfolabel, 'numNan');
-        threshold    = 0.30;
-        total_points = numel(data.time{1}); % depends on epoching and sampling rate
+        indepvarsel = contrastvars{i};
         
-        prunned_trls = round(featuredata.trialinfo(:, sel_column)./total_points, 2) < threshold; % snippets with less than 0.30 % nans
-        
-        ivar_exp2 = featuredata.trialinfo(prunned_trls, col_exp); % pick the appropriate language variable and snippets
-
-        q = quantile(ivar_exp2, [0.33 0.66]); % extract the new quantile values based only on snippets with < threshold nans
-        low_tertile2  = q(1);
-        high_tertile2 = q(2);
-        
-        trl_indx_low2   = all([prunned_trls, ivar_exp < low_tertile2], 2);  % select 0.3 < NaN high complexity trials
-        trl_indx_high2  = all([prunned_trls, ivar_exp > high_tertile2], 2); % select 0.3 < NaN low complexity trials
-        
-        contrast(i).label2       = {'low2', 'high2'};
-        contrast(i).trial2       = [trl_indx_low2, trl_indx_high2];
+        split(i) = streams_split(depdata, indepvarsel, [0.33 0.66]);
         
     end
-
-end
-
-%% SAVING
-
-if dosave
-
-    % save contrast, featuredata with new trialinfo and meg data
-    save(savename, 'contrast')
 
 end
 
 %% SUBFUNCTIONS
+function split = streams_split(datain, indepvarsel, quantile_range)
+           
+    col_indepvar = strcmp(datain.trialinfolabel(:), indepvarsel);
+    indepvar     = datain.trialinfo(:, col_indepvar); % pick the appropriate language variable (mean complexity for each trial)
 
-function featuredataout = streams_averagefeature(featuredatain, selected_features)
+    % find channel index
+    q            = quantile(indepvar, quantile_range); % extract the two quantile values
+    low_tertile  = q(1);
+    high_tertile = q(2);
+
+    % split into high and low tertile groups
+    trl_indx_low  = indepvar < low_tertile; % this gives a logical vector
+    trl_indx_high = indepvar > high_tertile; 
+
+    % create the contrast structure
+    split.indepvar     = indepvarsel;
+    split.quantrange   = quantile_range;
+    split.quantdvalue  = [low_tertile, high_tertile];
+    split.label        = {'low', 'high'};
+    split.trial        = [trl_indx_low, trl_indx_high];
+
+    % do the prunned contrast
+    sel_column   = strcmp(datain.trialinfolabel, 'numNan');
+    threshold    = 0.30;
+    total_points = numel(datain.time{1}); % depends on epoching and sampling rate
+
+    prunned_trls     = round(datain.trialinfo(:, sel_column)./total_points, 2) < threshold; % snippets with less than 0.30 % nans
+    indepvar_prunned = datain.trialinfo(prunned_trls, col_indepvar); % pick the appropriate language variable and snippets
+
+    q = quantile(indepvar_prunned, quantile_range); % extract the new quantile values based only on snippets with < threshold nans
+    low_tertile_2  = q(1);
+    high_tertile_2 = q(2);
+
+    trl_indx_low2   = all([prunned_trls, indepvar < low_tertile_2], 2);  % select 0.3 < NaN high complexity trials
+    trl_indx_high2  = all([prunned_trls, indepvar > high_tertile_2], 2); % select 0.3 < NaN low complexity trials
+    
+    split.quantvalue2  = [low_tertile_2, high_tertile_2];
+    split.label2       = {'low2', 'high2'};
+    split.trial2       = [trl_indx_low2, trl_indx_high2];
+
+end
+
+function dataout = streams_averagefeature(datain, selected_features, altmean)
 % streams_averagefeature() takes the output of
 % streams_preprocessing.m (featuredata struct) and averages single trial values
 
-featuredataout                      = featuredatain;
-featuredataout.trialinfolabel{1, 1} = 'story'; % this is the preprocessed trialinfo
-featuredataout.trialinfo(:, 1)      = featuredatain.trialinfo; % assign story numbers
+dataout                      = datain;
+dataout.trialinfolabel{1, 1} = 'story'; % this is the preprocessed trialinfo
+dataout.trialinfo(:, 1)      = datain.trialinfo; % assign story numbers
 
     for k = 1:numel(selected_features)
 
         feature   = selected_features{k};
-        chan_indx = strcmp(featuredatain.label, feature); % find the correct index
+        chan_indx = strcmp(datain.label, feature); % find the correct index
 
-        tmp = cellfun(@(x) x(chan_indx,:), featuredatain.trial(:), 'UniformOutput', 0); % choose the correct row in every cell
-
-        featuredataout.trialinfo(:, k + 1)      = cellfun(@nanmean, tmp(:)); % take the mean, ignoring nans
-        featuredataout.trialinfolabel{k + 1, 1} = feature;
+        tmp = cellfun(@(x) x(chan_indx,:), datain.trial(:), 'UniformOutput', 0); % choose the correct row in every cell
+        
+        if altmean % take the mean diving by the num words (~ number of non-Nan unique values)
+            
+            tmp = cellfun(@unique , tmp(:), 'UniformOutput', 0); % pick unique values (this includes nan's)
+            
+            dataout.trialinfo(:, k + 1)      = cellfun(@(x) nansum(x)/sum(~isnan(x)), tmp(:)); 
+            dataout.trialinfolabel{k + 1, 1} = feature;
+       
+        else
+            
+            dataout.trialinfo(:, k + 1)      = cellfun(@nanmean, tmp(:)); % take the mean, ignoring nans
+            dataout.trialinfolabel{k + 1, 1} = feature;
+        
+        end
+        
     end
     
-    total_columns = numel(featuredataout.trialinfolabel);
+    total_columns = numel(dataout.trialinfolabel);
     
     % add information about the number of nan's
-    featuredataout.trialinfo(:, total_columns + 1)       = cellfun(@(x) sum(isnan(x)), tmp(:));
-    featuredataout.trialinfolabel{total_columns + 1, 1}  = 'numNan';
+    dataout.trialinfo(:, total_columns + 1)       = cellfun(@(x) sum(isnan(x)), tmp(:));
+    dataout.trialinfolabel{total_columns + 1, 1}  = 'numNan';
     
+    clear tmp
     
 end
 
