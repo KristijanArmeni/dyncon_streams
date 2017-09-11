@@ -1,34 +1,44 @@
-function streams_dics(cfgfreq, cfgdics, subject, ivar)
+function streams_dics(subject, opt)
 % streams_dics() performs epoching (1s), freqanalysis and source
 % reconstruction on preprocessed data
 
-%% INITIALIZ
+%% INITIALIZE
 
-dir             = '/project/3011044.02/preproc';
+dir             = ft_getopt(opt, 'datadir');
+savedir         = ft_getopt(opt, 'savedir');
+indepvar        = ft_getopt(opt, 'indepvar');
+cfgfreq         = ft_getopt(opt, 'cfgfreq');
+cfgdics         = ft_getopt(opt, 'cfgdics');
 
 preprocfile     = fullfile(dir, 'meg', [subject '_meg-clean.mat']);
 featurefile     = fullfile(dir, 'meg', [subject '_featuredata.mat']);
+audiofile       = fullfile(dir, 'meg', [subject, '_aud.mat']);
 headmodelfile   = fullfile(dir, 'anatomy', [subject '_headmodel.mat']);
 leadfieldfile   = fullfile(dir, 'anatomy', [subject '_leadfield.mat']);
 sourcemodelfile = fullfile(dir, 'anatomy', [subject '_sourcemodel.mat']);
 
 % conditions file, frequency band doesn't matter here
-contrastfile    = fullfile('/project/3011044.02/analysis/lng-contrast/', [subject '.mat']); 
+% contrastfile    = fullfile('/project/3011044.02/analysis/lng-contrast/', [subject '.mat']); 
 
 % ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
 %% LOAD
 
-load(preprocfile);    % meg data
+load(preprocfile);    % meg data, 'data' variable
 load(headmodelfile);
 load(leadfieldfile);
 load(sourcemodelfile);
-load(contrastfile);   % struct with field .trial where logical colums for contrast are stored
 load(featurefile);
+load(audiofile);
 
 %% ADDITIONAL CLEANING STEP & EPOCHING
 
-opt = {'save', 0};
-[data, featuredata, contrast] = streams_epochdefinecontrast(subject, opt);
+opt = {'save', 0, ...
+       'altmean', 0, ...
+       'language_features', {'log10wf' 'perplexity', 'entropy'}, ...
+       'audio_features', {'audio_avg'}, ...
+       'contrastvars', {indepvar}};
+   
+[depdata, data, ~, ~, contrast] = streams_epochdefinecontrast(data, featuredata, audio, opt);
 
 %% DO FREQANALYSIS
 
@@ -98,14 +108,14 @@ clear F P S;
 %% REGRESS OUT WORD FREQUENCY DATA
 
 tri = source.tri;
-if ~strcmp(ivar, 'log10wf') % if ivarexp is lex. fr. itself skip this step
+if ~strcmp(indepvar, 'log10wf') % if ivarexp is lex. fr. itself skip this step
     
-    nuisance_vars = {'log10wf'}; % take lexical frequency as nuissance
-    confounds     = ismember(featuredata.trialinfolabel, nuisance_vars); % logical with 1 in the columns for nuisance vars
+    nuisance_vars = {'log10wf', 'audio_avg'}; % take lexical frequency as nuissance
+    confounds     = ismember(depdata.trialinfolabel, nuisance_vars); % logical with 1 in the columns for nuisance vars
 
     cfg          = [];
-    cfg.confound = featuredata.trialinfo(:, confounds); %pick the log10wf column
-    cfg.beta     = 'no';
+    cfg.confound = depdata.trialinfo(:, confounds); %pick the log10wf column
+
     source       = ft_regressconfound(cfg, rmfield(source, 'tri'));
     source.tri   = tri;
     
@@ -113,14 +123,14 @@ end
 
 %% SPLIT THE DATA
 
-ivarsel       = strcmp({contrast.indepvar}, ivar); % use the precomputed contrasts
+ivarsel       = strcmp({contrast.indepvar}, indepvar); % use the precomputed contrasts
 contrastsel   = contrast(ivarsel); % chose a subset of the struct array
 
 low_column    = strcmp(contrastsel.label, 'low');
 high_column   = strcmp(contrastsel.label, 'high');
 
-trl_indx_low  = contrastsel.trial(trialskeep, low_column);
-trl_indx_high = contrastsel.trial(trialskeep, high_column);
+trl_indx_low  = contrastsel.trial(:, low_column);
+trl_indx_high = contrastsel.trial(:, high_column);
 
 cfg         = [];
 cfg.trials  = trl_indx_low;
@@ -152,11 +162,9 @@ stat = ft_sourcestatistics(cfg, source_high, source_low);
 
 %% SAVING 
 
-savedir            = '/project/3011044.02/analysis/dics/subject';
-
 dicsfreq           = num2str(cfgdics.freq);
-savename           = fullfile(savedir, [subject '_' ivar '_' dicsfreq]);
-pipelinesavename   = fullfile(savedir, ['s02' '_' ivar '_' dicsfreq]);
+savename           = fullfile(savedir, [subject '_' indepvar '_' dicsfreq]);
+pipelinesavename   = fullfile(savedir, ['s02' '_' indepvar '_' dicsfreq]);
 
 datecreated        = char(datetime('today', 'Format', 'dd-MM-yy'));
 pipelinefilename   = [pipelinesavename '_' datecreated];
