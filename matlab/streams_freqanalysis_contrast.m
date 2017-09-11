@@ -2,9 +2,10 @@ function streams_freqanalysis_contrast(subject, inputargs)
 
 %% INITIALIZE
 
-ivarexp         = ft_getopt(inputargs, 'ivarexp'); % the first input must not be called 'varargin', else matlab complains
+indepvar        = ft_getopt(inputargs, 'indepvar'); % the first input must not be called 'varargin', else matlab complains
 dohigh          = ft_getopt(inputargs, 'dohigh', 0);
 prune           = ft_getopt(inputargs, 'prune', 0);
+datadir         = ft_getopt(inputargs, 'datadir');
 savedir         = ft_getopt(inputargs, 'savedir');
 doconfound      = ft_getopt(inputargs, 'doconfound', 1);
 taper           = ft_getopt(inputargs, 'taper');
@@ -12,10 +13,24 @@ tapsmooth       = ft_getopt(inputargs, 'tapsmooth');
 
 isdpss          = strcmp(taper, 'dpss');
 
+%% LOAD IN
+
+megf         = fullfile(datadir, [subject '_meg-clean']);
+featuredataf = fullfile(datadir, [subject '_featuredata']);
+audiof       = fullfile(datadir, [subject, '_aud']);
+load(megf)
+load(featuredataf)
+load(audiof)
+
 %% CREATE IN EPOCHED FEATUREDATA WITH TRIALINFO AND CONTRAST STRUCTURE
 
-opt = {'save', 0};
-[data, featuredata, contrast] = streams_epochdefinecontrast(subject, opt);
+opt = {'save', 0, ...
+       'altmean', 0, ...
+       'language_features', {'log10wf' 'perplexity', 'entropy'}, ...
+       'audio_features', {'audio_avg'}, ...
+       'contrastvars', {indepvar}};
+   
+[depdata, data, ~, ~, contrast] = streams_epochdefinecontrast(data, featuredata, audio, opt);
 
 %% COMPUTE POWER SPECTRUM
 
@@ -47,20 +62,19 @@ cfg.keeptrials    = 'yes';
 freq = ft_freqanalysis(cfg, data);
 clear data
 
-cfg = [];
+cfg        = [];
 cfg.method = 'sum';
-freq = ft_combineplanar(cfg, freq);
+freq       = ft_combineplanar(cfg, freq);
 
 %% regress out lexical frequency
 
-if ~strcmp(ivarexp, 'log10wf') && doconfound % if ivarexp is lex. fr. itself skip this step
+if ~strcmp(indepvar, 'log10wf') && doconfound % if ivarexp is lex. fr. itself skip this step
     
-    nuisance_vars = {'log10wf'}; % take lexical frequency as nuissance
-    confounds     = ismember(featuredata.trialinfolabel, nuisance_vars); % logical with 1 in the columns for nuisance vars
+    nuisance_vars = {'log10wf', 'audio_avg'}; % take lexical frequency as nuissance
+    confounds     = ismember(depdata.trialinfolabel, nuisance_vars); % logical with 1 in the columns for nuisance vars
 
-    cfg  = [];
-    cfg.confound  = featuredata.trialinfo(:, confounds);
-    cfg.beta      = 'no';
+    cfg           = [];
+    cfg.confound  = depdata.trialinfo(:, confounds);
     
     freq          = ft_regressconfound(cfg, freq);
 
@@ -69,7 +83,7 @@ end
 %% Split the data into high and low conditions
 
 % use the 'contrast' struct, computed in streams_epochdefinecontrast()
-ivarsel        = strcmp({contrast.indepvar}, ivarexp); % use the correct struct dimeension
+ivarsel        = strcmp({contrast.indepvar}, indepvar); % use the correct struct dimeension
 contrastsel    = contrast(ivarsel);                    % chose a subset of the struct array
 
 if prune % here tertiles were computed based only on trials with more than 30% of language info
@@ -90,15 +104,14 @@ else
     
 end
 
-
 % select data
-cfg = [];
-cfg.trials     = trl_indx_low;
-freq_low       = ft_selectdata(cfg, freq);
+cfg        = [];
+cfg.trials = trl_indx_low;
+freq_low   = ft_selectdata(cfg, freq);
 
-cfg = [];
-cfg.trials     = trl_indx_high;
-freq_high      = ft_selectdata(cfg, freq);
+cfg        = [];
+cfg.trials = trl_indx_high;
+freq_high  = ft_selectdata(cfg, freq);
 
 clear freq
 
@@ -109,10 +122,11 @@ if      isdpss && tapsmooth == 8 && dohigh;  foi = [60 90];
 elseif  isdpss && tapsmooth == 8;            foi = [30 60];
 elseif  isdpss && tapsmooth == 4 && dohigh;  foi = [20 30];
 elseif  isdpss && tapsmooth == 4;            foi = [12 20];
-else                                         foi = [4 8];
+elseif  ~isdpss && dohigh;                   foi = [4 8];
+else;                                        foi = [1 3];
 end
 
-design = [ones(1,size(freq_high.trialinfo,1)) ones(1,size(freq_low.trialinfo,1))*2];
+design = [ones(1, size(freq_high.trialinfo, 1)) ones(1, size(freq_low.trialinfo, 1))*2];
 
 % independent between trials t-test
 cfg                   = [];
@@ -127,10 +141,10 @@ stat = ft_freqstatistics(cfg, freq_high, freq_low);
 %% SAVE
 
 foistr       = [num2str(foi(1)) '-' num2str(foi(2))];
-filenameout  = ['_' ivarexp '_' foistr];
+filenameout  = ['_' indepvar '_' foistr];
 
 if ~doconfound % add -raw to the name if no regression is made
-    filenameout = ['_' ivarexp '-raw' '_' foistr];
+    filenameout = ['_' indepvar '-raw' '_' foistr];
 end
 
 % save the info on preprocessing options used
