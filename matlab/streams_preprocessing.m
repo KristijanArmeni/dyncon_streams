@@ -284,11 +284,14 @@ for k = 1:numel(seltrl)
       textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
       combineddata = combine_donders_textgrid(dondersfile, textgridfile);
 
-      % Compute the log log_transform perplexity
+      % Compute word duration
       for i = 1:numel(combineddata)
-
-        combineddata(i).log10perp = log10(combineddata(i).perplexity);
-
+        
+        if ~isempty(combineddata(i).start_time)
+            combineddata(i).duration = combineddata(i).end_time - combineddata(i).start_time;
+        else
+            combineddata(i).duration = nan;
+        end
       end
 
       % add frequency info and word length
