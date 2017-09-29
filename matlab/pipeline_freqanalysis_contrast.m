@@ -1,29 +1,31 @@
 
 [subjects, num_sub] = streams_util_subjectstring(2:28, {'s06', 's09'});
 
-ivars    = {'log10wf'};
-savedir  = '/project/3011044.02/analysis/freqanalysis/contrast/subject3/';
-freqopt  = {'dpss', 4};
+indepvars = {'perplexity', 'entropy'};
+datadir   = '/project/3011044.02/preproc/meg/';
+savedir   = '/project/3011044.02/analysis/freqanalysis/contrast/subject5/';
+freqopt   = {'hanning', []};
 
 %% SUBJECT AND VARIABLE LOOP
 
-for i = 1:numel(ivars)
+for i = 1:numel(indepvars)
 
-    ivarexp = ivars{i};
+    indepvar = indepvars{i};
 
     for k = 1:numel(subjects)
 
         subject = subjects{k};
-        inputargs = {'ivarexp', ivarexp, ...
+        inputargs = {'indepvar', indepvar, ...
                      'taper', freqopt{1}, ... 
                      'tapsmooth', freqopt{2}, ...
-                     'dohigh', 0, ...
+                     'dohigh', 2, ...
                      'prune', 0, ...
                      'doconfound', 1, ...
-                     'savedir', savedir};
+                     'savedir', savedir, ...
+                     'datadir', datadir};
         
         qsubfeval('streams_freqanalysis_contrast', subject, inputargs, ...
-                                                            'memreq', 1024^3 * 12,...
+                                                            'memreq', 1024^3 * 14,...
                                                             'timreq', 45*60);
     end
 
