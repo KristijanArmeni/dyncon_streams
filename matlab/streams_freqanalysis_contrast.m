@@ -117,11 +117,12 @@ clear freq
 
 %% INDEPENDENT T-TEST
 
-% determine the foi based on which taper and smooth was used on the data
-if      isdpss && tapsmooth == 8 && dohigh;  foi = [60 90];
+% determine the foi of t-test based on which taper and smooth was used on the freq data
+if      isdpss && tapsmooth == 8 && dohigh;  foi = [60 90]; % dpss for higher stuff
 elseif  isdpss && tapsmooth == 8;            foi = [30 60];
 elseif  isdpss && tapsmooth == 4 && dohigh;  foi = [20 30];
 elseif  isdpss && tapsmooth == 4;            foi = [12 20];
+elseif  ~isdpss && dohigh == 2;              foi = [8 12]; % haning for alpha, theta and delta
 elseif  ~isdpss && dohigh;                   foi = [4 8];
 else;                                        foi = [1 3];
 end
