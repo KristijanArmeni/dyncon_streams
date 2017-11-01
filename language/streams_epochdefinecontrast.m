@@ -14,6 +14,13 @@ audio_features    = ft_getopt(opt, 'audio_features');
 contrastvars      = ft_getopt(opt, 'contrastvars', 'perplexity');
 removeonset       = ft_getopt(opt, 'removeonset', 0);
 shift             = ft_getopt(opt, 'shift', 0); % in miliseconds
+epochlength       = ft_getopt(opt, 'epochlength', 1); % seconds
+overlap           = ft_getopt(opt, 'overlap', 0);
+
+% some data structures do not have .fsample field, I reconstruct it for now from
+if ~isfield(data, 'fsample')    
+    data.fsample = round(data.cfg.previous{1}.resamplefs);
+end
 
 %% NORMALIZE THE AUDIO CHANNEL DATA per story
 
@@ -39,10 +46,53 @@ end
 
 audio = ft_appenddata([], tmpaudio{:});
 
+%% REMOVE SHORT DATA EPOCHS PRIOR TO SHIFTING
+sr         = round(data.fsample); % sometimes data.fsample is 300.000
+shift_size = shift/1000;      % express msec shift size relatively
+shift_sr   = sr * shift_size; % shift expressed in the number of samples
+
+% check whether there the epochs are at least twice the sampling rate in length
+trlsel = logical(cell2mat(cellfun(@(x) numel(x) > 2*sr, data.time(:), 'UniformOutput', 0)));
+
+% if there are shorter epochs, reject them here (regardless of shift value)
+if ~all(trlsel)  
+    cfg         = [];
+    cfg.trials  = trlsel;
+
+    data        = ft_selectdata(cfg, data);
+    audio       = ft_selectdata(cfg, audio);
+    featuredata = ft_selectdata(cfg, featuredata);
+end
+%% ADD PER TRIAL TIME SHIFT TO THE DATA
+
+num_trl = numel(data.trial);
+
+if shift > 0
+
+    for ii = 1:num_trl
+
+        new_onset = shift_sr + 1;                  % sample index that represents a new onset
+
+        data.trial{ii} = data.trial{ii}(:, new_onset:end); % selectdata from the new index to the end
+        data.time{ii}  = data.time{ii}(:, new_onset:end);
+        
+        num_smpl = numel(featuredata.time{ii});
+        cut_tail              = num_smpl-shift_sr; % sample number to cut the left over featuredata at
+        featuredata.trial{ii} = featuredata.trial{ii}(:, 1:cut_tail); % discard feature data at the end
+        featuredata.time{ii}  = featuredata.time{ii}(:, 1:cut_tail);
+
+        audio.trial{ii} = audio.trial{ii}(:, 1:cut_tail);   
+        audio.time{ii}  = audio.time{ii}(:, 1:cut_tail);
+            
+    end
+    
+end
+
 %% EPOCH FEATURE and MEG DATA
 
 cfg         = [];
-cfg.length  = 1; 
+cfg.length  = epochlength;
+cfg.overlap = overlap;
 
 featuredata = ft_redefinetrial(cfg, featuredata);
 data        = ft_redefinetrial(cfg, data);
@@ -59,87 +109,17 @@ featuredata  = ft_selectdata(cfg, featuredata);
 data         = ft_selectdata(cfg, data);         
 audio        = ft_selectdata(cfg, audio);
 
-%% ADD TIME SHIFT TO THE DATA
-if shift > 0
-    
-    sr             = data.fsample;
-    shift_size     = shift/1000; % express msec shift size relatively
-    forward_shift  = sr * shift_size; % determine the num of samples for shift
-    
-    num_stories    = numel(stories);
-    datsel         = cell(1, num_stories);
-    featuredatasel = cell(1, num_stories);
-    audiosel       = cell(1, num_stories);
-    
-    for ii = 1:num_stories
-        
-        cfg = [];
-        cfg.trials = logical(data.trialinfo == stories(ii));
-        
-        % select story-specific data
-        datsel{ii}         = ft_selectdata(cfg, data);
-        featuredatasel{ii} = ft_selectdata(cfg, featuredata);
-        audiosel{ii}       = ft_selectdata(cfg, audio);
-        
-        tmpdat  = datsel{ii};
-        
-        numtrlshift    = ceil(forward_shift/sr); % determine how many 1-sec segments does the shift straddle
-
-        % convert cell array of 1-sec segments to a vector
-        datvec  = cell2mat(tmpdat.trial);
-        timevec = cell2mat(tmpdat.time);
-
-        % shift the MEG data, time and trlinfo vectors in the negative direction
-        % ('leftwards')
-        datvec_shift    = circshift(datvec, -forward_shift, 2);
-        timevec_shift   = circshift(timevec, -forward_shift, 2);
-        trialinfo_shift = circshift(tmpdat.trialinfo', -numtrlshift, 2); % this one is a column vec
-
-        % for mat2cell below
-        cellen    = zeros(1, numel(tmpdat.trial)); % number of cells to be created from the shifted vector
-        cellen(:) = size(tmpdat.trial{1}, 2);      % assign the length (num. samples) in each sell (e.g. 300)
-        
-        % Convert vector back to cell array with cells of 273-by-300 samples
-        tmpdat.time      = mat2cell(timevec_shift, 1, cellen);
-        tmpdat.trial     = mat2cell(datvec_shift, 273, cellen);
-        tmpdat.trialinfo = trialinfo_shift;
-
-        % drop the segments at the end that contain the data carried over from
-        % onset
-        trlkeep                = ones(1, numel(tmpdat.trialinfo));
-        trlkeep(1:numtrlshift) = 0; % mark the number of segments to be removed
-        trlkeep                = logical(flip(trlkeep));    % mark the number of segments from the back (negative shift)
-
-        % remove the selected trials in MEG and unshifted featuredata and audio
-        cfg          = [];
-        cfg.trials   = trlkeep;
-
-        featuredatasel{ii} = ft_selectdata(cfg, featuredatasel{ii});
-        datsel{ii}         = ft_selectdata(cfg, tmpdat);         
-        audiosel{ii}       = ft_selectdata(cfg, audiosel{ii});
-    
-    end
-    
-    % append across stories into a single struct
-    data        = ft_appenddata([], datsel{:});
-    featuredata = ft_appenddata([], featuredatasel{:});
-    audio       = ft_appenddata([], audiosel{:});
-    
-end
-
 %% REMOVE ONSET TRIALS
 
 if removeonset
 
     word_nr_chan = strcmp(featuredata.label, 'word_');
 
-    word_idx  = cellfun(@(x) x(word_nr_chan,:), featuredata.trial(:), 'UniformOutput', 0); % select word_ channel
-    word_idx2 = cellfun(@unique , word_idx, 'UniformOutput', 0);                           % get unique word index values
-    word_idx3 = cellfun(@(x) x(~isnan(x)), word_idx2, 'UniformOutput', 0);                 % select non-Nan unique values
+    word_idx    = cellfun(@(x) x(word_nr_chan,:), featuredata.trial(:), 'UniformOutput', 0); % select word_ channel
+    word_idx_un = cellfun(@unique , word_idx, 'UniformOutput', 0);                           % get unique word index values                 
 
-
-    criterion = 2; % numbering starts at 0, so this excludes first 3 words
-    trl_sel   = ~logical(cell2mat(cellfun(@(x) any(x < criterion), word_idx3, 'UniformOutput', 0))); % keep trials without sentence onsets
+    criterion = 1; % numbering starts at 0, so this excludes all epochs containting first 3 words
+    trl_sel   = ~logical(cell2mat(cellfun(@(x) any(x < criterion), word_idx_un, 'UniformOutput', 0))); % keep trials without sentence onsets
 
     cfg          = [];
     cfg.trials   = trl_sel; 
@@ -157,10 +137,12 @@ audio             = streams_averagefeature(audio, audio_features, altmean);
 
 % append together
 
-audio.time    = featuredata.time; % make time info the same else appenddata fails
-audio.fsample = featuredata.fsample;
+data.fsample        = sr; % this is needed for s14 and s28
+featuredata.fsample = sr;
+audio.time          = featuredata.time; % make time info the same else appenddata fails
+audio.fsample       = sr;
 
-depdata                = ft_appenddata([], featuredata, audio);
+depdata             = ft_appenddata([], featuredata, audio);
 
 % add averaging information back in
 audio_col = strcmp(audio.trialinfolabel, audio_features);
@@ -204,6 +186,7 @@ else
 end
 
 %% SUBFUNCTIONS
+
 function split = streams_split(datain, indepvarsel, quantile_range)
            
     col_indepvar = strcmp(datain.trialinfolabel(:), indepvarsel);
