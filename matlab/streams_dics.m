@@ -9,6 +9,9 @@ savedir         = ft_getopt(opt, 'savedir');
 indepvar        = ft_getopt(opt, 'indepvar');
 cfgfreq         = ft_getopt(opt, 'cfgfreq');
 cfgdics         = ft_getopt(opt, 'cfgdics');
+removeonset     = ft_getopt(opt, 'removeonset');
+shift           = ft_getopt(opt, 'shift');
+savewhat        = ft_getopt(opt, 'savewhat', 'stat');
 
 preprocfile     = fullfile(dir, 'meg', [subject '_meg-clean.mat']);
 featurefile     = fullfile(dir, 'meg', [subject '_featuredata.mat']);
@@ -30,13 +33,17 @@ load(sourcemodelfile);
 load(featurefile);
 load(audiofile);
 
-%% ADDITIONAL CLEANING STEP & EPOCHING
+%% ADDITIONAL CLEANING STEPS, EPOCHING and BINNING
 
-opt = {'save', 0, ...
-       'altmean', 0, ...
+opt = {'save',              0, ...
+       'altmean',           0, ...
        'language_features', {'log10wf' 'perplexity', 'entropy'}, ...
-       'audio_features', {'audio_avg'}, ...
-       'contrastvars', {indepvar}};
+       'audio_features',    {'audio_avg'}, ...
+       'contrastvars',      {indepvar}, ...
+       'removeonset',       removeonset, ...
+       'shift',             shift, ...
+       'epochlength',       1, ...
+       'overlap',           0};
    
 [depdata, data, ~, ~, contrast] = streams_epochdefinecontrast(data, featuredata, audio, opt);
 
@@ -163,20 +170,30 @@ stat = ft_sourcestatistics(cfg, source_high, source_low);
 %% SAVING 
 
 dicsfreq           = num2str(cfgdics.freq);
-savename           = fullfile(savedir, [subject '_' indepvar '_' dicsfreq]);
-pipelinesavename   = fullfile(savedir, ['s02' '_' indepvar '_' dicsfreq]);
 
-datecreated        = char(datetime('today', 'Format', 'dd-MM-yy'));
-pipelinefilename   = [pipelinesavename '_' datecreated];
+% pipelinesavename   = fullfile(savedir, ['s02' '_' indepvar '_' dicsfreq]);
+% 
+% datecreated        = char(datetime('today', 'Format', 'dd-MM-yy'));
+% pipelinefilename   = [pipelinesavename '_' datecreated];
+% 
+% if ~exist([pipelinefilename '.html'], 'file')
+%     cfgt           = [];
+%     cfgt.filename  = pipelinefilename;
+%     cfgt.filetype  = 'html';
+%     ft_analysispipeline(cfgt, stat);
+% end
 
-if ~exist([pipelinefilename '.html'], 'file')
-    cfgt           = [];
-    cfgt.filename  = pipelinefilename;
-    cfgt.filetype  = 'html';
-    ft_analysispipeline(cfgt, stat);
+savename = fullfile(savedir, [subject '_' indepvar '_' dicsfreq '_' num2str(shift)]);
+if strcmp(savewhat, 'stat')
+    save(savename, 'stat');
+elseif strcmp(savewhat, 'source')
+    save(fullfile(savedir, 'source', [savename '_H']), 'source_high');
+    save(fullfile(savedir, 'source', [savename '_L']), 'source_low');
+else
+    save(savename, 'stat');
+    save(fullfile(savedir, 'source', [savename '_H']), 'source_high');
+    save(fullfile(savedir, 'source', [savename '_L']), 'source_low');
 end
-
-save(savename, 'stat');
 % ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
 
 end
