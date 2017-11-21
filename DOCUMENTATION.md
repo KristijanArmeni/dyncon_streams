@@ -17,7 +17,6 @@ This is a brief documentation of the currently used [analysis pipeline][analysis
 
 ### MEG frequency analysis & stats
 ---
-* `streams_freqanalysis.m`
 * `streams_freqanalysis_contrast.m`
 * `streams_freqanalysis_groupcontrast.m`
 
@@ -65,7 +64,7 @@ Dependencies: [Freesurfer][Freesurfer], [Workbench][Workbench]
    
     
 * `streams_epochdefinecontrast.m`
-  * `streams_averagefeature.m`
+  * `streams_cleanadhoc.m`
 
 #### Subtlex data
 
@@ -83,7 +82,7 @@ Dependencies: [Freesurfer][Freesurfer], [Workbench][Workbench]
 * `streams_util_subjectstring.m`
 
 
-Last updated by: Kristijan on 8/15/2017
+Last updated by: Kristijan on 21/11/2017
 
 [analysis pipeline]:https://github.com/KristijanArmeni/dyncon_streams
 [Freesurfer]: https://surfer.nmr.mgh.harvard.edu/
