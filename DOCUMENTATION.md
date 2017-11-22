@@ -27,7 +27,7 @@ This is a brief documentation of the currently used [analysis pipeline][analysis
 
 ### MRI preprocessing
 ---
-Dependencies: [Freesurfer][Freesurfer], [Workbench][Workbench]
+Dependencies: [Freesurfer][Freesurfer], [FSL][FSL], [Workbench][Workbench]
 
 
 * `streams_anatomy_coregistration_qc.m`
@@ -86,10 +86,11 @@ Dependencies: [Freesurfer][Freesurfer], [Workbench][Workbench]
 * `streams_util_subjectstring.m`
 
 
-Last updated by: Kristijan on 21/11/2017
+Last updated by: Kristijan on 22/11/2017
 
 [analysis pipeline]:https://github.com/KristijanArmeni/dyncon_streams
 [Freesurfer]: https://surfer.nmr.mgh.harvard.edu/
+[FSL]: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki
 [Workbench]: http://www.humanconnectome.org/software/connectome-workbench
 [Fieldtrip]: http://www.fieldtriptoolbox.org/
 [Fieldtrip documentation]: http://www.fieldtriptoolbox.org/reference
