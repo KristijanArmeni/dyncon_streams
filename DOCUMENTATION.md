@@ -20,6 +20,10 @@ This is a brief documentation of the currently used [analysis pipeline][analysis
 * `streams_freqanalysis_contrast.m`
 * `streams_freqanalysis_groupcontrast.m`
 
+### MEG speech-brain coherence analysis & stats
+---
+* `streams_coherence_contrast.m`
+* `streams_coherence_groupcontrast.m`
 
 ### MRI preprocessing
 ---
