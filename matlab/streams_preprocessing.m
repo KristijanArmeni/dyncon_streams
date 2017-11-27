@@ -27,6 +27,7 @@ filter_audio      = ft_getopt(varargin, 'filter_audio', 'no');
 feature           = ft_getopt(varargin, 'feature');
 dofeature         = ft_getopt(varargin, 'dofeature', 0);
 addnoise          = ft_getopt(varargin, 'addnoise', 0);
+feature_select    = ft_getopt(varargin, 'feature_select', 'content_noonset');
 
 %% check whether all required user specified input is there
 
@@ -278,7 +279,9 @@ for k = 1:numel(seltrl)
   % LANGUAGE PREPROCESSING %
   %%%%%%%%%%%%%%%%%%%%%%%%%%
   if dofeature
-      
+  nomatch = [];
+  match = [];
+  
       % create combineddata data structure
       dondersfile  = fullfile(audiodir, f, [f,'.donders']);
       textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
@@ -293,7 +296,32 @@ for k = 1:numel(seltrl)
             combineddata(i).duration = nan;
         end
       end
-
+        
+      % add content word field
+      % CGN tag system here: https://pdfs.semanticscholar.org/f3b4/676b6ce2f16883c3b8253b8b8cb312576db9.pdf
+      
+      % WW  - werkworden    - verbs
+      % N   - substantieven - nouns
+      % ADJ - adjectieven   - adjectives
+      % BW  - bijworden     - adverbs
+      content = {'N', 'WW', 'ADJ', 'BW'}; 
+      
+      % LET() - leestekens      - punctuation
+      % VG()  - voegworden      - conjunctions
+      % LID() - lidworden       - articles
+      % TSW() - tussenverpsels  - interjections
+      % VZ()  - voorzetsels     - prepositions
+      % TW()  - teelworden      - numerals
+      % VNW() - voornaamwoorden - pronouns
+      closed  = {'LET', 'VZ', 'LID', 'VG', 'TSW', 'TW', 'VNW', 'SPEC'};  
+      
+      fulltags = {combineddata(:).POS};                  % make a cell array from struct fields
+      wordPOS  = cellfun(@(x) strtok(x, '('), fulltags); % retain only the string before the parenthesis
+      
+      classvec = num2cell(ismember(wordPOS, content)); % create a logical cell array
+      
+      [combineddata(1:end).iscontent] = classvec{:};
+      
       % add frequency info and word length
       combineddata = add_subtlex(combineddata, subtlex_data,  subtlex_firstrow);
 
@@ -302,7 +330,7 @@ for k = 1:numel(seltrl)
         
         featuredata = cell(1, numel(feature));
         for m = 1:numel(feature)
-          featuredata{m} = create_featuredata(combineddata, feature{m}, data, addnoise);
+          featuredata{m} = create_featuredata(combineddata, feature{m}, data, addnoise, feature_select);
         end
 
         featuredata = ft_appenddata([], featuredata{:});
@@ -310,7 +338,7 @@ for k = 1:numel(seltrl)
       else
 
         % single feature
-        featuredata = create_featuredata(combineddata, feature, data, addnoise);
+        featuredata = create_featuredata(combineddata, feature, data, addnoise, feature_select);
 
       end
       
@@ -421,10 +449,10 @@ subtlex_words = subtlex_data(:, word_column);
 end
 
 % Create box-shape predictors 
-function [featuredata] = create_featuredata(combineddata, feature, data, addnoise)
+function [featuredata] = create_featuredata(combineddata, feature, data, addnoise, select)
 
 % create FT-datastructure with the feature as a channel
-[time, featurevector] = get_time_series(combineddata, feature, data.fsample);
+[time, featurevector] = get_time_series(combineddata, feature, data.fsample, select);
 
 if addnoise
   
