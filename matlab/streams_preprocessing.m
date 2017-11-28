@@ -1,4 +1,4 @@
-function [data, eeg, audio, featuredata] = streams_preprocessing(subject, varargin)
+function [data, eeg, audio, featuredata] = streams_preprocessing(subject, inpcfg)
 
 % streams_preprocessing() 
 
@@ -14,20 +14,20 @@ if ischar(subject)
 end
 
 % make a local version of the variable input arguments
-bpfreq            = ft_getopt(varargin, 'bpfreq');
-hpfreq            = ft_getopt(varargin, 'hpfreq');
-lpfreq            = ft_getopt(varargin, 'lpfreq'); % before the post-envelope computation downsampling
-dftfreq           = ft_getopt(varargin, 'dftfreq', [49 51; 99 101; 149 151]);
-audiofile         = ft_getopt(varargin, 'audiofile', 'all');
-fsample           = ft_getopt(varargin, 'fsample', 30);
-dosns             = ft_getopt(varargin, 'dosns', 0);
-dospeechenvelope  = ft_getopt(varargin, 'dospeechenvelope', 0);
-bp_speechenvelope = ft_getopt(varargin, 'bp_speechenvelope', 0);
-filter_audio      = ft_getopt(varargin, 'filter_audio', 'no');
-feature           = ft_getopt(varargin, 'feature');
-dofeature         = ft_getopt(varargin, 'dofeature', 0);
-addnoise          = ft_getopt(varargin, 'addnoise', 0);
-feature_select    = ft_getopt(varargin, 'feature_select', 'content_noonset');
+bpfreq            = ft_getopt(inpcfg, 'bpfreq');
+hpfreq            = ft_getopt(inpcfg, 'hpfreq');
+lpfreq            = ft_getopt(inpcfg, 'lpfreq'); % before the post-envelope computation downsampling
+dftfreq           = ft_getopt(inpcfg, 'dftfreq', [49 51; 99 101; 149 151]);
+audiofile         = ft_getopt(inpcfg, 'audiofile', 'all');
+fsample           = ft_getopt(inpcfg, 'fsample', 30);
+dosns             = ft_getopt(inpcfg, 'dosns', 0);
+dospeechenvelope  = ft_getopt(inpcfg, 'dospeechenvelope', 0);
+bp_speechenvelope = ft_getopt(inpcfg, 'bp_speechenvelope', 0);
+filter_audio      = ft_getopt(inpcfg, 'filter_audio', 'no');
+feature           = ft_getopt(inpcfg, 'feature');
+dofeature         = ft_getopt(inpcfg, 'dofeature', 0);
+addnoise          = ft_getopt(inpcfg, 'addnoise', 0);
+feature_select    = ft_getopt(inpcfg, 'feature_select', 'content_noonset');
 
 %% check whether all required user specified input is there
 
@@ -279,8 +279,6 @@ for k = 1:numel(seltrl)
   % LANGUAGE PREPROCESSING %
   %%%%%%%%%%%%%%%%%%%%%%%%%%
   if dofeature
-  nomatch = [];
-  match = [];
   
       % create combineddata data structure
       dondersfile  = fullfile(audiodir, f, [f,'.donders']);
@@ -296,33 +294,11 @@ for k = 1:numel(seltrl)
             combineddata(i).duration = nan;
         end
       end
-        
-      % add content word field
-      % CGN tag system here: https://pdfs.semanticscholar.org/f3b4/676b6ce2f16883c3b8253b8b8cb312576db9.pdf
       
-      % WW  - werkworden    - verbs
-      % N   - substantieven - nouns
-      % ADJ - adjectieven   - adjectives
-      % BW  - bijworden     - adverbs
-      content = {'N', 'WW', 'ADJ', 'BW'}; 
+      % add .iscontent field to combineddata structure
+      combineddata = streams_combinedata_iscontent(combineddata);
       
-      % LET() - leestekens      - punctuation
-      % VG()  - voegworden      - conjunctions
-      % LID() - lidworden       - articles
-      % TSW() - tussenverpsels  - interjections
-      % VZ()  - voorzetsels     - prepositions
-      % TW()  - teelworden      - numerals
-      % VNW() - voornaamwoorden - pronouns
-      closed  = {'LET', 'VZ', 'LID', 'VG', 'TSW', 'TW', 'VNW', 'SPEC'};  
-      
-      fulltags = {combineddata(:).POS};                  % make a cell array from struct fields
-      wordPOS  = cellfun(@(x) strtok(x, '('), fulltags); % retain only the string before the parenthesis
-      
-      classvec = num2cell(ismember(wordPOS, content)); % create a logical cell array
-      
-      [combineddata(1:end).iscontent] = classvec{:};
-      
-      % add frequency info and word length
+      % add subtlex frequency info and word length
       combineddata = add_subtlex(combineddata, subtlex_data,  subtlex_firstrow);
 
       % create language predictor based on language model output
