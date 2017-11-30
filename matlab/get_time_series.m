@@ -41,7 +41,7 @@ endtim = endtim(sel);
 % make sure combineddata has same elements as begtim/endtim vectors
 combined_data = combined_data(sel);
 
-% loop over and create feture vector at MEG sampling rate based on model data
+%% loop over and create feture vector at MEG sampling rate based on model data
 for k = 1:numel(begtim)
     
   begsmp = nearest(time, begtim(k));
@@ -51,34 +51,41 @@ for k = 1:numel(begtim)
   isonset           = ismember(combined_data(k).word_, [0, 1]); % logical, check if word index is 0 or 1 (indicating onset position)
   feature_value     = combined_data(k).(feature); % curent feature value to be assigned
   
-  switch select
-      
-      case 'all' % assign value to all parsed words
+  % make sure word selection only operates on model metrics
+  if ismember(feature, {'entropy', 'perplexity', 'log10wf'})
+      switch select
+
+          case 'all' % assign value to all parsed words
+
+          feature_value_vector(begsmp:endsmp) = feature_value;
+
+          case 'content' % assign value to the vector only if it is content word
+
+          if iscontent
+            feature_value_vector(begsmp:endsmp) = feature_value;
+          end
+
+          case 'noonset' % select only words not indexed as 0 or 1
+
+          if ~isonset
+            feature_value_vector(begsmp:endsmp) = feature_value;
+          end
+
+          case 'content_noonset' % select content only, sentence-non initial words
+
+          if iscontent && ~isonset
+            feature_value_vector(begsmp:endsmp) = feature_value;
+          end    
+      end
+  % if it is not complexity score or lex.freq quantify all words
+  else     
       
       feature_value_vector(begsmp:endsmp) = feature_value;
   
-      case 'content' % assign value to the vector only if it is content word
-      
-      if iscontent
-        feature_value_vector(begsmp:endsmp) = feature_value;
-      end
-      
-      case 'noonset' % select only words not indexed as 0 or 1
-      
-      if ~isonset
-        feature_value_vector(begsmp:endsmp) = feature_value;
-      end
-      
-      case 'content_noonset' % select content only, sentence-non initial words
-      
-      if iscontent && ~isonset
-        feature_value_vector(begsmp:endsmp) = feature_value;
-      end
-      
-  end
-      
+  end    
 end
 
+%% 
 % create a trl-like matrix for the feature with samples expressed in the
 % requested sampling_frequency
 for i=1:numel(combined_data)
