@@ -27,7 +27,7 @@ filter_audio      = ft_getopt(inpcfg, 'filter_audio', 'no');
 feature           = ft_getopt(inpcfg, 'feature');
 dofeature         = ft_getopt(inpcfg, 'dofeature', 0);
 addnoise          = ft_getopt(inpcfg, 'addnoise', 0);
-feature_select    = ft_getopt(inpcfg, 'feature_select', 'content_noonset');
+word_quantify     = ft_getopt(inpcfg, 'word_quantify', 'content_noonset');
 
 %% check whether all required user specified input is there
 
@@ -306,7 +306,7 @@ for k = 1:numel(seltrl)
         
         featuredata = cell(1, numel(feature));
         for m = 1:numel(feature)
-          featuredata{m} = create_featuredata(combineddata, feature{m}, data, addnoise, feature_select);
+          featuredata{m} = create_featuredata(combineddata, feature{m}, data, addnoise, word_quantify);
         end
 
         featuredata = ft_appenddata([], featuredata{:});
@@ -314,7 +314,7 @@ for k = 1:numel(seltrl)
       else
 
         % single feature
-        featuredata = create_featuredata(combineddata, feature, data, addnoise, feature_select);
+        featuredata = create_featuredata(combineddata, feature, data, addnoise, word_quantify);
 
       end
       
