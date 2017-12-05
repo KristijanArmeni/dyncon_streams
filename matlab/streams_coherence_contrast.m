@@ -2,11 +2,12 @@ function streams_coherence_contrast(subject, inputargs)
 
 %% INITIALIZE
 
-indepvar  = ft_getopt(inputargs, 'indepvar'); % the first input must not be called 'varargin', else matlab complains
-datadir   = ft_getopt(inputargs, 'datadir');
-savedir   = ft_getopt(inputargs, 'savedir');
-taper     = ft_getopt(inputargs, 'taper');
-tapsmooth = ft_getopt(inputargs, 'tapsmooth');
+indepvar    = ft_getopt(inputargs, 'indepvar'); % the first input must not be called 'varargin', else matlab complains
+datadir     = ft_getopt(inputargs, 'datadir');
+savedir     = ft_getopt(inputargs, 'savedir');
+removeonset = ft_getopt(inputargs, 'removeonset');
+taper       = ft_getopt(inputargs, 'taper');
+tapsmooth   = ft_getopt(inputargs, 'tapsmooth');
 
 %% LOAD IN
 
@@ -23,7 +24,8 @@ opt = {'save', 0, ...
        'altmean', 0, ...
        'language_features', {'log10wf' 'perplexity', 'entropy'}, ...
        'audio_features', {'audio_avg'}, ...
-       'contrastvars', {indepvar}};
+       'contrastvars', {indepvar}, ...
+       'removeonset', 1};
 
 [~, data, ~, audio, contrast] = streams_epochdefinecontrast(data, featuredata, audio, opt);
 dataorig = data;
