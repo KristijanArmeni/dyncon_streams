@@ -19,10 +19,6 @@ if ~isempty(selcomp)
     data = ft_rejectcomponent(cfg, comp, data);
 end
 
-cfg = [];
-cfg.length = 1;
-data = ft_redefinetrial(cfg, data);
-
 savename = fullfile(datadir, [subject '_meg-clean']);
 save(savename, 'data');
 end
