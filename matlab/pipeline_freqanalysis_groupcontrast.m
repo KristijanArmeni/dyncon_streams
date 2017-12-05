@@ -1,28 +1,34 @@
 
-ivars = {'entropy', 'perplexity'};
-freqs = {'1-3', '4-8', '8-12', '12-20', '20-30', '30-60', '60-90'};
+ivars  = {'entropy'};
+freqs  = {'4-8'};
+shifts = {'0', '200', '400', '600'};
 
-% /subject1 --> basic
-% /subject2 --> prunned
-% /subject3 --> epoching to 0.5
-% /subject4 --> mean over the number of words
-% /subject5 --> regressed for lexfr && audio_avg, altmean == 0, prune == 0
+%/subject1 --> all words quantified
+%/subject3 --> only content words quantified
 
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject5/';
-savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group5/';
+datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject3ctrl';
+savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group3ctrl';
 
 % variable and frequency loop
-for j = 1:numel(freqs)
+for j = 1:numel(shifts)
 
-    foi    = freqs{j};
+    shift    = shifts{j};
     
     for i = 1:numel(ivars)
         
         ivar = ivars{i};
         
-        qsubfeval('streams_freqanalysis_groupcontrast', ivar, foi, datadir, savedir, ...
-                                          'memreq', 1024^3 * 12,...
-                                          'timreq', 90*60);
+        for k = 1:numel(freqs)
+            
+            foi = freqs{k};
+            
+            foi = [foi '_' shift];
+            
+            qsubfeval('streams_freqanalysis_groupcontrast', ivar, foi, datadir, savedir, ...
+                                          'memreq', 1024^3 * 4,...
+                                          'timreq', 30*60);
+        end
+        
     end
 
 end
