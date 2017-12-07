@@ -1,7 +1,7 @@
-function [depdata, data, featuredata, audio, split] = streams_epochdefinecontrast(data, featuredata, audio, opt)
-
-% streams_definecontrast(subject) averages language data from featuredata
-% obtained from streams_preprocessing_language() and computes tertile split
+function [avgfeature, data, featuredata, audio, split] = streams_epochdefinecontrast(data, featuredata, audio, opt)
+%
+% streams_definecontrast() averages language data from featuredata
+% obtained from streams_preprocessing() and computes tertile split
 % for entropy, perplexity and word frequency. It saves the ouput to:
 % '/project/3011044.02/analysis/lng-contrast/'
 %
@@ -13,9 +13,9 @@ language_features = ft_getopt(opt, 'language_features');
 audio_features    = ft_getopt(opt, 'audio_features');
 contrastvars      = ft_getopt(opt, 'contrastvars', 'perplexity');
 removeonset       = ft_getopt(opt, 'removeonset', 0);
-shift             = ft_getopt(opt, 'shift', 0); % in miliseconds
-epochlength       = ft_getopt(opt, 'epochlength', 1); % seconds
-overlap           = ft_getopt(opt, 'overlap', 0);
+shift             = ft_getopt(opt, 'shift', 0);          % in miliseconds
+epochlength       = ft_getopt(opt, 'epochlength', 1);    % integer, seconds, the amount of semgent length
+overlap           = ft_getopt(opt, 'overlap', 0);        % 
 
 % some data structures do not have .fsample field, I reconstruct it for now from
 if ~isfield(data, 'fsample')    
@@ -63,6 +63,7 @@ if ~all(trlsel)
     audio       = ft_selectdata(cfg, audio);
     featuredata = ft_selectdata(cfg, featuredata);
 end
+
 %% ADD PER TRIAL TIME SHIFT TO THE DATA
 
 num_trl = numel(data.trial);
@@ -77,7 +78,7 @@ if shift > 0
         data.time{ii}  = data.time{ii}(:, new_onset:end);
         
         num_smpl = numel(featuredata.time{ii});
-        cut_tail              = num_smpl-shift_sr; % sample number to cut the left over featuredata at
+        cut_tail              = num_smpl-shift_sr;   % sample number to cut the left over featuredata at
         featuredata.trial{ii} = featuredata.trial{ii}(:, 1:cut_tail); % discard feature data at the end
         featuredata.time{ii}  = featuredata.time{ii}(:, 1:cut_tail);
 
@@ -86,7 +87,7 @@ if shift > 0
             
     end
     
-end
+end 
 
 %% EPOCH FEATURE and MEG DATA
 
@@ -118,7 +119,7 @@ if removeonset
     word_idx    = cellfun(@(x) x(word_nr_chan,:), featuredata.trial(:), 'UniformOutput', 0); % select word_ channel
     word_idx_un = cellfun(@unique , word_idx, 'UniformOutput', 0);                           % get unique word index values                 
 
-    criterion = 1; % numbering starts at 0, so this excludes all epochs containting first 3 words
+    criterion = 1; % numbering starts at 0, so this excludes all epochs containting first 2 words
     trl_sel   = ~logical(cell2mat(cellfun(@(x) any(x < criterion), word_idx_un, 'UniformOutput', 0))); % keep trials without sentence onsets
 
     cfg          = [];
@@ -142,30 +143,30 @@ featuredata.fsample = sr;
 audio.time          = featuredata.time; % make time info the same else appenddata fails
 audio.fsample       = sr;
 
-depdata             = ft_appenddata([], featuredata, audio);
+avgfeature             = ft_appenddata([], featuredata, audio);
 
 % add averaging information back in
 audio_col = strcmp(audio.trialinfolabel, audio_features);
 
-depdata.trialinfo      = [featuredata.trialinfo, audio.trialinfo(:, audio_col)];
-depdata.trialinfolabel = [featuredata.trialinfolabel; audio.trialinfolabel(audio_col)];
+avgfeature.trialinfo      = [featuredata.trialinfo, audio.trialinfo(:, audio_col)];
+avgfeature.trialinfolabel = [featuredata.trialinfolabel; audio.trialinfolabel(audio_col)];
 
 %% REMOVE NAN TRIALS
 
-selected_column = strcmp(depdata.trialinfolabel, 'log10wf'); % this column is used as a confound and must not have Nans
-trialskeep      = logical(~isnan(depdata.trialinfo(:, selected_column))); % keep only non-nan trials
+selected_column = strcmp(avgfeature.trialinfolabel, 'log10wf'); % this column is used as a confound and must not have Nans
+trialskeep      = logical(~isnan(avgfeature.trialinfo(:, selected_column))); % keep only non-nan trials
 
-trialinfolabel  = depdata.trialinfolabel; % store this because ft_selectdata below discards it
+trialinfolabel = avgfeature.trialinfolabel; % store this because ft_selectdata below discards it
 
-cfg          = [];
-cfg.trials   = trialskeep;
+cfg         = [];
+cfg.trials  = trialskeep;
 
-data         = ft_selectdata(cfg, data);
-featuredata  = ft_selectdata(cfg, featuredata);
-audio        = ft_selectdata(cfg, audio);
-depdata      = ft_selectdata(cfg, depdata); % this also removes Nans in .trialinfo cells with lex. freq. info (needed for ft_regressconfound)
+data        = ft_selectdata(cfg, data);
+featuredata = ft_selectdata(cfg, featuredata);
+audio       = ft_selectdata(cfg, audio);
+avgfeature  = ft_selectdata(cfg, avgfeature); % this also removes Nans in .trialinfo cells with lex. freq. info (needed for ft_regressconfound)
 
-depdata.trialinfolabel = trialinfolabel; % plug trialinfolabel back in
+avgfeature.trialinfolabel = trialinfolabel; % plug trialinfolabel back in
 
 %% DO THE TERTILE SPLIT
 
@@ -179,7 +180,7 @@ else
         
         indepvarsel = contrastvars{i};
         
-        split(i) = streams_split(depdata, indepvarsel, [0.33 0.66]);
+        split(i) = streams_split(avgfeature, indepvarsel, [0.33 0.66]);
         
     end
 
