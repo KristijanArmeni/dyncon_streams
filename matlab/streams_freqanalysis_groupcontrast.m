@@ -20,34 +20,28 @@ stat_all = cell(num_sub, 1);
 %% Combine subject-specific structures
 
 % create structure from scratch
-if ~exist(savename_stat_all, 'file')
-    fprintf('Loading the following datafiles: %s over %d subjects \n\n', filename_stat, num_sub)
-    
-    % subject loop
-    for k = 1:num_sub
 
-        subject = subjects{k};
+fprintf('Loading the following datafiles: %s over %d subjects \n\n', filename_stat, num_sub)
 
-        file_T  = fullfile(datadir, [subject '_' filename_stat]);
-        load(file_T)
-        
-        stat_all{k} = stat;
+% subject loop
+for k = 1:num_sub
 
-    end
+    subject = subjects{k};
 
-    fprintf('Have this now: \n');
-    display(stat_all);
-    display(stat_all{1});
-    
-    save(savename_stat_all, 'stat_all');
-    fprintf('Saving %s... \n', savename_stat_all)
+    file_T  = fullfile(datadir, [subject '_' filename_stat]);
+    load(file_T)
 
-else % just load it
-    
-    fprintf('Loading %s: \n', savename_stat_all);
-    load(savename_stat_all)
+    stat_all{k} = stat;
 
 end
+
+fprintf('Have this now: \n');
+display(stat_all);
+display(stat_all{1});
+
+save(savename_stat_all, 'stat_all');
+fprintf('Saving %s... \n', savename_stat_all)
+
 
 %% Freq statistics
 fprintf('Doing second level stats on: \n\n')
@@ -82,16 +76,16 @@ cfg.neighbours       = ft_prepare_neighbours(cfg_neighb, neighdata);
 cfg.method           = 'montecarlo';
 cfg.parameter        = 'stat';
 cfg.statistic        = 'depsamplesT';
-cfg.correctm         = 'cluster';
-cfg.alpha            = 0.025; % adjust alpha-level for two-sided test
-cfg.correcttail      = 'prob';  
-cfg.numrandomization = 1000;
+% cfg.correctm         = 'cluster';
+% cfg.alpha            = 0.025; % adjust alpha-level for two-sided test
+% cfg.correcttail      = 'prob';  
+cfg.numrandomization = 0;
 cfg.design           = design;
 cfg.uvar             = 1;
 cfg.ivar             = 2;
 
 % optional:
-cfg.avgoverfreq      = 'yes';
+%cfg.avgoverfreq      = 'yes';
 
 stat_group           = ft_freqstatistics(cfg, stat_all{:}, data_N{:});
 stat4plot            = rmfield(stat_group, 'cfg');
