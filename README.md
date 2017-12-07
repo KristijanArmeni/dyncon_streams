@@ -21,7 +21,7 @@ The pipeline relies on the following matlab toolboxes and software:
 
 ### Data availability
 
-Data used in the project are available through [Donders repository](http://donders.data.ru.nl). See [here]('http://www.ru.nl/donders/research/data/user-manual/access-shared-data/request-access/') for instructions on how to request access to the shared data.
+Data used in the project are available through [Donders repository](http://donders.data.ru.nl). See [this link](http://www.ru.nl/donders/research/data/user-manual/access-shared-data) for instructions on how to access the shared data.
 
 ### Licence
 
