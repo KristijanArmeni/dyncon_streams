@@ -1,59 +1,120 @@
 
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast/group/tertile-split'; 
+datadir = '/project/3011044.02/analysis/freqanalysis/contrast/group3ctrl'; 
 
-% for loading freq structures
+% for loading stat structures
 prefix = 's02-s28';
-ivar = 'log10wf';
-foi = {'12-20', '20-30', '30-60', '60-90', '30-90'};
+ivar   = 'entropy';
+foi    = {'4-8'};
+lags   = {'0', '200', '400', '600'};
+sep    = '_';
 
-plotcluster = 0;
-
+plottype = 'subplots';
+save     = 0;
 %% Plots
 
-% cluster plot
-if plotcluster
+switch plottype
     
-    cfg = [];
-    cfg.layout = 'CTF275_helmet.mat';
-
-    frequency = foi{3};
-    filename = fullfile(datadir, [prefix '_' ivar '_' frequency]);
-    fprintf('Loading %s... \n\n', filename)
-
-    load(filename)
-
-    figure('Name', ivar ,'NumberTitle','off');
-    ft_clusterplot(cfg, stat_group);
-    title([frequency ' Hz'])
-    c = colorbar;
-    ylabel(c, 't-value')
-
-% topoplot
-else 
-
-    cfg = [];
-    cfg.layout = 'CTF275_helmet.mat';
-    cfg.style = 'straight';
-    % cfg.colormap = flipud(colormap(gray));
-    cfg.colorbar = 'yes';
-    cfg.parameter = 'stat';
-    cfg.zlim = 'maxabs';
+  case 'plotcluster'
 
     for i = 1:numel(foi)
 
         frequency = foi{i};
-        filename = fullfile(datadir, [prefix '_' ivar '_' frequency]);
+        filename  = fullfile(datadir, [prefix '_' ivar '_' frequency]);
         fprintf('Loading %s... \n\n', filename)
+
         load(filename)
 
-        figure('Name', ivar ,'NumberTitle','off');
-        cfg.parameter = 'stat';
-        cfg.comment = 'no';
-        ft_topoplotER(cfg, stat_group);
+        cfg             = [];
+        cfg.layout      = 'CTF275_helmet.mat';
+        cfg.subplotsize = [1 1];
+        cfg.style       = 'straight';
+        cfg.gridscale   = 100;
+        cfg.zlim        = 'maxabs';
+
+        ft_clusterplot(cfg, stat_group);
         title([frequency ' Hz'])
         c = colorbar;
         ylabel(c, 't-value')
 
     end
+
+   case 'topoplot_single'
+    
+    savedir = '/project/3011044.02/misc/nblpresentation';
+   
+    zlim = [-4 4];
+       
+    cfg            = [];
+    cfg.layout     = 'CTF275_helmet.mat';
+    cfg.style      = 'straight';
+    % cfg.colormap = flipud(colormap(gray));
+    cfg.colorbar   = 'no';
+    cfg.colormap   = flipud(brewermap(64, 'RdBu'));
+    cfg.parameter  = 'stat';
+    cfg.zlim       = zlim;
+
+    for i = 1:numel(foi)
+
+        frequency = foi{i};
+        filename  = fullfile(datadir, [prefix '_' ivar '_' frequency '_4plot.mat']);
+        
+        fprintf('Loading %s... \n\n', filename)
+        load(filename)
+
+        figure('Name', ivar ,'NumberTitle','off');
+        cfg.parameter = 'stat';
+        cfg.comment   = 'no';
+        ft_topoplotER(cfg, stat4plot);
+        title([frequency(1:5) ' Hz ' frequency(end-2:end)])
+        
+        c = colorbar;
+        caxis(zlim);
+        set(c,'position',[.85 .65 .04 .30])
+        ylabel(c, 't-value')
+        
+        if save
+            fname = fullfile(savedir, [prefix '_' ivar '_' frequency]);
+            saveas(gcf, [fname '.jpg']);
+            saveas(gcf, [fname '.epsc']);
+        end
+        
+    end
+
+
+   case 'subplots'
+   
+   zlim = [-4 4];
+       
+    cfg           = [];
+    cfg.layout    = 'CTF275_helmet.mat';
+    cfg.style     = 'straight';
+    cfg.colormap  = flipud(brewermap(64, 'RdBu'));
+    cfg.colorbar  = 'no';
+    cfg.parameter = 'stat';
+    cfg.zlim      = zlim;
+    cfg.marker    = 'off';
+    
+    figure('Name', [foi{1} sep ivar sep datadir(end-5:end)]  ,'NumberTitle','off');
+    for i = 1:numel(lags)
+        
+        subplot(2, 2, i)
+        frequency = foi{1};
+        lag       = lags{i};
+        
+        filename  = fullfile(datadir, [prefix sep ivar sep frequency sep lag '_4plot.mat']);
+        fprintf('Loading %s... \n\n', filename)
+        load(filename)
+
+        cfg.parameter = 'stat';
+        cfg.comment   = 'no';
+        ft_topoplotER(cfg, stat4plot);
+        title([lag ' ms'])
+        
+    end
+       
+    c = colorbar;
+    caxis(zlim);
+    set(c,'position',[.90 .80 .02 .15])
+    ylabel(c, 't-value')
     
 end
