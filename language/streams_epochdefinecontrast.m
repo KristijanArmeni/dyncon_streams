@@ -119,8 +119,8 @@ if removeonset
     word_idx    = cellfun(@(x) x(word_nr_chan,:), featuredata.trial(:), 'UniformOutput', 0); % select word_ channel
     word_idx_un = cellfun(@unique , word_idx, 'UniformOutput', 0);                           % get unique word index values                 
 
-    criterion = 1; % numbering starts at 0, so this excludes all epochs containting first 2 words
-    trl_sel   = ~logical(cell2mat(cellfun(@(x) any(x < criterion), word_idx_un, 'UniformOutput', 0))); % keep trials without sentence onsets
+    criterion = 1; % numbering starts at 0, so this excludes all epochs containting at least first 2 words
+    trl_sel   = ~logical(cell2mat(cellfun(@(x) any(x <= criterion), word_idx_un, 'UniformOutput', 0))); % keep trials without sentence onsets
 
     cfg          = [];
     cfg.trials   = trl_sel; 
