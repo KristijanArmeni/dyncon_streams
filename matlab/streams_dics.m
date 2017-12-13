@@ -1,20 +1,45 @@
-function streams_dics(subject, opt)
-% streams_dics() performs epoching (1s), freqanalysis and source
-% reconstruction on preprocessed data
-
+function streams_dics(subject, inpcfg)
+% streams_dics() is a script, written as a matlab function. It performs epoching (1s), 
+% freqanalysis and source reconstruction on preprocessed data MEG data.
+% It splits the re-epoched trials into two groups and performs a first-level
+% t-test on source estimates. 
+% 
+% 
+% The following functions are called in this 'script':
+%
+% Custom:
+%   streams_epochdefinecontrast()
+%    
+%
+% Fieldtrip:
+%   ft_selectdata
+%   ft_freqanalysis
+%   ft_sourceanalysis
+%   ft_sourcestatistics
+%   ft_regresconfound
+%
 %% INITIALIZE
 
-dir             = ft_getopt(opt, 'datadir');
-savedir         = ft_getopt(opt, 'savedir');
-indepvar        = ft_getopt(opt, 'indepvar');
-cfgfreq         = ft_getopt(opt, 'cfgfreq');
-cfgdics         = ft_getopt(opt, 'cfgdics');
-removeonset     = ft_getopt(opt, 'removeonset');
-shift           = ft_getopt(opt, 'shift');
-savewhat        = ft_getopt(opt, 'savewhat', 'stat');
+dir             = ft_getopt(inpcfg, 'datadir');
+savedir         = ft_getopt(inpcfg, 'savedir');
+indepvar        = ft_getopt(inpcfg, 'indepvar');
+removeonset     = ft_getopt(inpcfg, 'removeonset');
+shift           = ft_getopt(inpcfg, 'shift'); % value for which to shif
+savewhat        = ft_getopt(inpcfg, 'savewhat', 'stat');
+freqband        = ft_getopt(inpcfg, 'freqband');
+word_selection  = ft_getopt(inpcfg, 'word_selection', 'all');
+
+% ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
+% determine which featuredata.mat to load in
+switch word_selection
+    case 'all',             fdata = 'featuredata1';
+    case 'content_noonset', fdata = 'featuredata2';
+    case 'content',         fdata = 'featuredata3';
+    case 'noonset',         fdata = 'featuredata4';
+end 
 
 preprocfile     = fullfile(dir, 'meg', [subject '_meg-clean.mat']);
-featurefile     = fullfile(dir, 'meg', [subject '_featuredata.mat']);
+featurefile     = fullfile(dir, 'meg', [subject '_' fdata]);
 audiofile       = fullfile(dir, 'meg', [subject, '_aud.mat']);
 headmodelfile   = fullfile(dir, 'anatomy', [subject '_headmodel.mat']);
 leadfieldfile   = fullfile(dir, 'anatomy', [subject '_leadfield.mat']);
@@ -23,174 +48,215 @@ sourcemodelfile = fullfile(dir, 'anatomy', [subject '_sourcemodel.mat']);
 % conditions file, frequency band doesn't matter here
 % contrastfile    = fullfile('/project/3011044.02/analysis/lng-contrast/', [subject '.mat']); 
 
-% ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
+% determine 'foi' for ft_freqstatistics
+switch freqband
+    case 'delta',     foilim = [2 2];
+    case 'theta',     foilim = [6 6];
+    case 'alpha',     foilim = [10 10];
+    case 'beta',      foilim = [16 16];
+    case 'high-beta', foilim = [25 25];
+    case 'gamma',     foilim = [45 45];
+    case 'high-gamma',foilim = [75 75];
+end
+
+% condition taper and smoothing parameters on the frequency of interest
+switch freqband
+    case {'delta'}
+        taper     = 'hanning';
+    case {'theta', 'alpha'}
+        taper     = 'dpss';
+        tapsmooth = 2;
+    case {'beta', 'high-beta'}
+        taper     = 'dpss';
+        tapsmooth = 5;
+    case {'gamma', 'high-gamma'}
+        taper     = 'dpss';
+        tapsmooth = 15;
+end
+
 %% LOAD
 
 load(preprocfile);    % meg data, 'data' variable
 load(headmodelfile);
 load(leadfieldfile);
 load(sourcemodelfile);
-load(featurefile);
-load(audiofile);
+load(featurefile);    % featuredata var
+load(audiofile);      % audio var
 
-%% ADDITIONAL CLEANING STEPS, EPOCHING and BINNING
+%% PER SHIFT LOOP
 
-opt = {'save',              0, ...
-       'altmean',           0, ...
-       'language_features', {'log10wf' 'perplexity', 'entropy'}, ...
-       'audio_features',    {'audio_avg'}, ...
-       'contrastvars',      {indepvar}, ...
-       'removeonset',       removeonset, ...
-       'shift',             shift, ...
-       'epochlength',       1, ...
-       'overlap',           0};
-   
-[depdata, data, ~, ~, contrast] = streams_epochdefinecontrast(data, featuredata, audio, opt);
+for kk = 1:numel(shift)
 
-%% DO FREQANALYSIS
+    opt = {'save',              0, ...
+           'altmean',           0, ...
+           'language_features', {'log10wf' 'perplexity', 'entropy'}, ...
+           'audio_features',    {'audio_avg'}, ...
+           'contrastvars',      {indepvar}, ...
+           'removeonset',       removeonset, ...
+           'shift',             shift(kk), ...
+           'epochlength',       1, ...
+           'overlap',           0};
 
-cfg = [];
-cfg.method        = 'mtmfft';
-cfg.output        = 'fourier';
-cfg.keeptrials    = 'yes';
-cfg.taper         = cfgfreq.taper;
+    [avgfeature, data_epoched, ~, ~, contrast] = streams_epochdefinecontrast(data, featuredata, audio, opt);
 
-if strcmp(cfgfreq.taper, 'dpss')
-    cfg.tapsmofrq = cfgfreq.tapsmofrq;
-end
+    %% DO FREQANALYSIS
 
-cfg.foilim        = cfgfreq.foilim;
+    cfg = [];
+    cfg.method        = 'mtmfft';
+    cfg.output        = 'fourier';
+    cfg.keeptrials    = 'yes';
+    cfg.taper         = taper;
 
-freq = ft_freqanalysis(cfg, data);
+    if strcmp(taper, 'dpss')
+        cfg.tapsmofrq = tapsmooth;
+    end
 
+    cfg.foilim        = foilim;
 
-%% COMMON FILTER
+    freq = ft_freqanalysis(cfg, data_epoched);
+    clear data_epoched
 
-cfg                     = []; 
-cfg.method              = 'dics';
-cfg.frequency           = cfgdics.freq;  
-cfg.grid                = sourcemodel;
-cfg.grid.leadfield      = leadfield.leadfield;
-cfg.headmodel           = headmodel;
-%cfg.keeptrials          = 'yes';
-cfg.dics.projectnoise   = 'yes';
-cfg.dics.lambda         = '5%';
-cfg.dics.keepfilter     = 'yes';
-cfg.dics.realfilter     = 'yes';
-cfg.dics.fixedori       = 'yes';
+    %% COMMON FILTER
 
-source_both = ft_sourceanalysis(cfg, ft_checkdata(freq,'cmbrepresentation','fullfast')); % trick to speed up the computation
-F           = cat(1,source_both.avg.filter{source_both.inside}); % common spatial filters per location
+    cfg                     = []; 
+    cfg.method              = 'dics';
+    cfg.frequency           = foilim(1);  
+    cfg.grid                = sourcemodel;
+    cfg.grid.leadfield      = leadfield.leadfield;
+    cfg.headmodel           = headmodel;
+    %cfg.keeptrials          = 'yes';
+    cfg.dics.projectnoise   = 'yes';
+    cfg.dics.lambda         = '5%';
+    cfg.dics.keepfilter     = 'yes';
+    cfg.dics.realfilter     = 'yes';
+    cfg.dics.fixedori       = 'yes';
 
-%% SINGLE TRIAL POWER ESTIMATE
+    source_both = ft_sourceanalysis(cfg, ft_checkdata(freq,'cmbrepresentation','fullfast')); % trick to speed up the computation
+    F           = cat(1,source_both.avg.filter{source_both.inside}); % common spatial filters per location
 
-% now do something hacky to efficiently compute the single trial power
-% estimates at the source level:
-ntap = freq.cumtapcnt(1); % number of tapers used
+    %% SINGLE TRIAL POWER ESTIMATE
 
-nrpt = numel(freq.cumtapcnt); % number of trials
-x    = repmat(1:nrpt,[ntap 1]);
-x    = x(:);
-y    = 1:(nrpt*ntap);
-P    = sparse(y,x,ones(numel(x),1)./ntap);
+    % now do something hacky to efficiently compute the single trial power
+    % estimates at the source level:
+    ntap = freq.cumtapcnt(1); % number of tapers used
 
-source = removefields(source_both, {'avg' 'cfg'});
+    nrpt = numel(freq.cumtapcnt); % number of trials
+    x    = repmat(1:nrpt,[ntap 1]);
+    x    = x(:);
+    y    = 1:(nrpt*ntap);
+    P    = sparse(y,x,ones(numel(x),1)./ntap);
 
-npos = size(source_both.pos,1);
-clear source_both;
+    source = removefields(source_both, {'avg' 'cfg'});
 
-tmppow = abs(F*transpose(freq.fourierspctrm)).^2;
-clear freq
+    npos = size(source_both.pos,1);
+    clear source_both;
 
-for k = 1:nrpt
-    source.trial(k,1).pow                = zeros(npos, 1);
-    source.trial(k,1).pow(source.inside) = tmppow*P(:,k);
-end
+    tmppow = abs(F*transpose(freq.fourierspctrm)).^2;
+    clear freq
 
-% remove some stuff that's clogging wm
-clear tmppow;
-clear sourcemodel leadfield headmodel cfg;
-clear F P S;
+    for k = 1:nrpt
+        source.trial(k,1).pow                = zeros(npos, 1);
+        source.trial(k,1).pow(source.inside) = tmppow*P(:,k);
+    end
 
-%% REGRESS OUT WORD FREQUENCY DATA
+    % remove some stuff that's clogging wm
+    clear tmppow;
+    clear cfg;
+    clear F P S;
 
-tri = source.tri;
-if ~strcmp(indepvar, 'log10wf') % if ivarexp is lex. fr. itself skip this step
+    %% REGRESS OUT WORD FREQUENCY DATA
+
+    tri = source.tri;
+    if ~strcmp(indepvar, 'log10wf') % if ivarexp is lex. fr. itself skip this step
+
+        nuisance_vars = {'log10wf', 'audio_avg'}; % take lexical frequency as nuissance
+        confounds     = ismember(avgfeature.trialinfolabel, nuisance_vars); % logical with 1 in the columns for nuisance vars
+
+        cfg          = [];
+        cfg.confound = avgfeature.trialinfo(:, confounds); %pick the log10wf column
+
+        source       = ft_regressconfound(cfg, rmfield(source, 'tri'));
+        source.tri   = tri;
+
+    end
+    clear avgfeature % these are recreated within the loop
     
-    nuisance_vars = {'log10wf', 'audio_avg'}; % take lexical frequency as nuissance
-    confounds     = ismember(depdata.trialinfolabel, nuisance_vars); % logical with 1 in the columns for nuisance vars
+    %% SPLIT THE DATA
 
-    cfg          = [];
-    cfg.confound = depdata.trialinfo(:, confounds); %pick the log10wf column
+    ivarsel       = strcmp({contrast.indepvar}, indepvar); % use the precomputed contrasts
+    contrastsel   = contrast(ivarsel); % chose a subset of the struct array
 
-    source       = ft_regressconfound(cfg, rmfield(source, 'tri'));
-    source.tri   = tri;
+    low_column    = strcmp(contrastsel.label, 'low');
+    high_column   = strcmp(contrastsel.label, 'high');
+
+    trl_indx_low  = contrastsel.trial(:, low_column);
+    trl_indx_high = contrastsel.trial(:, high_column);
+
+    cfg         = [];
+    cfg.trials  = trl_indx_low;
+    source_low  = ft_selectdata(cfg, source);
+
+    cfg         = [];
+    cfg.trials  = trl_indx_high;
+    source_high = ft_selectdata(cfg, source);
+    clear source
+    
+    %% FIRST-LEVEL CONTRAST
+
+    % desing matrix
+    numobs_high = sum(trl_indx_high); % count the number of ones in this vector
+    numobs_low  = sum(trl_indx_low);
+
+    statdesign  = [ones(1, numobs_high) ones(1, numobs_low)*2];
+
+    % independent between trials t-test
+    cfg                     = [];
+    cfg.method              = 'montecarlo';
+    cfg.statistic           = 'indepsamplesT'; % for each subject do between trials (independent) t-test
+    cfg.parameter           = 'pow';
+    cfg.numrandomization    = 0;
+    cfg.design              = statdesign;
+
+    stattmp(kk) = ft_sourcestatistics(cfg, source_high, source_low);
+    clear source_high source_low
     
 end
 
-%% SPLIT THE DATA
+%% CONCATENATE TIME-SHIFTED STAT STRUCTURES
 
-ivarsel       = strcmp({contrast.indepvar}, indepvar); % use the precomputed contrasts
-contrastsel   = contrast(ivarsel); % chose a subset of the struct array
+stat             = rmfield(stattmp(1), {'stat'});
+for kk = 1:numel(shift)
+stat.stat(:,:,kk) = stattmp(kk).stat; 
+end
+clear stattmp
 
-low_column    = strcmp(contrastsel.label, 'low');
-high_column   = strcmp(contrastsel.label, 'high');
-
-trl_indx_low  = contrastsel.trial(:, low_column);
-trl_indx_high = contrastsel.trial(:, high_column);
-
-cfg         = [];
-cfg.trials  = trl_indx_low;
-source_low  = ft_selectdata(cfg, source);
-
-cfg         = [];
-cfg.trials  = trl_indx_high;
-source_high = ft_selectdata(cfg, source);
-
-clear source; % not needed anymore
-
-%% FIRST-LEVEL CONTRAST
-
-% desing matrix
-numobs_high = sum(trl_indx_high); % count the number of ones in this vector
-numobs_low  = sum(trl_indx_low);
-
-statdesign  = [ones(1, numobs_high) ones(1, numobs_low)*2];
-
-% independent between trials t-test
-cfg                     = [];
-cfg.method              = 'montecarlo';
-cfg.statistic           = 'indepsamplesT'; % for each subject do between trials (independent) t-test
-cfg.parameter           = 'pow';
-cfg.numrandomization    = 0;
-cfg.design              = statdesign;
-
-stat = ft_sourcestatistics(cfg, source_high, source_low);
+stat.dimord = 'chan_freq_time';
+stat.time   = shift./1000;      % make it in seconds
 
 %% SAVING 
 
-dicsfreq           = num2str(cfgdics.freq);
+dicsfreq           = num2str(foilim(1));
 
-% pipelinesavename   = fullfile(savedir, ['s02' '_' indepvar '_' dicsfreq]);
-% 
-% datecreated        = char(datetime('today', 'Format', 'dd-MM-yy'));
-% pipelinefilename   = [pipelinesavename '_' datecreated];
-% 
-% if ~exist([pipelinefilename '.html'], 'file')
-%     cfgt           = [];
-%     cfgt.filename  = pipelinefilename;
-%     cfgt.filetype  = 'html';
-%     ft_analysispipeline(cfgt, stat);
-% end
+pipelinesavename   = fullfile(savedir, ['s02' '_' indepvar '_' dicsfreq]);
 
-savename = fullfile(savedir, [subject '_' indepvar '_' dicsfreq '_' num2str(shift)]);
+datecreated        = char(datetime('today', 'Format', 'dd-MM-yy'));
+pipelinefilename   = [pipelinesavename '_' datecreated];
+
+if ~exist([pipelinefilename '.html'], 'file')
+    cfgt           = [];
+    cfgt.filename  = pipelinefilename;
+    cfgt.filetype  = 'html';
+    ft_analysispipeline(cfgt, stat);
+end
+
+savename = fullfile(savedir, [subject '_' indepvar '_' dicsfreq]);
 if strcmp(savewhat, 'stat')
-    save(savename, 'stat');
+    save(savename, 'stat', 'inpcfg');
 elseif strcmp(savewhat, 'source')
-    save(fullfile(savedir, 'source', [savename '_H']), 'source_high');
+    save(fullfile(savedir, 'source', [savename '_H']), 'source_high', 'inpcfg');
     save(fullfile(savedir, 'source', [savename '_L']), 'source_low');
 else
-    save(savename, 'stat');
+    save(savename, 'stat', 'inpcfg');
     save(fullfile(savedir, 'source', [savename '_H']), 'source_high');
     save(fullfile(savedir, 'source', [savename '_L']), 'source_low');
 end
