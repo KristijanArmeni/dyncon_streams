@@ -8,12 +8,12 @@ function streams_freqanalysis_groupcontrast_permute(ivar, foi, datadir, savedir)
 % for loading freq structures
 prefix        = [subjects{1} '-' subjects{end}];
 sep           = '_';
-fname_stat = [ivar sep foi sep];
+fname_stat    = [ivar sep foi];
 
 % create strings for saving
 savename_stat_all   = fullfile(datadir, [prefix sep fname_stat]);
-savename_stat_group = fullfile(savedir, [prefix sep ivar sep foi '.mat']);
-savename_stat4plot  = fullfile(savedir, [prefix sep ivar sep foi '_4plot.mat']);
+savename_stat_group = fullfile(savedir, [prefix sep fname_stat '.mat']);
+savename_stat4plot  = fullfile(savedir, [prefix sep fname_stat '_4plot.mat']);
 
 stat_all = cell(num_sub, 1);
 
@@ -28,32 +28,11 @@ for k = 1:num_sub
     subject = subjects{k};
     
     % create filenames for different time shifts
-    st1 = fullfile(datadir, [subject sep fname_stat '0']);
-    st2 = fullfile(datadir, [subject sep fname_stat '200']);
-    st3 = fullfile(datadir, [subject sep fname_stat '400']);
-    st4 = fullfile(datadir, [subject sep fname_stat '600']);
+    fstat = fullfile(datadir, [subject sep fname_stat]);
+    load(fstat)
     
-    load(st1)
-    stat1 = stat; clear stat;
-    load(st2)
-    stat2 = stat; clear stat;
-    load(st3)
-    stat3 = stat; clear stat;
-    load(st4)
-    stat4 = stat; clear stat;
-    
-    stat_all{k} = stat1; % create basic structure
-    
-    % concatenate t-statistics from 3 time shifts along the 3rd dimension
-    stat_all{k}.stat(:, :, 1) = stat1.stat; % 0 shift stat
-    stat_all{k}.stat(:, :, 2) = stat2.stat; % 200 ms shift stat
-    stat_all{k}.stat(:, :, 3) = stat3.stat; % 400 ms shift stat
-    stat_all{k}.stat(:, :, 4) = stat4.stat; % 600 ms shift stat
-    
-    %add respective .time and .dimord fields
-    stat_all{k}.time   = [0, 0.2, 0.4, 0.6];
-    stat_all{k}.dimord = 'chan_freq_time';
-    
+    stat_all{k} = stat;
+    clear stat
 end
 
 save(savename_stat_all, 'stat_all');
@@ -70,9 +49,9 @@ neighdata.grad = data.grad;
 
 % Create the null structure
 data_N = stat_all;
-for k = 1:numel(data_N)
+for kk = 1:numel(data_N)
     
-    data_N{k}.stat(:,:,:) = 0;
+    data_N{kk}.stat(:,:,:) = 0;
     
 end
 
@@ -104,7 +83,7 @@ cfg.uvar             = 1;
 cfg.ivar             = 2;
 
 % optional:
-%cfg.avgoverfreq      = 'yes';
+cfg.avgoverfreq      = 'yes';
 
 stat_group           = ft_freqstatistics(cfg, stat_all{:}, data_N{:});
 stat4plot            = rmfield(stat_group, 'cfg');
