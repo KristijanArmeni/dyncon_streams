@@ -1,46 +1,43 @@
-clear all
 
-if ~ft_hastoolbox('qsub',1)
-    addpath /home/kriarm/git/fieldtrip/qsub;
-end
+[subjects, num_sub] = streams_util_subjectstring(3, {'s06', 's09'});
 
-%% INITIALIZE
+ivars     = {'perplexity'};
+freqbands = {'gamma'};
 
-[subjects, num_sub] = streams_util_subjectstring(2:28, {'s06', 's09', 's01'});
-ivars = {'log10perp'};
-foilim = {[40 40]};
+datadir = '/project/3011044.02/preproc/';
+savedir = '/project/3011044.02/analysis/freqanalysis/source/subject';
 
 %% SUBJECT LOOP
 
-for k = 1:numel(foilim)
-
-    cfgfreq.foilim = foilim{k};
-    freq = cfgfreq.foilim(1);
+for k = 1:numel(freqbands)
     
-    if freq < 8; taper = 'hanning'; end
-    if freq > 8 && freq < 30; taper = 'dpss'; tapsmofrq = 4; end
-    if freq > 30 && freq < 90; taper = 'dpss'; tapsmofrq = 8; end
-   
-    cfgfreq.taper = taper;
-    if strcmp(taper, 'dpss'); cfgfreq.tapsmofrq = tapsmofrq; end
+    freqband = freqbands{k};
     
-    cfgdics.freq = cfgfreq.foilim(1);
-
     for i = 1:numel(ivars)
 
-    ivar = ivars{i};
-    
+    indepvar = ivars{i};
+        
         for kk = 1:num_sub
 
         subject = subjects{kk};
-        qsubfeval('streams_dics', cfgfreq, cfgdics, subject, ivar, ...
-                  'memreq', 1024^3 * 12,...
-                  'timreq', 240*60,...
-                  'batchid', 'streams_dics', ...
+        
+        inpcfg = {'indepvar', indepvar, ...
+                   'freqband', freqband, ...
+                   'removeonset', 0, ...
+                   'word_selection', 'all', ...
+                   'shift', [0 200 400 600], ...
+                   'datadir', datadir, ...
+                   'savedir', savedir};
+        
+        qsubfeval('streams_dics', subject, inpcfg, ...
+                  'memreq', 1024^3 * 32,...
+                  'timreq', 120*90, ...
                   'matlabcmd', 'matlab2016b');
         
         end
+    
         
     end
+    
     
 end
