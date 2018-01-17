@@ -118,18 +118,18 @@ for kk = 1:numel(shift)
 
     %% COMMON FILTER
 
-    cfg                     = []; 
-    cfg.method              = 'dics';
-    cfg.frequency           = foilim(1);  
-    cfg.grid                = sourcemodel;
-    cfg.grid.leadfield      = leadfield.leadfield;
-    cfg.headmodel           = headmodel;
-    %cfg.keeptrials          = 'yes';
-    cfg.dics.projectnoise   = 'yes';
-    cfg.dics.lambda         = '5%';
-    cfg.dics.keepfilter     = 'yes';
-    cfg.dics.realfilter     = 'yes';
-    cfg.dics.fixedori       = 'yes';
+    cfg                   = []; 
+    cfg.method            = 'dics';
+    cfg.frequency         = foilim(1);  
+    cfg.grid              = sourcemodel;
+    cfg.grid.leadfield    = leadfield.leadfield;
+    cfg.headmodel         = headmodel;
+    %cfg.keeptrials       = 'yes';
+    cfg.dics.projectnoise = 'yes';
+    cfg.dics.lambda       = '100%';
+    cfg.dics.keepfilter   = 'yes';
+    cfg.dics.realfilter   = 'yes';
+    cfg.dics.fixedori     = 'yes';
 
     source_both = ft_sourceanalysis(cfg, ft_checkdata(freq,'cmbrepresentation','fullfast')); % trick to speed up the computation
     F           = cat(1,source_both.avg.filter{source_both.inside}); % common spatial filters per location
