@@ -88,13 +88,12 @@ load(audiofile);      % audio var
 for kk = 1:numel(shift)
 
     opt = {'save',              0, ...
-           'altmean',           0, ...
-           'language_features', {'log10wf' 'perplexity', 'entropy'}, ...
+           'language_features', {'log10wf' 'perplexity', 'entropy', 'word_'}, ...
            'audio_features',    {'audio_avg'}, ...
            'contrastvars',      {indepvar}, ...
            'removeonset',       removeonset, ...
            'shift',             shift(kk), ...
-           'epochlength',       1, ...
+           'epochlength',       0.5, ...
            'overlap',           0};
 
     [avgfeature, data_epoched, ~, ~, contrast] = streams_epochdefinecontrast(data, featuredata, audio, opt);
@@ -237,10 +236,8 @@ stat.time   = shift./1000;      % make it in seconds
 
 dicsfreq           = num2str(foilim(1));
 
-pipelinesavename   = fullfile(savedir, ['s02' '_' indepvar '_' dicsfreq]);
-
 datecreated        = char(datetime('today', 'Format', 'dd-MM-yy'));
-pipelinefilename   = [pipelinesavename '_' datecreated];
+pipelinefilename   = [fullfile(savedir, ['pipeline' '_' indepvar '_' dicsfreq]) '_' datecreated];
 
 if ~exist([pipelinefilename '.html'], 'file')
     cfgt           = [];
@@ -260,6 +257,5 @@ else
     save(fullfile(savedir, 'source', [savename '_H']), 'source_high');
     save(fullfile(savedir, 'source', [savename '_L']), 'source_low');
 end
-% ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
 
 end
