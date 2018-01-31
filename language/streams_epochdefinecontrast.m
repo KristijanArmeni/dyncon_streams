@@ -8,10 +8,10 @@ function [avgfeature, data, featuredata, audio, split] = streams_epochdefinecont
 
 %% INITIALIZE 
 
-altmean           = ft_getopt(opt, 'altmean', 0);
+%altmean           = ft_getopt(opt, 'altmean', 0);
 language_features = ft_getopt(opt, 'language_features');
 audio_features    = ft_getopt(opt, 'audio_features');
-contrastvars      = ft_getopt(opt, 'contrastvars', 'perplexity');
+contrastvars      = ft_getopt(opt, 'contrastvars');
 removeonset       = ft_getopt(opt, 'removeonset', 0);
 shift             = ft_getopt(opt, 'shift', 0);          % in miliseconds
 epochlength       = ft_getopt(opt, 'epochlength', 1);    % integer, seconds, the amount of semgent length
@@ -54,7 +54,7 @@ shift_sr   = sr * shift_size; % shift expressed in the number of samples
 % check whether there the epochs are at least twice the sampling rate in length
 trlsel = logical(cell2mat(cellfun(@(x) numel(x) > 2*sr, data.time(:), 'UniformOutput', 0)));
 
-% if there are shorter epochs, reject them here (regardless of shift value)
+% if there are epochs < 2*sr, leave them out at this step (regardless of shift value)
 if ~all(trlsel)  
     cfg         = [];
     cfg.trials  = trlsel;
@@ -72,7 +72,7 @@ if shift > 0
 
     for ii = 1:num_trl
 
-        new_onset = shift_sr + 1;                  % sample index that represents a new onset
+        new_onset = shift_sr + 1;                  % sample index that represents the new onset
 
         data.trial{ii} = data.trial{ii}(:, new_onset:end); % selectdata from the new index to the end
         data.time{ii}  = data.time{ii}(:, new_onset:end);
@@ -133,8 +133,8 @@ end
 %% AVERAGE FEATURE
 
 % put average feature information into .trialinfo and labels into .trialinfolabel
-featuredata       = streams_averagefeature(featuredata, language_features, altmean);
-audio             = streams_averagefeature(audio, audio_features, altmean);
+featuredata       = streams_averagefeature(featuredata, language_features);
+audio             = streams_averagefeature(audio, audio_features);
 
 % append together
 
@@ -180,8 +180,16 @@ else
         
         indepvarsel = contrastvars{i};
         
-        split(i) = streams_split(avgfeature, indepvarsel, [0.33 0.66]);
+        % determine quantile range for split based on the measure
+        if strcmp(indepvarsel, 'word_')
+            quantile_range = [0.33 0.66];
+        else
+            quantile_range = [0.33 0.66];
+        end
         
+        % do the split
+        split(i) = streams_split(avgfeature, indepvarsel, quantile_range);
+            
     end
 
 end
@@ -230,14 +238,16 @@ function split = streams_split(datain, indepvarsel, quantile_range)
 
 end
 
-function dataout = streams_averagefeature(datain, selected_features, altmean)
+function dataout = streams_averagefeature(datain, selected_features)
 % streams_averagefeature() takes the output of
 % streams_preprocessing.m (featuredata struct) and averages single trial values
 
-dataout                      = datain;
-dataout.trialinfolabel{1, 1} = 'story'; % this is the preprocessed trialinfo
-dataout.trialinfo(:, 1)      = datain.trialinfo; % assign story numbers
+dataout                      = rmfield(datain, 'trialinfo');
+dataout.trialinfolabel{1, 1} = 'story';                      % this is the preprocessed trialinfo
+dataout.trialinfo(:, 1)      = datain.trialinfo(:, 2);       % assign story numbers
+num_features_pre             = size(dataout.trialinfo, 2);   % store the number of features already assigned
 
+    % average entropy, perplexity and audio lex. freq.
     for k = 1:numel(selected_features)
 
         feature   = selected_features{k};
@@ -245,22 +255,20 @@ dataout.trialinfo(:, 1)      = datain.trialinfo; % assign story numbers
 
         tmp = cellfun(@(x) x(chan_indx,:), datain.trial(:), 'UniformOutput', 0); % choose the correct row in every cell
         
-        if altmean % take the mean diving by the num words (~ number of non-Nan unique values)
-            
-            tmp = cellfun(@unique , tmp(:), 'UniformOutput', 0); % pick unique values (this includes nan's)
-            
-            dataout.trialinfo(:, k + 1)      = cellfun(@(x) nansum(x)/sum(~isnan(x)), tmp(:)); 
-            dataout.trialinfolabel{k + 1, 1} = feature;
+        if strcmp(feature, 'word_') % take mode for word index
+        
+           dataout.trialinfo(:, num_features_pre + k)      = cellfun(@mode, tmp(:)); % take the mode
+           dataout.trialinfolabel{k + num_features_pre, 1} = feature;
        
-        else
+        else % mean, weighted by word's duration
             
-            dataout.trialinfo(:, k + 1)      = cellfun(@nanmean, tmp(:)); % take the mean, ignoring nans
-            dataout.trialinfolabel{k + 1, 1} = feature;
+            dataout.trialinfo(:, num_features_pre + k)       = cellfun(@nanmean, tmp(:)); % take the mean, ignoring nans
+            dataout.trialinfolabel{num_features_pre + k, 1} = feature;
         
         end
         
     end
-    
+      
     total_columns = numel(dataout.trialinfolabel);
     
     % add information about the number of nan's
