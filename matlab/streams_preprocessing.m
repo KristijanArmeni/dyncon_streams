@@ -216,7 +216,7 @@ for k = 1:numel(seltrl)
   % reject muscle & SQUID artifacts
   cfg                  = [];
   cfg.artfctdef        = subject.artfctdef;
-  cfg.artfctdef.reject = 'partial';
+  cfg.artfctdef.reject = 'nan';
   cfg.artfctdef.minaccepttim = 2;
   data        = ft_rejectartifact(cfg, data);
   eeg         = ft_rejectartifact(cfg, eeg);
@@ -300,7 +300,17 @@ for k = 1:numel(seltrl)
       
       % add subtlex frequency info and word length
       combineddata = add_subtlex(combineddata, subtlex_data,  subtlex_firstrow);
-
+        
+      % create semantic distance field in combineddata
+      vector_file        = fullfile('/project/3011044.02/preproc/stimuli/vectors', [f '.txt']);
+      [vecmat, words]    = vsm_readvectors(vector_file);
+      
+      vec2dist_selection = [combineddata(:).iscontent]';
+      [d, ~]             = vsm_vec2dist(words, vecmat, 5, vec2dist_selection);
+      for jj = 1:numel(words)
+          combineddata(jj).semdist = d(jj);
+      end
+      
       % create language predictor based on language model output
       if iscell(feature)
         
@@ -448,22 +458,22 @@ end
   
 featuredata   = ft_selectdata(data, 'channel', data.label(1)); % ensure that it only has 1 channel
 featuredata.label{1} = feature;
-for kk = 1:numel(featuredata.trial)
-  if featuredata.time{kk}(1)>=0
+for h = 1:numel(featuredata.trial)
+  if featuredata.time{h}(1)>=0
     begsmp1 = 1;
-    begsmp2 = nearest(time, featuredata.time{kk}(1));
+    begsmp2 = nearest(time, featuredata.time{h}(1));
     
-    endsmp1 = min(numel(featuredata.time{kk}), numel(featurevector)-begsmp2+1);
+    endsmp1 = min(numel(featuredata.time{h}), numel(featurevector)-begsmp2+1);
     endsmp2 = endsmp1-begsmp1+begsmp2;
   else
-    begsmp1 = nearest(data.time{kk},0);
+    begsmp1 = nearest(data.time{h},0);
     begsmp2 = 1;
   
-    endsmp2 = min(numel(featuredata.time{kk})-begsmp1+1, numel(featurevector));
+    endsmp2 = min(numel(featuredata.time{h})-begsmp1+1, numel(featurevector));
     endsmp1 = endsmp2-begsmp2+begsmp1;
   end
-  featuredata.trial{kk}(:) = nan;
-  featuredata.trial{kk}(begsmp1:endsmp1) = featurevector(begsmp2:endsmp2);
+  featuredata.trial{h}(:) = nan;
+  featuredata.trial{h}(begsmp1:endsmp1) = featurevector(begsmp2:endsmp2);
 end
 end
 
