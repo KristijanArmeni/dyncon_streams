@@ -27,7 +27,7 @@ filter_audio      = ft_getopt(inpcfg, 'filter_audio', 'no');
 feature           = ft_getopt(inpcfg, 'feature');
 dofeature         = ft_getopt(inpcfg, 'dofeature', 0);
 addnoise          = ft_getopt(inpcfg, 'addnoise', 0);
-word_quantify     = ft_getopt(inpcfg, 'word_quantify', 'content_noonset');
+word_quantify     = ft_getopt(inpcfg, 'word_quantify', 'all');
 
 %% check whether all required user specified input is there
 
@@ -56,16 +56,18 @@ if ischar(audiofile) && strcmp(audiofile, 'all')
   audiofile = subject.audiofile;
 elseif ischar(audiofile)
   audiofile = {audiofile};
+else
 end
 
 % determine the trials with which the audiofiles correspond
 seltrl   = zeros(0,1);
 selaudio = cell(0,1);
 for k = 1:numel(audiofile)
-  tmp = ~cellfun('isempty', strfind(subject.audiofile, audiofile{k}));
+
+  tmp = contains(subject.audiofile, audiofile{k}); % check which audiofiles were selected by the user
   if sum(tmp)==1
-    seltrl   = cat(1,seltrl,find(tmp));
-    selaudio = cat(1,selaudio,audiofile(k)); 
+    seltrl   = cat(1, seltrl, find(tmp));
+    selaudio = cat(1, selaudio, subject.audiofile(tmp)); 
   else
     % file is not there
   end
@@ -308,7 +310,8 @@ for k = 1:numel(seltrl)
       vec2dist_selection = [combineddata(:).iscontent]';
       [d, ~]             = vsm_vec2dist(words, vecmat, 5, vec2dist_selection);
       for jj = 1:numel(words)
-          combineddata(jj).semdist = d(jj);
+          combineddata(jj).embedding = vecmat(jj,:)';  % pick the vector row for this word, store as column
+          combineddata(jj).semdist   = d(jj);
       end
       
       % create language predictor based on language model output
@@ -437,44 +440,70 @@ end
 % Create box-shape predictors 
 function [featuredata] = create_featuredata(combineddata, feature, data, addnoise, select)
 
-% create FT-datastructure with the feature as a channel
+% create FT-datastructure with the feature as channels
 [time, featurevector] = get_time_series(combineddata, feature, data.fsample, select);
 
-if addnoise
-  
-  steps = unique(featurevector);
-  steps_sel = isfinite(steps);  % indicate all non-Nan values
-  steps = steps(steps_sel);     % select all non-Nan values
-  steps = steps(find(steps));   % select all non-zero values
-  
-  range = 0.1*min(diff(steps));
-  num_samples = size(featurevector, 2);
+    if addnoise
 
-  noise = range.*rand(1, num_samples);
-  noise(~isfinite(featurevector)) = NaN;
-  featurevector = featurevector + noise;
+      steps = unique(featurevector);
+      steps_sel = isfinite(steps);  % indicate all non-Nan values
+      steps = steps(steps_sel);     % select all non-Nan values
+      steps = steps(find(steps));   % select all non-zero values
 
-end
-  
-featuredata   = ft_selectdata(data, 'channel', data.label(1)); % ensure that it only has 1 channel
-featuredata.label{1} = feature;
-for h = 1:numel(featuredata.trial)
-  if featuredata.time{h}(1)>=0
-    begsmp1 = 1;
-    begsmp2 = nearest(time, featuredata.time{h}(1));
-    
-    endsmp1 = min(numel(featuredata.time{h}), numel(featurevector)-begsmp2+1);
-    endsmp2 = endsmp1-begsmp1+begsmp2;
-  else
-    begsmp1 = nearest(data.time{h},0);
-    begsmp2 = 1;
-  
-    endsmp2 = min(numel(featuredata.time{h})-begsmp1+1, numel(featurevector));
-    endsmp1 = endsmp2-begsmp2+begsmp1;
-  end
-  featuredata.trial{h}(:) = nan;
-  featuredata.trial{h}(begsmp1:endsmp1) = featurevector(begsmp2:endsmp2);
-end
+      range = 0.1*min(diff(steps));
+      num_samples = size(featurevector, 2);
+
+      noise = range.*rand(1, num_samples);
+      noise(~isfinite(featurevector)) = NaN;
+      featurevector = featurevector + noise;
+
+    end
+
+feature_dim   = size(featurevector, 1); % it assumess a row feature vector
+num_samples   = size(featurevector, 2);
+
+    if feature_dim > 1 % check if it is a high-dimensional vector
+
+        % generate channel labels
+        labels = cell(feature_dim, 1);
+        for hh = 1:feature_dim
+            labels{hh} = sprintf('%s%d', feature, hh);
+        end
+
+        featuredata                                         = data;
+        featuredata.label                                   = labels;
+        featuredata.trial{numel(data.trial)}(feature_dim,:) = 0; % create the trial array of correct dimensions
+
+    else    
+        featuredata          = ft_selectdata(data, 'channel', data.label(1)); % ensure that it only has 1 channel
+        featuredata.label{1} = feature;
+    end
+
+    for h = 1:numel(featuredata.trial)
+
+      if featuredata.time{h}(1)>=0
+
+        begsmp1 = 1;
+        begsmp2 = nearest(time, featuredata.time{h}(1));
+
+        endsmp1 = min(numel(featuredata.time{h}), num_samples-begsmp2+1);
+        endsmp2 = endsmp1-begsmp1+begsmp2;
+
+      else
+
+        begsmp1 = nearest(data.time{h},0);
+        begsmp2 = 1;
+
+        endsmp2 = min(numel(featuredata.time{h})-begsmp1+1, num_samples);
+        endsmp1 = endsmp2-begsmp2+begsmp1;
+
+      end
+
+      featuredata.trial{h}(:)                  = nan;
+      featuredata.trial{h}(:, begsmp1:endsmp1) = featurevector(:, begsmp2:endsmp2);
+
+    end
+
 end
 
 end
