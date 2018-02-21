@@ -441,7 +441,12 @@ end
 function [featuredata] = create_featuredata(combineddata, feature, data, addnoise, select)
 
 % create FT-datastructure with the feature as channels
-[time, featurevector] = get_time_series(combineddata, feature, data.fsample, select);
+config.feature = feature;
+config.fsample = data.fsample;
+config.select  = select;
+config.shape   = 'box';
+
+[time, featurevector] = get_time_series(config, combineddata);
 
     if addnoise
 
