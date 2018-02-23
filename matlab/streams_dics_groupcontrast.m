@@ -6,7 +6,7 @@ savedir = ft_getopt(opt, 'savedir');
 ivar    = ft_getopt(opt, 'ivar');
 foi     = ft_getopt(opt, 'foi');
 
-load '/project/3011044.02/preproc/anatomy/connectivity.mat';
+load '/project/3011044.02/preproc/anatomy/connectivity_eucl5.mat';
 
 % define subject array
 [subjects, num_sub] = streams_util_subjectstring(2:28, {'s01', 's06', 's09'});
@@ -56,8 +56,8 @@ fprintf('Doing second level stats on: \n\n')
 % Create the null structure
 data_N = stat_all;
 for k = 1:numel(data_N)
-    data_N{k}.stat(:,:) = 0;
-    %data_N{k}.stat(:,:) = nanmean(stat_all{k}.stat(:));
+    data_N{k}.stat(:) = 0;
+    %data_N{k}.stat(:) = nanmean(stat_all{k}.stat(:));
 end
 
 % specify design matrix
@@ -73,9 +73,10 @@ cfg.method           = 'montecarlo';
 cfg.parameter        = 'stat';
 cfg.statistic        = 'depsamplesT';
 cfg.correctm         = 'cluster';
+cfg.clusteralpha     = 0.05;
 cfg.alpha            = 0.025; % adjust alpha-level for two-sided test
 cfg.correcttail      = 'prob';  
-cfg.numrandomization = 100;
+cfg.numrandomization = 1000;
 cfg.design           = design;
 cfg.uvar             = 1;
 cfg.ivar             = 2;
