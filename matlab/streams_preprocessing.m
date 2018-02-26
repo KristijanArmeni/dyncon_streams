@@ -444,7 +444,7 @@ function [featuredata] = create_featuredata(combineddata, feature, data, addnois
 config.feature = feature;
 config.fsample = data.fsample;
 config.select  = select;
-config.shape   = 'box';
+config.shape   = 'stick';
 
 [time, featurevector] = get_time_series(config, combineddata);
 
