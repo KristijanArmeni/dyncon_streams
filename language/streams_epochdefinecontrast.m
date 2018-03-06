@@ -131,69 +131,73 @@ if removeonset
 
 end
 %% AVERAGE FEATURE
+if ~isempty(language_features) % do averaging and nan removal only if features are specified
+    
+    % put average feature information into .trialinfo and labels into .trialinfolabel
+    featuredata       = streams_averagefeature(featuredata, language_features);
+    audio             = streams_averagefeature(audio, audio_features);
 
-% put average feature information into .trialinfo and labels into .trialinfolabel
-featuredata       = streams_averagefeature(featuredata, language_features);
-audio             = streams_averagefeature(audio, audio_features);
+    % append together
 
-% append together
+    data.fsample        = sr; % this is needed for s14 and s28
+    featuredata.fsample = sr;
+    audio.time          = featuredata.time; % make time info the same else appenddata fails
+    audio.fsample       = sr;
 
-data.fsample        = sr; % this is needed for s14 and s28
-featuredata.fsample = sr;
-audio.time          = featuredata.time; % make time info the same else appenddata fails
-audio.fsample       = sr;
+    avgfeature             = ft_appenddata([], featuredata, audio);
 
-avgfeature             = ft_appenddata([], featuredata, audio);
+    % add averaging information back in
+    audio_col = strcmp(audio.trialinfolabel, audio_features);
 
-% add averaging information back in
-audio_col = strcmp(audio.trialinfolabel, audio_features);
+    avgfeature.trialinfo      = [featuredata.trialinfo, audio.trialinfo(:, audio_col)];
+    avgfeature.trialinfolabel = [featuredata.trialinfolabel; audio.trialinfolabel(audio_col)];
 
-avgfeature.trialinfo      = [featuredata.trialinfo, audio.trialinfo(:, audio_col)];
-avgfeature.trialinfolabel = [featuredata.trialinfolabel; audio.trialinfolabel(audio_col)];
+    %% REMOVE NAN TRIALS
 
-%% REMOVE NAN TRIALS
+    selected_column = strcmp(avgfeature.trialinfolabel, 'log10wf'); % this column is used as a confound and must not have Nans
+    trialskeep      = logical(~isnan(avgfeature.trialinfo(:, selected_column))); % keep only non-nan trials
 
-selected_column = strcmp(avgfeature.trialinfolabel, 'log10wf'); % this column is used as a confound and must not have Nans
-trialskeep      = logical(~isnan(avgfeature.trialinfo(:, selected_column))); % keep only non-nan trials
+    trialinfolabel = avgfeature.trialinfolabel; % store this because ft_selectdata below discards it
 
-trialinfolabel = avgfeature.trialinfolabel; % store this because ft_selectdata below discards it
+    cfg         = [];
+    cfg.trials  = trialskeep;
 
-cfg         = [];
-cfg.trials  = trialskeep;
+    data        = ft_selectdata(cfg, data);
+    featuredata = ft_selectdata(cfg, featuredata);
+    audio       = ft_selectdata(cfg, audio);
+    avgfeature  = ft_selectdata(cfg, avgfeature); % this also removes Nans in .trialinfo cells with lex. freq. info (needed for ft_regressconfound)
 
-data        = ft_selectdata(cfg, data);
-featuredata = ft_selectdata(cfg, featuredata);
-audio       = ft_selectdata(cfg, audio);
-avgfeature  = ft_selectdata(cfg, avgfeature); % this also removes Nans in .trialinfo cells with lex. freq. info (needed for ft_regressconfound)
-
-avgfeature.trialinfolabel = trialinfolabel; % plug trialinfolabel back in
-
-%% DO THE TERTILE SPLIT
-
-doload = 0; %% TEMPORARY
-% load or compute the contrast
-if doload
-    load(savename);
+    avgfeature.trialinfolabel = trialinfolabel; % plug trialinfolabel back in
 else
     
+    avgfeature = [];
+    
+end
+%% DO THE TERTILE SPLIT
+
+if ~isempty(contrastvars)
+
     for i = 1:numel(contrastvars)
-        
+
         indepvarsel = contrastvars{i};
-        
+
         % determine quantile range for split based on the measure
         if strcmp(indepvarsel, 'word_')
             quantile_range = [0.33 0.66];
         else
             quantile_range = [0.33 0.66];
         end
-        
+
         % do the split
         split(i) = streams_split(avgfeature, indepvarsel, quantile_range);
-            
+
     end
 
+else
+    
+    split = [];
+    
 end
-
 %% SUBFUNCTIONS
 
 function split = streams_split(datain, indepvarsel, quantile_range)
@@ -243,9 +247,9 @@ function dataout = streams_averagefeature(datain, selected_features)
 % streams_preprocessing.m (featuredata struct) and averages single trial values
 
 dataout                      = rmfield(datain, 'trialinfo');
-dataout.trialinfolabel{1, 1} = 'story';                      % this is the preprocessed trialinfo
-dataout.trialinfo(:, 1)      = datain.trialinfo(:, 2);       % assign story numbers
-num_features_pre             = size(dataout.trialinfo, 2);   % store the number of features already assigned
+dataout.trialinfolabel{1, 1} = 'trialnr';                  % this is the preprocessed trialinfo
+dataout.trialinfo(:, 1)      = datain.trialinfo;           % assign trial numbers
+num_features_pre             = size(dataout.trialinfo, 2); % store the number of features already assigned
 
     % average entropy, perplexity and audio lex. freq.
     for k = 1:numel(selected_features)
