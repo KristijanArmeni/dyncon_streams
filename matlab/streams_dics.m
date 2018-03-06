@@ -217,7 +217,7 @@ for kk = 1:numel(shift)
     cfg.design              = statdesign;
 
     stattmp(kk) = ft_sourcestatistics(cfg, source_high, source_low);
-    clear source_high source_low
+    %clear source_high source_low
     
 end
 
@@ -250,12 +250,12 @@ savename = fullfile(savedir, [subject '_' indepvar '_' dicsfreq]);
 if strcmp(savewhat, 'stat')
     save(savename, 'stat', 'inpcfg');
 elseif strcmp(savewhat, 'source')
-    save(fullfile(savedir, 'source', [savename '_H']), 'source_high', 'inpcfg');
-    save(fullfile(savedir, 'source', [savename '_L']), 'source_low');
+    save(fullfile(savedir, 'source', [savename '_high']), 'source_high', 'inpcfg');
+    save(fullfile(savedir, 'source', [savename '_low']), 'source_low');
 else
     save(savename, 'stat', 'inpcfg');
-    save(fullfile(savedir, 'source', [savename '_H']), 'source_high');
-    save(fullfile(savedir, 'source', [savename '_L']), 'source_low');
+    save(fullfile(savedir, 'source', [savename '_high']), 'source_high');
+    save(fullfile(savedir, 'source', [savename '_low']), 'source_low');
 end
 
 end
