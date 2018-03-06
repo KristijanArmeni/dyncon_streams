@@ -4,26 +4,56 @@ function streams_coherence_dics(subject, inputargs)
 
 %% INITIALIZE
 
+% create variables from input argument options
 dir             = ft_getopt(inputargs, 'datadir');
 savedir         = ft_getopt(inputargs, 'savedir');
 indepvar        = ft_getopt(inputargs, 'indepvar');
-cfgfreq         = ft_getopt(inputargs, 'cfgfreq');
-cfgdics         = ft_getopt(inputargs, 'cfgdics');
 removeonset     = ft_getopt(inputargs, 'removeonset', 0);
 shift           = ft_getopt(inputargs, 'shift', 0);
-savewhat        = ft_getopt(inputargs, 'savewhat', 'stat');
+freqband        = ft_getopt(inputargs, 'freqband');  
+word_selection  = ft_getopt(inputargs, 'word_selection', 'all');
+docontrast      = ft_getopt(inputargs, 'docontrast', 'no');
+
+% determine what predictor to load
+switch word_selection
+    case 'all',             fdata = 'featuredata1';
+    case 'content_noonset', fdata = 'featuredata2';
+    case 'content',         fdata = 'featuredata3';
+    case 'noonset',         fdata = 'featuredata4';
+end
 
 preprocfile     = fullfile(dir, 'meg', [subject '_meg-clean.mat']);
-featurefile     = fullfile(dir, 'meg', [subject '_featuredata.mat']);
+featurefile     = fullfile(dir, 'meg', [subject '_' fdata]);
 audiofile       = fullfile(dir, 'meg', [subject, '_aud.mat']);
 headmodelfile   = fullfile(dir, 'anatomy', [subject '_headmodel.mat']);
 leadfieldfile   = fullfile(dir, 'anatomy', [subject '_leadfield.mat']);
 sourcemodelfile = fullfile(dir, 'anatomy', [subject '_sourcemodel.mat']);
 
-% conditions file, frequency band doesn't matter here
-% contrastfile    = fullfile('/project/3011044.02/analysis/lng-contrast/', [subject '.mat']); 
+% determine 'foi' for ft_freqstatistics
+switch freqband
+    case 'delta',     foilim = [2 2];
+    case 'theta',     foilim = [6 6];
+    case 'alpha',     foilim = [10 10];
+    case 'beta',      foilim = [16 16];
+    case 'high-beta', foilim = [26 26];
+    case 'gamma',     foilim = [45 45];
+    case 'high-gamma',foilim = [75 75];
+end
 
-% ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
+% condition taper and smoothing paramteres on the frequency of interest
+switch freqband
+    case {'delta'}
+        taper     = 'hanning';
+    case {'theta', 'alpha'}
+        taper     = 'dpss';
+        tapsmooth = 2;
+    case {'beta', 'high-beta'}
+        taper     = 'dpss';
+        tapsmooth = 5;
+    case {'gamma', 'high-gamma'}
+        taper     = 'dpss';
+        tapsmooth = 15;
+end
 %% LOAD
 
 load(preprocfile);    % meg data, 'data' variable
@@ -42,15 +72,28 @@ opt = {'save',              0, ...
        'contrastvars',      {indepvar}, ...
        'removeonset',       removeonset, ...
        'shift',             shift, ...
-       'epochlength',       1, ...
+       'epochlength',       0.5, ...
        'overlap',           0};
    
 [~, data, ~, audio, contrast] = streams_epochdefinecontrast(data, featuredata, audio, opt);
 
 % combine the data
 
-datac = ft_appenddata([], data, audio);
+% somewhere in the pipelines something goes wrong with .time numericla preciscion, this is a pedestrian way
+% of correcting it
+try 
+    datac            = ft_appenddata([], data, audio); 
+catch ME
+    if  strcmp(ME.message, 'cannot append this data') && ...
+        strcmp(lastwarn, 'correcting numerical inaccuracy in the time axes')
+    
+        audio.time = data.time;
+        datac      = ft_appenddata([], data, audio);
+    end
+end
+
 datac.grad = data.grad;
+clear data audio
 
 %% GET COMPLEX REPRESENTATION
 
@@ -58,137 +101,154 @@ cfg = [];
 cfg.method        = 'mtmfft';
 cfg.output        = 'fourier';
 cfg.keeptrials    = 'yes';
-cfg.taper         = cfgfreq.taper; % hanning
+cfg.taper         = taper; % hanning
 
-if strcmp(cfgfreq.taper, 'dpss')
-    cfg.tapsmofrq = cfgfreq.tapsmofrq;
+if strcmp(taper, 'dpss')
+    cfg.tapsmofrq = tapsmooth;
 end
 
-cfg.foilim        = cfgfreq.foilim; % [6 6]
+cfg.foilim        = foilim; 
 
 freq = ft_freqanalysis(cfg, datac);
 
 %% SPLIT DATA
 
-% use the 'contrast' struct, computed in streams_epochdefinecontrast()
-ivarsel     = strcmp({contrast.indepvar}, indepvar); % use the correct struct dimeension
-contrastsel = contrast(ivarsel);                    % chose a subset of the struct array
+if strcmp(docontrast, 'yes')
     
-low_column  = strcmp(contrastsel.label, 'low');
-high_column = strcmp(contrastsel.label, 'high');
+    % use the 'contrast' struct, computed in streams_epochdefinecontrast()
+    ivarsel     = strcmp({contrast.indepvar}, indepvar); % use the correct struct dimeension
+    contrastsel = contrast(ivarsel);                    % chose a subset of the struct array
 
-trl_indx_low  = contrastsel.trial(:, low_column);  % select non-NaN high complexity trials
-trl_indx_high = contrastsel.trial(:, high_column); % select non-NaN low complexity trials
+    low_column  = strcmp(contrastsel.label, 'low');
+    high_column = strcmp(contrastsel.label, 'high');
 
-% select data
-cfg        = [];
-cfg.trials = trl_indx_low;
-freq_low   = ft_selectdata(cfg, freq);
+    trl_indx_low  = contrastsel.trial(:, low_column);  % select non-NaN high complexity trials
+    trl_indx_high = contrastsel.trial(:, high_column); % select non-NaN low complexity trials
 
-cfg        = [];
-cfg.trials = trl_indx_high;
-freq_high  = ft_selectdata(cfg, freq);
+    % select data
+    cfg        = [];
+    cfg.trials = trl_indx_low;
+    freq_low   = ft_selectdata(cfg, freq);
+
+    cfg        = [];
+    cfg.trials = trl_indx_high;
+    freq_high  = ft_selectdata(cfg, freq);
+    clear contrast
+    
+end
 
 %% COMMON FILTER
 
 cfg                     = []; 
 cfg.method              = 'dics';
-cfg.frequency           = 6;  
+cfg.frequency           = foilim(1);  
 cfg.grid                = sourcemodel;
 cfg.grid.leadfield      = leadfield.leadfield;
 cfg.headmodel           = headmodel;
 cfg.refchan             = 'audio_avg';
 %cfg.keeptrials         = 'yes';
 cfg.dics.projectnoise   = 'yes';
-cfg.dics.lambda         = '5%';
+cfg.dics.lambda         = '100%';
 cfg.dics.keepfilter     = 'yes';
 cfg.dics.realfilter     = 'yes';
 cfg.dics.fixedori       = 'yes';
 
-source_both = ft_sourceanalysis(cfg, ft_checkdata(freq,'cmbrepresentation','fullfast')); % trick to speed up the computation
+source       = ft_sourceanalysis(cfg, ft_checkdata(freq,'cmbrepresentation','fullfast')); % trick to speed up the computation
 %F           = cat(1,source_both.avg.filter{source_both.inside}); % common spatial filters per location
 
 %%
-freq_high = ft_checkdata(freq_high, 'cmbrepresentation', 'fullfast');
-freq_low  = ft_checkdata(freq_low, 'cmbrepresentation', 'fullfast');
-
-%for-loop across dipole locations, so not by creating F = cat(1,source.avg.filter{:});):
-
-inside_indx = find(source.inside); 
-
-for k = 1:inside_indx(:)
-
-    Ftmp   = blkdiag(source.avg.filter{inside_indx},1);
+% get the cross-spectrum per condition
+inside_indx = find(source.inside);
+switch docontrast    
     
-    csdtmp1 = Ftmp*freq_high.crsspctrm*Ftmp'; % gives a 2x2 csd matrix
-    csdtmp2 = Ftmp*freq_low.crssspctrm*Ftmp';
+    case 'no' % just overall coherence (no spliting)
+   
+        freq = ft_checkdata(freq, 'cmbrepresentation', 'fullfast');
+        coh  = zeros(1, numel(inside_indx));
     
-    coh_high(inside_indx) = abs(csdtmp(1,2))./sqrt(csdtmp(1,1)*csdtmp(2,2));
-    coh_low(inside_indx)  = abs(csdtmp(1,2))./sqrt(csdtmp(1,1)*csdtmp(2,2))
+        for k = inside_indx(:)'
+
+            Ftmp   = blkdiag(source.avg.filter{k}, 1);
+
+            % compute the 2x2 csd matrix
+            csdtmp      = Ftmp*freq.crsspctrm*Ftmp';
+            coh(k)      = abs(csdtmp(1,2))./sqrt(abs(csdtmp(1,1))*abs(csdtmp(2,2)));
+
+        end
+        
+    case 'yes'
+        
+        freq_high = ft_checkdata(freq_high, 'cmbrepresentation', 'fullfast');
+        freq_low  = ft_checkdata(freq_low, 'cmbrepresentation', 'fullfast');
+        
+        coh_high = zeros(1, numel(inside_indx));
+        coh_low  = zeros(1, numel(inside_indx));
     
+        % compute coherence value per each vertex in the cortical sheet
+        for k = inside_indx(:)'
+
+            Ftmp   = blkdiag(source.avg.filter{k}, 1);
+
+            % compute the 2x2 csd matrix
+            csdtmp_high = Ftmp*freq_high.crsspctrm*Ftmp'; 
+            csdtmp_low  = Ftmp*freq_low.crsspctrm*Ftmp';
+
+            coh_high(k) = abs(csdtmp_high(1,2))./sqrt(abs(csdtmp_high(1,1))*abs(csdtmp_high(2,2)));
+            coh_low(k)  = abs(csdtmp_low(1,2))./sqrt(abs(csdtmp_high(1,1))*abs(csdtmp_high(2,2)));
+
+        end
+        
+        % COHERENCE Z-STATISTIC
+        % Following eq(1) in Maris et al, 2007, Nonparametric statistical testing of coherence differences
+
+        % atang transformation
+        coh_high = atanh(coh_high);
+        coh_low  = atanh(coh_low);
+
+        % condition specific degrees of freedom
+        dfhigh = 1./(2*sum(trl_indx_high) - 2);
+        dflow  = 1./(2*sum(trl_indx_low) - 2);
+
+        % subtract degrees of freedom
+        coh_high = coh_high - dfhigh;
+        coh_low  = coh_low - dflow;
+
+        % divide by joint df
+        jointdf  = sqrt(dfhigh + dflow);
+        coh_low  = coh_low./jointdf;
+        coh_high = coh_high./jointdf;
+
+        % subtract
+        cohdif = coh_high - coh_low;
+        
 end
 
-%% REGRESS OUT WORD FREQUENCY DATA
-
-tri = source.tri;
-if ~strcmp(indepvar, 'log10wf') % if ivarexp is lex. fr. itself skip this step
-    
-    nuisance_vars = {'log10wf', 'audio_avg'}; % take lexical frequency as nuissance
-    confounds     = ismember(depdata.trialinfolabel, nuisance_vars); % logical with 1 in the columns for nuisance vars
-
-    cfg          = [];
-    cfg.confound = depdata.trialinfo(:, confounds); %pick the log10wf column
-
-    source       = ft_regressconfound(cfg, rmfield(source, 'tri'));
-    source.tri   = tri;
-    
-end
-
-%% FIRST-LEVEL CONTRAST
-
-% desing matrix
-numobs_high = sum(trl_indx_high); % count the number of ones in this vector
-numobs_low  = sum(trl_indx_low);
-
-statdesign  = [ones(1, numobs_high) ones(1, numobs_low)*2];
-
-% independent between trials t-test
-cfg                     = [];
-cfg.method              = 'montecarlo';
-cfg.statistic           = 'indepsamplesT'; % for each subject do between trials (independent) t-test
-cfg.parameter           = 'pow';
-cfg.numrandomization    = 0;
-cfg.design              = statdesign;
-
-stat = ft_sourcestatistics(cfg, source_high, source_low);
+clear source freq
 
 %% SAVING 
 
-dicsfreq           = num2str(cfgdics.freq);
+dicsfreq           = num2str(foilim(1));
 
-pipelinesavename   = fullfile(savedir, ['s02' '_' indepvar '_' dicsfreq '_' num2str(shift)]);
-
-datecreated        = char(datetime('today', 'Format', 'dd-MM-yy'));
-pipelinefilename   = [pipelinesavename '_' datecreated];
-
-if ~exist([pipelinefilename '.html'], 'file')
-    cfgt           = [];
-    cfgt.filename  = pipelinefilename;
-    cfgt.filetype  = 'html';
-    ft_analysispipeline(cfgt, stat);
+switch docontrast
+    case 'no'
+        savename = fullfile(savedir, [subject '_' dicsfreq]);
+        save(savename, 'coh', 'inputargs');
+        %pipelinesavename = fullfile(savedir, ['pipeline' '_' dicsfreq]);
+    case 'yes'
+        savename  = fullfile(savedir, [subject '_' indepvar '_' dicsfreq]);
+        save(savename, 'cohdif', 'inputargs');
+        %pipelinesavename = fullfile(savedir, ['pipeline_' indepvar '_' dicsfreq]);
 end
 
-savename = fullfile(savedir, [subject '_' indepvar '_' dicsfreq '_' num2str(shift)]);
-if strcmp(savewhat, 'stat')
-    save(savename, 'stat');
-elseif strcmp(savewhat, 'source')
-    save(fullfile(savedir, 'source', [savename '_H']), 'source_high');
-    save(fullfile(savedir, 'source', [savename '_L']), 'source_low');
-else
-    save(savename, 'stat');
-    save(fullfile(savedir, 'source', [savename '_H']), 'source_high');
-    save(fullfile(savedir, 'source', [savename '_L']), 'source_low');
-end
-% ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
+% datecreated        = char(datetime('today', 'Format', 'dd-MM-yy'));
+% pipelinefilename   = [pipelinesavename '_' datecreated];
+% 
+% if ~exist([pipelinefilename '.html'], 'file')
+%      cfgt           = [];
+%      cfgt.filename  = pipelinefilename;
+%      cfgt.filetype  = 'html';
+%      ft_analysispipeline(cfgt, stat);
+% end
+
 
 end
