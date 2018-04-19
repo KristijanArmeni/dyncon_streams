@@ -79,7 +79,7 @@ for k = 1:numel(begtim)
   end
   
   % make sure word selection only operates on model metrics
-  if ismember(feature, {'entropy', 'perplexity', 'semdist', 'embedding', 'log10wf'})
+  if ismember(feature, {'entropy', 'perplexity', 'semdist1', 'semdist2', 'embedding', 'log10wf'})
       switch select
 
           case 'all' % assign value to all parsed words
