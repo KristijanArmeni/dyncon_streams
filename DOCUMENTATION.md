@@ -9,14 +9,14 @@ This is a brief documentation/overview of the currently used [analysis pipeline]
   * [`streams_artifact_definetrial.m`](matlab/streams_artifact_definetrial.m)
   * [`streams_artifact_squidjumps.m`](maltab/streams_artifact_squidjumps.m)
 * [`streams_preprocessing.m`](matlab/streams_preprocessing.m)
-* [`streams_componentanalysis_fastica.m`](matlab/streams_componentanalysis_fastica)
+* [`streams_componentanalysis_fastica.m`](matlab/streams_componentanalysis_fastica.m)
 * [`streams_rejectcomponent_fastica.m`](matlab/streams_rejectcomponent_fastica.m)
 * [`streams_cleanadhoc.m`](matlab/streams_rejectcomponent_fastica.m)
 
 #### Audio preprocessing
 
 * [`streams_preprocessing.m`](matlab/streams_preprocessing.m)
-  * [`streams_wav2mat.m`](matlab/streams_wav2mat)
+  * [`streams_wav2mat.m`](matlab/streams_wav2mat.m)
 
 #### Language model preprocessing
 
@@ -81,7 +81,7 @@ Dependencies: [Freesurfer][Freesurfer], [FSL][FSL], [Workbench][Workbench]
 * [`streams_util_subjectstring.m`](matlab/streams_util_subjectstring.m)
 * [`streams_util_stories.m`](matlab/streams_util_stories.m)
 
-Last updated by: Kristijan on 7/12/2017
+Last updated by: Kristijan on 05/26/2018
 
 [matlab]:https://nl.mathworks.com/products/matlab.html
 [analysis pipeline]:https://github.com/KristijanArmeni/dyncon_streams
