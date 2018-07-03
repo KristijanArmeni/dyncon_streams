@@ -11,6 +11,8 @@ sep       = '_';
 saveformat = '-png';
 pixdim     = '-m8';
 
+do_appendix = 'no';
+
 %mesh
 load /project/3011044.02/preproc/atlas/cortex_inflated_shifted.mat % ctx var
 
@@ -35,6 +37,9 @@ filename = fullfile(datadir, [prefix sep iv sep freq]);
 load(filename);
 s = stat_group; clear stat_group % make variable name shorter
 
+% extract maximal lags
+[maxlag_val, maxlag_idx] = max(abs(squeeze(s.stat))');
+
 % general fig
 cfg.funcolorlim   = 'maxabs';
 
@@ -45,17 +50,17 @@ sp.time   = 0;
 sp.pos    = ctx.pos;
 sp.tri    = ctx.tri;
 
-ft_sourceplot(cfg, sp);
+% ft_sourceplot(cfg, sp);
 
 % Medial view
-view([-90 0]); camlight; material dull;
-figure11 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'M']);
-export_fig(figure11, saveformat, pixdim)
+% view([-90 0]); camlight; material dull;
+% figure11 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'M']);
+%export_fig(figure11, saveformat, pixdim)
 
 % Lateral view
-view([90 0]); camlight; material dull;
-figure12 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'L']);
-export_fig(figure12, saveformat, pixdim)
+% view([90 0]); camlight; material dull;
+% figure12 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'L']);
+%export_fig(figure12, saveformat, pixdim)
 
 % Time slices
 times           = [1 2 3 4];
@@ -64,7 +69,7 @@ cfg.funcolorlim = [-maxabs maxabs];
 
 for k = 1:numel(times)   
     
-    sp.stat   = s.stat(:, 1, k);
+    sp.stat   = s.stat(:, 1, k).*double(s.posclusterslabelmat(:, 1, k)==1);
     sp.dimord = 'pos_time';
     sp.time   = times(k);
     sp.pos    = ctx.pos;
@@ -104,23 +109,23 @@ s = stat_group; clear stat_group % make variable name shorter
 cfg.funcolorlim   = 'maxabs';
 
 sp        = keepfields(s, {'stat' 'time' 'dimord'});
-sp.stat   = mean(s.stat.*double(s.negclusterslabelmat==1),3);
+sp.stat   = mean(s.stat.*double(s.negclusterslabelmat == 1),3);
 sp.dimord = 'pos_time';
 sp.time   = 0;
 sp.pos    = ctx.pos;
 sp.tri    = ctx.tri;
 
-ft_sourceplot(cfg, sp);
+% ft_sourceplot(cfg, sp);
 
 % Medial
-view([-90 0]); camlight; material dull;
-figure21 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'M']);
-export_fig(figure21, saveformat, pixdim)
+% view([-90 0]); camlight; material dull;
+% figure21 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'M']);
+% export_fig(figure21, saveformat, pixdim)
 
 % Lateral
-view([90 0]); camlight; material dull;
-figure22 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'L']);
-export_fig(figure22, saveformat, pixdim)
+% view([90 0]); camlight; material dull;
+% figure22 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'L']);
+% export_fig(figure22, saveformat, pixdim)
 
 % Time slices
 times           = [1 2 3 4];
@@ -131,7 +136,7 @@ for k = 1:numel(times)
     
     t = [iv '-' freq '-' num2str(k)];
     
-    sp.stat   = s.stat(:, 1, k);
+    sp.stat   = s.stat(:, 1, k).*double(s.negclusterslabelmat(:, 1, k) == 1);
     sp.dimord = 'pos_time';
     sp.time   = times(k);
     sp.pos    = ctx.pos;
@@ -146,7 +151,6 @@ for k = 1:numel(times)
     export_fig(figure23, saveformat, pixdim)
     
     % medial side
-    cfg.opacitylim = cfg.funcolorlim.*opacityratio;
     ft_sourceplot(cfg, sp);
     
     view([-90 0]); camlight; material dull; title(t);
@@ -176,17 +180,17 @@ sp.time   = 0;
 sp.pos    = ctx.pos;
 sp.tri    = ctx.tri;
 
-ft_sourceplot(cfg, sp);
+% ft_sourceplot(cfg, sp);
 
 % Medial view
-view([-90 0]); camlight; material dull;
-figure31 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'M']);
-export_fig(figure31, saveformat, pixdim)
+% view([-90 0]); camlight; material dull;
+% figure31 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'M']);
+% export_fig(figure31, saveformat, pixdim)
 
 % Lateral view
-view([90 0]); camlight; material dull;
-figure32 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'L']);
-export_fig(figure32, saveformat, pixdim)
+% view([90 0]); camlight; material dull;
+% figure32 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'L']);
+% export_fig(figure32, saveformat, pixdim)
 
 % Time-specific
 times = [1 2 3 4];
@@ -198,23 +202,21 @@ for k = 1:numel(times)
     
     t = [iv '-' freq '-' num2str(k)]; % title string
     
-    sp.stat   = s.stat(:, 1, k);
+    sp.stat   = s.stat(:, 1, k).*double(s.negclusterslabelmat(:, 1, k) == 1);
     sp.dimord = 'pos_time';
     sp.time   = times(k);
     sp.pos    = ctx.pos;
     sp.tri    = ctx.tri;
 
-    % Lateral side
     ft_sourceplot(cfg, sp);
-    view([90 0]); camlight; material dull; title(t);
     
+    % Lateral side
+    view([90 0]); camlight; material dull; title(t);
     figure33 = fullfile(resultdir, [iv sep freq sep num2str(k) sep 'L']);
     export_fig(figure33, saveformat, pixdim)
     
     % Medial side
-    %ft_sourceplot(cfg, sp);
     view([-90 0]); camlight; material dull; title(t);
-    
     figure34 = fullfile(resultdir, [iv sep freq sep num2str(k) sep 'M']);
     export_fig(figure34, saveformat, pixdim)
     
@@ -244,14 +246,14 @@ sp.tri    = ctx.tri;
 ft_sourceplot(cfg, sp);
 
 % Medial view
-view([-90 0]); camlight; material dull;
-figure41 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'M']);
-export_fig(figure41, saveformat, pixdim)
+% view([-90 0]); camlight; material dull;
+% figure41 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'M']);
+% export_fig(figure41, saveformat, pixdim)
 
 % Lateral view
-view([90 0]); camlight; material dull;
-figure42 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'L']);
-export_fig(figure42, saveformat, pixdim)
+% view([90 0]); camlight; material dull;
+% figure42 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'L']);
+% export_fig(figure42, saveformat, pixdim)
 
 % Time-specific
 times           = [1 2 3 4];
@@ -263,25 +265,29 @@ for k = 1:numel(times)
 
     t = [iv '-' freq '-' num2str(k)]; % title string
     
-    sp.stat   = s.stat(:, 1, k);
+    sp.stat   = s.stat(:, 1, k).*double(s.negclusterslabelmat(:, 1, k) == 1);
     sp.dimord = 'pos_time';
     sp.time   = times(k);
     sp.pos    = ctx.pos;
     sp.tri    = ctx.tri;
     
-    % lateral side
     ft_sourceplot(cfg, sp);
-    view([90 0]); camlight; material dull; title(t);
     
+    % lateral side
+    view([90 0]); camlight; material dull; title(t);
     figure43 = fullfile(resultdir, [iv sep freq sep num2str(k) sep 'L']);
     export_fig(figure43, saveformat, pixdim)
     
     % medial side
-    %ft_sourceplot(cfg, sp);
     view([-90 0]); camlight; material dull; title(t);
-    
     figure44 = fullfile(resultdir, [iv sep freq sep num2str(k) sep 'M']);
     export_fig(figure44, saveformat, pixdim);
+    
+end
+
+if istrue(do_appendix)
+
+% perhaps include here code for generarting other figures if needed
     
 end
 
