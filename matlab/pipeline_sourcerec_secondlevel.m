@@ -1,9 +1,9 @@
 
-ivars  = {'entropy'};
-fois   = {'6'};
+ivars  = {'entropy', 'perplexity'};
+fois   = {'10'};
 
-datadir = '/project/3011044.02/analysis/freqanalysis/source/subject';
-savedir = '/project/3011044.02/analysis/freqanalysis/source/group';
+datadir = '/project/3011044.02/analysis/freqanalysis/source/subject3';
+savedir = '/project/3011044.02/analysis/freqanalysis/source/group4';
 
 for i = 1:numel(ivars)
     
