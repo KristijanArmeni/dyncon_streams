@@ -7,7 +7,7 @@ load(subtlex_table_filename);
 load(subtlex_firstrow_filename);
 
 audiodir = '/project/3011044.02/lab/pilot/stim/audio';
-stories  = {'fn001078', 'fn001155', 'fn001172', 'fn001293', 'fn001294', 'fn001443', 'fn001481', 'fn001498'};
+stories  = streams_util_stories();
 num_stories = numel(stories);
 
 data = cell(1, 7);
