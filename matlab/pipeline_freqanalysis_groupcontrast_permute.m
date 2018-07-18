@@ -1,9 +1,9 @@
 
-ivars  = {'entropy'};
-freqs  = {'4-8'};
+ivars  = {'perplexity'};
+freqs  = {'1_3', '4_8', '8_12', '12_20', '20_30', '30_60', '60_90'};
 
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject1';
-savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group1';
+datadir = '/project/3011044.02/analysis/freqanalysis/subject';
+savedir = '/project/3011044.02/analysis/freqanalysis/group';
 
 % variable and frequency loop  
 for i = 1:numel(ivars)

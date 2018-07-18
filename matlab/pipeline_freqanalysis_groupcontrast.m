@@ -6,8 +6,8 @@ shifts = {'0', '200', '400', '600'};
 %/subject1 --> all words quantified
 %/subject3 --> only content words quantified
 
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject3ctrl';
-savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group3ctrl';
+datadir = '/project/3011044.02/analysis/freqanalysis/contrast/subject1';
+savedir = '/project/3011044.02/analysis/freqanalysis/contrast/group1';
 
 % variable and frequency loop
 for j = 1:numel(shifts)
