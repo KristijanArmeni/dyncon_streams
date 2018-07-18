@@ -15,17 +15,19 @@ if exist('leadfield_parc', 'var')
   clear leadfield_parc
 end
 
+%% Compute spatial filters
+
 cfg              = [];
 cfg.vartrllength = 2;
 cfg.covariance   = 'yes';
 tlck             = ft_timelockanalysis(cfg, data);
 tlck.cov         = real(tlck.cov);
 
-cfg      = [];
-cfg.vol  = headmodel;
-cfg.grid = leadfield;
-cfg.grid.label = tlck.label;
-cfg.method = 'lcmv';
+cfg                 = [];
+cfg.vol             = headmodel;
+cfg.grid            = leadfield;
+cfg.grid.label      = tlck.label;
+cfg.method          = 'lcmv';
 cfg.lcmv.fixedori   = 'yes';%'no';
 cfg.lcmv.keepfilter = 'yes';
 cfg.lcmv.lambda     = '5%';
@@ -38,7 +40,8 @@ data = ft_annotate(cfgt, data);  % add comment and shift .previous
 data.cfg.previous = {data.cfg.previous}; % make it a 1-by-1 cell
 data.cfg.previous(2) = {source.cfg};  % store source.cfg info
 
-% apply spatial filters to the data
+%%  Apply spatial filters to the data
+
 if nargout>1
   data = ft_selectdata(data, 'channel', ft_channelselection('MEG', data.label));
   for k = 1:numel(data.trial)
