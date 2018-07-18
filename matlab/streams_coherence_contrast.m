@@ -97,9 +97,17 @@ cfg        = [];
 cfg.trials = trl_indx_high;
 freq_high  = ft_selectdata(cfg, freq);
 
-clear freq
 
-%% COMPUTE COHERENCE SPECTRA
+
+%% COMPUTE COHERENCE
+cfg            = [];
+cfg.method     = 'coh';
+cfg.channelcmb = {'MEG' 'audio_avg'};
+coh        = ft_connectivityanalysis(cfg, freq_low);
+
+
+
+%% COMPUTE COHERENCE DIFFERENCE
 cfg            = [];
 cfg.method     = 'coh';
 cfg.channelcmb = {'MEG' 'audio_avg'};
