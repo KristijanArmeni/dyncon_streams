@@ -1,15 +1,16 @@
 
-datadir = '/project/3011044.02/analysis/freqanalysis/contrast/group3ctrl'; 
+datadir = '/project/3011044.02/analysis/freqanalysis/group'; 
 
 % for loading stat structures
 prefix = 's02-s28';
 ivar   = 'entropy';
-foi    = {'4-8'};
+foi    = {'1_3', '4_8', '8_12', '12_20', '20_30', '30_60'};
 lags   = {'0', '200', '400', '600'};
 sep    = '_';
 
 plottype = 'subplots';
 save     = 0;
+
 %% Plots
 
 switch plottype
@@ -42,7 +43,7 @@ switch plottype
     
     savedir = '/project/3011044.02/misc/nblpresentation';
    
-    zlim = [-4 4];
+    zlim = [-6 6];
        
     cfg            = [];
     cfg.layout     = 'CTF275_helmet.mat';
@@ -83,7 +84,7 @@ switch plottype
 
    case 'subplots'
    
-   zlim = [-4 4];
+    zlim = [-6 6];
        
     cfg           = [];
     cfg.layout    = 'CTF275_helmet.mat';
@@ -94,27 +95,37 @@ switch plottype
     cfg.zlim      = zlim;
     cfg.marker    = 'off';
     
-    figure('Name', [foi{1} sep ivar sep datadir(end-5:end)]  ,'NumberTitle','off');
-    for i = 1:numel(lags)
-        
-        subplot(2, 2, i)
-        frequency = foi{1};
-        lag       = lags{i};
-        
-        filename  = fullfile(datadir, [prefix sep ivar sep frequency sep lag '_4plot.mat']);
-        fprintf('Loading %s... \n\n', filename)
-        load(filename)
+    for k = 1:numel(foi)
+    
+    frequency = foi{k};
+    filename  = fullfile(datadir, [prefix '_' ivar '_' frequency '_4plot.mat']);
+    fprintf('Loading %s... \n\n', filename)
 
-        cfg.parameter = 'stat';
-        cfg.comment   = 'no';
-        ft_topoplotER(cfg, stat4plot);
-        title([lag ' ms'])
+    load(filename)   
+    stat = stat4plot;
+    clear stat4plot
+    
+    figure('Name', [foi{k} sep ivar]  ,'NumberTitle','off');
+        for i = 1:numel(stat.time)
+
+            subplot(2, 2, i)
+            
+            t = stat.time(i);
+            
+            cfg.xlim      = [t t];
+            cfg.parameter = 'stat';
+            cfg.comment   = 'no';
+            ft_topoplotER(cfg, stat);
+            title([num2str(t) ' ms'])
+
+        end
+
+        c = colorbar;
+        caxis(zlim);
+        set(c,'position',[.90 .80 .02 .15])
+        ylabel(c, 't-value')
         
     end
-       
-    c = colorbar;
-    caxis(zlim);
-    set(c,'position',[.90 .80 .02 .15])
-    ylabel(c, 't-value')
     
 end
+    
