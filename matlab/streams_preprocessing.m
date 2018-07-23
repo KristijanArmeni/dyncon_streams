@@ -1,4 +1,4 @@
-function [data, eeg, audio, featuredata] = streams_preprocessing(subject, varargin)
+function [data, eeg, audio, featuredata] = streams_preprocessing(subject, inpcfg)
 
 % streams_preprocessing() 
 
@@ -14,19 +14,20 @@ if ischar(subject)
 end
 
 % make a local version of the variable input arguments
-bpfreq            = ft_getopt(varargin, 'bpfreq');
-hpfreq            = ft_getopt(varargin, 'hpfreq');
-lpfreq            = ft_getopt(varargin, 'lpfreq'); % before the post-envelope computation downsampling
-dftfreq           = ft_getopt(varargin, 'dftfreq', [49 51; 99 101; 149 151]);
-audiofile         = ft_getopt(varargin, 'audiofile', 'all');
-fsample           = ft_getopt(varargin, 'fsample', 30);
-dosns             = ft_getopt(varargin, 'dosns', 0);
-dospeechenvelope  = ft_getopt(varargin, 'dospeechenvelope', 0);
-bp_speechenvelope = ft_getopt(varargin, 'bp_speechenvelope', 0);
-filter_audio      = ft_getopt(varargin, 'filter_audio', 'no');
-feature           = ft_getopt(varargin, 'feature');
-dofeature         = ft_getopt(varargin, 'dofeature', 0);
-addnoise          = ft_getopt(varargin, 'addnoise', 0);
+bpfreq            = ft_getopt(inpcfg, 'bpfreq');
+hpfreq            = ft_getopt(inpcfg, 'hpfreq');
+lpfreq            = ft_getopt(inpcfg, 'lpfreq'); % before the post-envelope computation downsampling
+dftfreq           = ft_getopt(inpcfg, 'dftfreq', [49 51; 99 101; 149 151]);
+audiofile         = ft_getopt(inpcfg, 'audiofile', 'all');
+fsample           = ft_getopt(inpcfg, 'fsample', 30);
+dosns             = ft_getopt(inpcfg, 'dosns', 0);
+dospeechenvelope  = ft_getopt(inpcfg, 'dospeechenvelope', 0);
+bp_speechenvelope = ft_getopt(inpcfg, 'bp_speechenvelope', 0);
+filter_audio      = ft_getopt(inpcfg, 'filter_audio', 'no');
+feature           = ft_getopt(inpcfg, 'feature');
+dofeature         = ft_getopt(inpcfg, 'dofeature', 0);
+addnoise          = ft_getopt(inpcfg, 'addnoise', 0);
+word_quantify     = ft_getopt(inpcfg, 'word_quantify', 'content_noonset');
 
 %% check whether all required user specified input is there
 
@@ -278,7 +279,7 @@ for k = 1:numel(seltrl)
   % LANGUAGE PREPROCESSING %
   %%%%%%%%%%%%%%%%%%%%%%%%%%
   if dofeature
-      
+  
       % create combineddata data structure
       dondersfile  = fullfile(audiodir, f, [f,'.donders']);
       textgridfile = fullfile(audiodir, f, [f,'.TextGrid']);
@@ -293,8 +294,11 @@ for k = 1:numel(seltrl)
             combineddata(i).duration = nan;
         end
       end
-
-      % add frequency info and word length
+      
+      % add .iscontent field to combineddata structure
+      combineddata = streams_combinedata_iscontent(combineddata);
+      
+      % add subtlex frequency info and word length
       combineddata = add_subtlex(combineddata, subtlex_data,  subtlex_firstrow);
 
       % create language predictor based on language model output
@@ -302,7 +306,7 @@ for k = 1:numel(seltrl)
         
         featuredata = cell(1, numel(feature));
         for m = 1:numel(feature)
-          featuredata{m} = create_featuredata(combineddata, feature{m}, data, addnoise);
+          featuredata{m} = create_featuredata(combineddata, feature{m}, data, addnoise, word_quantify);
         end
 
         featuredata = ft_appenddata([], featuredata{:});
@@ -310,7 +314,7 @@ for k = 1:numel(seltrl)
       else
 
         % single feature
-        featuredata = create_featuredata(combineddata, feature, data, addnoise);
+        featuredata = create_featuredata(combineddata, feature, data, addnoise, word_quantify);
 
       end
       
@@ -421,10 +425,10 @@ subtlex_words = subtlex_data(:, word_column);
 end
 
 % Create box-shape predictors 
-function [featuredata] = create_featuredata(combineddata, feature, data, addnoise)
+function [featuredata] = create_featuredata(combineddata, feature, data, addnoise, select)
 
 % create FT-datastructure with the feature as a channel
-[time, featurevector] = get_time_series(combineddata, feature, data.fsample);
+[time, featurevector] = get_time_series(combineddata, feature, data.fsample, select);
 
 if addnoise
   

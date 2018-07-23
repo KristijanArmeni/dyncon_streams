@@ -1,4 +1,4 @@
-function streams_freqanalysis_groupcontrast(ivar, foi, datadir, savedir)
+function streams_freqanalysis_groupcontrast_permute(ivar, foi, datadir, savedir)
 
 %% Initialize
 
@@ -6,44 +6,40 @@ function streams_freqanalysis_groupcontrast(ivar, foi, datadir, savedir)
 [subjects, num_sub] = streams_util_subjectstring(2:28, {'s06', 's09'});
 
 % for loading freq structures
-prefix = [subjects{1} '-' subjects{end}];
-
-filename_stat = [ivar '_' foi '.mat'];
+prefix        = [subjects{1} '-' subjects{end}];
+sep           = '_';
+fname_stat    = [ivar sep foi];
 
 % create strings for saving
-savename_stat_all   = fullfile(datadir, [prefix '_' filename_stat]);
-savename_stat_group = fullfile(savedir, [prefix '_' ivar '_' foi '.mat']);
-savename_stat4plot   = fullfile(savedir, [prefix '_' ivar '_' foi '_4plot.mat']);
+savename_stat_all   = fullfile(datadir, [prefix sep fname_stat]);
+savename_stat_group = fullfile(savedir, [prefix sep fname_stat '.mat']);
+savename_stat4plot  = fullfile(savedir, [prefix sep fname_stat '_4plot.mat']);
 
 stat_all = cell(num_sub, 1);
 
 %% Combine subject-specific structures
 
 % create structure from scratch
-
-fprintf('Loading the following datafiles: %s over %d subjects \n\n', filename_stat, num_sub)
+fprintf('Loading the following datafiles: %s over %d subjects \n\n', fname_stat, num_sub)
 
 % subject loop
 for k = 1:num_sub
 
     subject = subjects{k};
-
-    file_T  = fullfile(datadir, [subject '_' filename_stat]);
-    load(file_T)
-
+    
+    % create filenames for different time shifts
+    fstat = fullfile(datadir, [subject sep fname_stat]);
+    load(fstat)
+    
     stat_all{k} = stat;
-
+    clear stat
 end
-
-fprintf('Have this now: \n');
-display(stat_all);
-display(stat_all{1});
 
 save(savename_stat_all, 'stat_all');
 fprintf('Saving %s... \n', savename_stat_all)
 
 
-%% Freq statistics
+%% GROUP TEST: DEPENDENT SAMPLES T-TEST
 fprintf('Doing second level stats on: \n\n')
 
 % import preproc data for grad information in neighbourhoud chan definition
@@ -53,11 +49,13 @@ neighdata.grad = data.grad;
 
 % Create the null structure
 data_N = stat_all;
-for k = 1:numel(data_N)
-    data_N{k}.stat(:,:) = 0;
+for kk = 1:numel(data_N)
+    
+    data_N{kk}.stat(:,:,:) = 0;
+    
 end
 
-% specify design matrix
+% specify the design matrix
 design                           = zeros(2, 2*num_sub);
 design(1, 1:num_sub)             = 1:num_sub;
 design(1, num_sub + 1:num_sub*2) = 1:num_sub;
@@ -76,16 +74,16 @@ cfg.neighbours       = ft_prepare_neighbours(cfg_neighb, neighdata);
 cfg.method           = 'montecarlo';
 cfg.parameter        = 'stat';
 cfg.statistic        = 'depsamplesT';
-% cfg.correctm         = 'cluster';
-% cfg.alpha            = 0.025; % adjust alpha-level for two-sided test
-% cfg.correcttail      = 'prob';  
-cfg.numrandomization = 0;
+cfg.correctm         = 'cluster';
+cfg.alpha            = 0.025; % to control for 0.05 error rate on a two-sided test
+cfg.correcttail      = 'prob';  
+cfg.numrandomization = 1000;
 cfg.design           = design;
 cfg.uvar             = 1;
 cfg.ivar             = 2;
 
 % optional:
-%cfg.avgoverfreq      = 'yes';
+cfg.avgoverfreq      = 'yes';
 
 stat_group           = ft_freqstatistics(cfg, stat_all{:}, data_N{:});
 stat4plot            = rmfield(stat_group, 'cfg');

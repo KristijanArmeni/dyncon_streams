@@ -67,6 +67,10 @@ for k = 1:num_sub
     colsel2     = ismember(depdata.trialinfolabel, 'audio_avg');
     dat(k, col) = corr(depdata.trialinfo(:, colsel1), depdata.trialinfo(:, colsel2));
     
+    if str2double(subject(2:end)) > 10
+        depdata.trialinfo(:, 1) = depdata.trialinfo(:,1)./10; % change labels 10, 20 to 1, 2 etc.
+    end
+    
     trialinfo = depdata.trialinfo;
     
     % add perplexity contrast info

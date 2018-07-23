@@ -1,4 +1,4 @@
-function [ time , feature_value_vector, trl] = get_time_series( combined_data, feature, sampling_rate )
+function [ time , feature_value_vector, trl] = get_time_series( combined_data, feature, sampling_rate, select )
 
 % GET_STREAMS_TIME_SERIES creates a vector and time axis of a specified
 % feature from the computational model output, at a specified sampling
@@ -11,6 +11,8 @@ function [ time , feature_value_vector, trl] = get_time_series( combined_data, f
 %   combined_data = struct_array, the output of COMBINE_DONDERS_TEXTGRID
 %   feature       = string, specifying which feature to use
 %   sampling_rate = integer scalar, specifying the sampling rate
+%   select        = string, 'all', 'content', 'noonset' or 'content_noonset', 
+%                   whether or not to include content and/or onset words in creating the vector
 %
 % Output arguments:
 %   time = vector, specifying the time axis
@@ -30,17 +32,60 @@ feature_value_vector = zeros(1, numel(time))+nan; % initialize as NaN so that mi
 
 begtim = [combined_data.start_time]';
 endtim = [combined_data.end_time]';
-sel    = find(begtim~=endtim); % the '.' seem to have the same begtim as endtim
+
+% the '.' seem to have the same begtim as endtim
+sel    = find(begtim~=endtim); 
 begtim = begtim(sel);
 endtim = endtim(sel);
 
+% make sure combineddata has same elements as begtim/endtim vectors
+combined_data = combined_data(sel);
+
+%% loop over and create feture vector at MEG sampling rate based on model data
 for k = 1:numel(begtim)
+    
   begsmp = nearest(time, begtim(k));
   endsmp = nearest(time, endtim(k));
-  feature_value_vector(begsmp:endsmp) = combined_data(sel(k)).(feature);
   
+  iscontent         = combined_data(k).iscontent; % logical, check .iscontent field
+  isonset           = ismember(combined_data(k).word_, [0, 1]); % logical, check if word index is 0 or 1 (indicating onset position)
+  feature_value     = combined_data(k).(feature); % curent feature value to be assigned
+  
+  % make sure word selection only operates on model metrics
+  if ismember(feature, {'entropy', 'perplexity', 'log10wf'})
+      switch select
+
+          case 'all' % assign value to all parsed words
+
+          feature_value_vector(begsmp:endsmp) = feature_value;
+
+          case 'content' % assign value to the vector only if it is content word
+
+          if iscontent
+            feature_value_vector(begsmp:endsmp) = feature_value;
+          end
+
+          case 'noonset' % select only words not indexed as 0 or 1
+
+          if ~isonset
+            feature_value_vector(begsmp:endsmp) = feature_value;
+          end
+
+          case 'content_noonset' % select content only, sentence-non initial words
+
+          if iscontent && ~isonset
+            feature_value_vector(begsmp:endsmp) = feature_value;
+          end    
+      end
+  % if it is not complexity score or lex.freq quantify all words
+  else     
+      
+      feature_value_vector(begsmp:endsmp) = feature_value;
+  
+  end    
 end
 
+%% 
 % create a trl-like matrix for the feature with samples expressed in the
 % requested sampling_frequency
 for i=1:numel(combined_data)

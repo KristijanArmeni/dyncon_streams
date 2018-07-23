@@ -6,23 +6,25 @@ savedir = '/project/3011044.02/preproc/meg';
 
 % preprocessing options
 fsample = ft_getopt(optarg, 'fsample');
-feature = {'nchar' 'duration' 'log10wf'  'perplexity' 'entropy'};
+feature = {'sent_' 'word_' 'nchar' 'duration' 'log10wf'  'perplexity' 'entropy'};
 
 %% Preprocessing, band-pass filtering, and downsampling
-                        
-[~, ~, ~, featuredata] = streams_preprocessing(subject, ...
-                                'audiofile', audiofile, ...
-                                'feature', feature, ...
-                                'lpfreq', [], ...
-                                'hpfreq', [], ...
-                                'dftfreq', [49 51; 99 101; 149 151], ...
-                                'dospeechenvelope', 1, ...
-                                'fsample', fsample);
+
+inpcfg = {'audiofile', audiofile, ...
+          'feature', feature, ...
+          'lpfreq', [], ...
+          'hpfreq', [], ...
+          'dftfreq', [49 51; 99 101; 149 151], ...
+          'dospeechenvelope', 1, ...
+          'word_quantify', 'noonset', ...)
+          'fsample', fsample};
+
+[~, ~, audio, ~] = streams_preprocessing(subject, inpcfg);
    
 %% Saving
 
-%savenamemeg = [subject.name '_meg'];
-%savenamemeg = fullfile(savedir, savenamemeg);
+% savenamemeg = [subject.name '_meg'];
+% savenamemeg = fullfile(savedir, savenamemeg);
 
 % savenameeeg = [subject.name '_eeg'];
 % savenameeeg = fullfile(savedir, savenameeeg);
@@ -30,7 +32,7 @@ feature = {'nchar' 'duration' 'log10wf'  'perplexity' 'entropy'};
 % savenameaudio = [subject.name '_aud'];
 % savenameaudio = fullfile(savedir, savenameaudio);
 
-savenamefeaturedata = [subject.name '_featuredata'];
+savenamefeaturedata = [subject.name '_featuredata4'];
 savenamefeaturedata = fullfile(savedir, savenamefeaturedata);
 
 datecreated = char(datetime('today', 'Format', 'dd-MM-yy'));
@@ -47,7 +49,7 @@ end
 % save(savenamemeg, 'data');
 % save(savenameeeg, 'eeg');
 % save(savenameaudio, 'audio');
-save(savenamefeaturedata, 'featuredata');
+save(savenamefeaturedata, 'featuredata', 'inpcfg');
 
 
 end
