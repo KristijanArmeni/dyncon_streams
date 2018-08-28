@@ -124,12 +124,12 @@ load(d.atlas{3});
 m.pos = ctx.pos;
 m.tri = ctx.tri;
 
-ft_plot_mesh(m)
+ft_plot_mesh(m, 'facecolor', 'none', 'edgecolor', 'black');
 set(gcf,'color','w');
 view([80 10])
 l = camlight; material dull;
 %saveas(gcf, fullfile(savedir, 'mesh'), 'epsc');
-export_fig(fullfile(savedir, 'mesh'), '-png', '-m8');
+export_fig(fullfile(savedir, 'mesh-bw'), '-png', '-m8');
 
 
 % Plot entropy distribution distribution histogram; Figure 1, Panel C
