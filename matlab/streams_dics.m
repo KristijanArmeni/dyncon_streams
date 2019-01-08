@@ -28,6 +28,7 @@ shift           = ft_getopt(inpcfg, 'shift'); % value for which to shif
 savewhat        = ft_getopt(inpcfg, 'savewhat', 'stat');
 freqband        = ft_getopt(inpcfg, 'freqband');
 word_selection  = ft_getopt(inpcfg, 'word_selection', 'all');
+epochlength     = ft_getopt(inpcfg, 'epochlength');
 
 % ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
 % determine which featuredata.mat to load in
@@ -93,7 +94,7 @@ for kk = 1:numel(shift)
            'contrastvars',      {indepvar}, ...
            'removeonset',       removeonset, ...
            'shift',             shift(kk), ...
-           'epochlength',       0.5, ...
+           'epochlength',       epochlength, ...
            'overlap',           0};
 
     [avgfeature, data_epoched, ~, ~, contrast] = streams_epochdefinecontrast(data, featuredata, audio, opt);
@@ -151,7 +152,7 @@ for kk = 1:numel(shift)
     clear source_both;
 
     tmppow = abs(F*transpose(freq.fourierspctrm)).^2;
-    clear freq
+    %clear freq
 
     for k = 1:nrpt
         source.trial(k,1).pow                = zeros(npos, 1);
