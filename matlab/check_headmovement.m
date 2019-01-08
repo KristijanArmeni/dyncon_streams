@@ -1,25 +1,31 @@
-function check_headmovement(subject)
+function [cc, cc_demean, cc_rel] = check_headmovement(subject, sel)
 
-subject = streams_subjinfo(subject);
-savedir = '/project/3011044.02/preproc/meg/headmov';
+cfg          = [];
+if numel(subject) > 1
+    if isempty(sel)
+        error('There are multiple datasets, provide index.');
+    end
+    cfg.dataset = subject(sel).dataset;
+    cfg.trl     = subject(sel).trl;
+else
+    cfg.dataset  = subject.dataset;
+    cfg.trl      = subject.trl;
+end    
 
-cfg         = [];
-cfg.dataset = subject.dataset;
-cfg.trl     = subject.trl;
-cfg.trl(1,1) = cfg.trl(1,1) - 1200; % read in an extra second of data at the beginning
-cfg.trl(1,2) = cfg.trl(1,2) + 1200; % read in an extra second of data at the end
-cfg.trl(1,3) = -1200; % update the offset, to account for the padding
-cfg.channel = {'HLC0011','HLC0012','HLC0013', ...
-             'HLC0021','HLC0022','HLC0023', ...
-             'HLC0031','HLC0032','HLC0033'};
+cfg.trl(:,1) = cfg.trl(:,1) - 1200; % read in an extra second of data at the beginning
+cfg.trl(:,2) = cfg.trl(:,2) + 1200; % read in an extra second of data at the end
+cfg.trl(:,3) = -1200;               % update the offset, to account for the padding
+cfg.channel  = {'HLC0011','HLC0012','HLC0013', ...
+                'HLC0021','HLC0022','HLC0023', ...
+                'HLC0031','HLC0032','HLC0033'};
 cfg.continuous = 'yes';
 
 % meg
 headpos           = ft_preprocessing(cfg); % read in the MEG data
 
-cfg =[];
+cfg        = [];
 cfg.length = 60;
-headpos = ft_redefinetrial(cfg, headpos);
+headpos    = ft_redefinetrial(cfg, headpos);
 
 % calculate the mean coil position per trial
 ntrials = length(headpos.sampleinfo);
@@ -33,35 +39,37 @@ end
 cc = circumcenter(coil1, coil2, coil3);
 
 % Now you can plot the head position relative to the first value, and compute the maximal position change.
-cc_rel = [cc - repmat(cc(:,1),1,size(cc,2))]';
+cc_rel    = cc - [repmat(cc(:,1),1,size(cc,2))];
+cc_demean = cc - mean(cc, 2);
+
 [maxposchange, indx] = max(abs(cc_rel(:,1:3)*1000)); % in mm
 display(maxposchange)
-save(fullfile(savedir, sprintf('%s', subject.name)), 'headpos', 'cc', 'maxposchange');
+%save(fullfile(savedir, sprintf('%s', subject.name)), 'headpos', 'cc', 'maxposchange');
 
 % plot translations
-figure(); 
-plot(cc_rel(:,1:3)*1000) % in mm
-title(sprintf('Translations (%s)', subject.name));
-text(indx(:), maxposchange(:), num2str(maxposchange(:)));
-xlabel('time (min)')
-ylabel('mm')
-legend('x', 'y', 'z');
-set(gcf, 'Name', sprintf('%s head movement', subject.name), 'NumberTitle', 'off')
-saveas(gcf, fullfile(savedir, sprintf('%s_trans', subject.name)), 'jpg');
-saveas(gcf, fullfile(savedir, sprintf('%s_trans', subject.name)), 'fig');
+% figure(); 
+% plot(cc_rel(:,1:3)*1000, '--o') % in mm
+% title(sprintf('Translations (%s)', subject.name));
+% %text(indx(:), maxposchange(:), num2str(maxposchange(:)));
+% xlabel('time (min)')
+% ylabel('distance (mm)')
+% legend('x', 'y', 'z');
+% set(gcf, 'Name', sprintf('Translations %s', subject.name), 'NumberTitle', 'off')
+%saveas(gcf, fullfile(savedir, sprintf('%s_trans', subject.name)), 'jpg');
+%saveas(gcf, fullfile(savedir, sprintf('%s_trans', subject.name)), 'fig');
 % plot rotations
-figure(); 
-plot(cc_rel(:,4:6))
-title(sprintf('Rotations (%s)', subject.name))
-xlabel('time (min)')
-ylabel('deg')
-legend('x', 'y', 'z');
-set(gcf, 'Name', sprintf('%s head movement', subject.name), 'NumberTitle', 'off')
-saveas(gcf, fullfile(savedir, sprintf('%s_rot', subject.name)), 'jpg');
-saveas(gcf, fullfile(savedir, sprintf('%s_rot', subject.name)), 'fig');
+% figure(); 
+% plot(cc_rel(:,4:6), '--o');
+% title(sprintf('Rotations (%s)', subject.name))
+% xlabel('time (min)')
+% ylabel('angle (deg)')
+% legend('x', 'y', 'z');
+% set(gcf, 'Name', sprintf('Rotations %s', subject.name), 'NumberTitle', 'off')
+%saveas(gcf, fullfile(savedir, sprintf('%s_rot', subject.name)), 'jpg');
+%saveas(gcf, fullfile(savedir, sprintf('%s_rot', subject.name)), 'fig');
 
 
-function [cc] = circumcenter(coil1,coil2,coil3)
+function [cc] = circumcenter(coil1, coil2, coil3)
  
 % CIRCUMCENTER determines the position and orientation of the circumcenter
 % of the three fiducial markers (MEG headposition coils). 
