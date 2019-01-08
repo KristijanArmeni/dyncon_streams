@@ -31,25 +31,21 @@ for i = 1:num_stories
     textgridfile = fullfile(audiodir, story, [story, '.TextGrid']);
     
     % read in the model output
-    datatmp = combine_donders_textgrid(dondersfile, textgridfile);
+    datatmp   = combine_donders_textgrid(dondersfile, textgridfile);
     num_words = numel(datatmp);
     
-    storymat = cell(num_words, 7);
+    storytable = cell(num_words, 7);
     
-    % word loop
-    for k = 1:num_words
-        
-       storymat{k,1} = story;
-       storymat{k,2} = datatmp(k).word{1}; % word string
-       storymat{k,3} = i; % story index
-       storymat{k,4} = datatmp(k).sent_;
-       storymat{k,5} = datatmp(k).word_;
-       storymat{k,6} = datatmp(k).entropy;
-       storymat{k,7} = datatmp(k).perplexity;
-       
-    end
+    storytable(:, 1) = {story};           % story label string
+    storytable(:, 2) = [datatmp(:).word]; % word string
+    storytable(:, 3) = {i};               % story index
+    storytable(:, 4) = {datatmp(:).sent_};               % sentence index
+    storytable(:, 5) = {datatmp(:).word_};
+    storytable(:, 6) = {datatmp(:).entropy};
+    storytable(:, 7) = {datatmp(:).perplexity};
     
-    data = vertcat(data, storymat);
+    % Append current story table rows to data table
+    data = vertcat(data, storytable);
     
 end
 
