@@ -5,7 +5,7 @@ datadir            = '/project/3011044.02/analysis/coherence/source/subject';
 savedir            = '/project/3011044.02/results/figures/coherence';
 [subjects, numsub] = streams_util_subjectstring(2:28, {'s06', 's09'});
 
-suffix = 'cohspectrum42';
+suffix = 'cohspectrum42-43';
 
 %% FIGURE 1, Panel B
 
@@ -20,12 +20,12 @@ for k = 1:numsub
     load(cohdics);
 
     % take median over a subselection of locations
-    r        = contains(cohlcmv.label, 'R_42'); % vertices in the right hemisphere
+    r        = contains(cohlcmv.label, {'R_42', 'R_43'}); % vertices in the right hemisphere
     cohlcmvR = squeeze(cohlcmv.cohspctrm(r, end, :));
     cohlcmvR = median(cohlcmvR, 1);        % median across vertex locations
 
     % left hemisphere
-    l        = contains(cohlcmv.label, 'L_42');
+    l        = contains(cohlcmv.label, {'L_42', 'L_43'});
     cohlcmvL = squeeze(cohlcmv.cohspctrm(l, end, :));
     cohlcmvL = median(cohlcmvL, 1);
 
@@ -145,7 +145,7 @@ ba42 = ismember(atlas.parcellation, idx);
 figure;
 set(gcf,'color','w');
 ft_plot_mesh(m, 'vertexcolor', double(ba42)); colormap parula
-view([110 10]);
+view([110 10]);o
 l = camlight;
 material dull;
 
