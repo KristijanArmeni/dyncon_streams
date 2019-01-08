@@ -11,6 +11,7 @@ indepvar        = ft_getopt(inputargs, 'indepvar');
 removeonset     = ft_getopt(inputargs, 'removeonset', 0);
 shift           = ft_getopt(inputargs, 'shift', 0); 
 word_selection  = ft_getopt(inputargs, 'word_selection', 'all');
+roi             = ft_getopt(inputargs, 'roi');
 
 % determine what predictor to load
 switch word_selection
@@ -82,7 +83,37 @@ source                  = ft_sourceanalysis(cfg, data_timelock);
 
 load /project/3011044.02/preproc/atlas/374/atlas_subparc374_8k.mat
 
-parc_pos  = contains(atlas.parcellationlabel, '_42'); % choose primary auditory cortex (ba 42)
+% choose labels based on max coherence as shown by dics source localization
+if strcmp(roi, 'dicsmax')
+    dicsfile = fullfile('/project/3011044.02/analysis/coherence/source/subject', [subject '_6.mat']); 
+    load(dicsfile); 
+    
+    llable = atlas.parcellationlabel(contains(atlas.parcellationlabel, 'L_'));
+    llable = llable(~ismember(llable, {'R_MEDIAL.WALL_01'}));
+    lind = contains(atlas.parcellationlabel, llable);
+    lparcind = ismember(atlas.parcellation, find(lind));
+    
+    rlable = atlas.parcellationlabel(contains(atlas.parcellationlabel, 'R_'));
+    rlable = rlable(~ismember(rlable, {'L_MEDIAL.WALL_01'}));
+    rind   = contains(atlas.parcellationlabel, rlable);
+    rparcind = ismember(atlas.parcellation, find(rind));
+    
+    [~, limax] = max(coh(lparcind));
+    [~, rimax] = max(coh(rparcind));
+    roiL = {atlas.parcellationlabel{atlas.parcellation(lparcind)}};
+    roiR = {atlas.parcellationlabel{atlas.parcellation(rparcind)}};
+    roiL = roiL(limax);
+    roiR = roiR(rimax);
+    
+    roi  = [roiL, roiR];
+    
+    suffix = 'maxLR';
+    clear coh
+    
+end
+
+% choose labels defined in <roi> cell array ('_42' etc.)
+parc_pos  = contains(atlas.parcellationlabel, roi); 
 parc      = atlas.parcellationlabel(parc_pos);
 parc_idx  = find(parc_pos);
 vchan_pos = ismember(atlas.parcellation, parc_idx);
@@ -134,7 +165,7 @@ coh            = ft_connectivityanalysis(cfg, freq);
 
 %% SAVING 
 
-savename = fullfile(savedir, [subject '_cohspectrum42']);
+savename = fullfile(savedir, [subject '_cohspectrum' '-' suffix]);
 save(savename, 'coh', 'inputargs');
 
 % pipelinesavename  = fullfile(savedir, ['pipeline' '_cohspectrum']);
