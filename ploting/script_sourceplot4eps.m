@@ -4,8 +4,8 @@ function script_sourceplot4eps()
 
 addpath /home/language/kriarm/matlab/BrewerMap
 
-resultdir = '/project/3011044.02/results/figures/';
-datadir   = '/project/3011044.02/analysis/freqanalysis/source/group3';
+resultdir = '/project/3011085.04/streams/results/figures/revision';
+datadir   = '/project/3011085.04/streams/analysis/freqanalysis/source/group4-combinedfreq/onset_lock_minoverlap';
 prefix    = 's02-s28';
 sep       = '_';
 saveformat = '-png';
@@ -50,16 +50,16 @@ sp.time   = 0;
 sp.pos    = ctx.pos;
 sp.tri    = ctx.tri;
 
-% ft_sourceplot(cfg, sp);
+%ft_sourceplot(cfg, sp);
 
 % Medial view
-% view([-90 0]); camlight; material dull;
-% figure11 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'M']);
+%view([-90 0]); camlight; material dull;
+%figure11 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'M']);
 %export_fig(figure11, saveformat, pixdim)
 
 % Lateral view
-% view([90 0]); camlight; material dull;
-% figure12 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'L']);
+%view([90 0]); camlight; material dull;
+%figure12 = fullfile(resultdir, [iv sep freq sep 'avg' sep 'L']);
 %export_fig(figure12, saveformat, pixdim)
 
 % Time slices
@@ -69,7 +69,8 @@ cfg.funcolorlim = [-maxabs maxabs];
 
 for k = 1:numel(times)   
     
-    sp.stat   = s.stat(:, 1, k).*double(s.posclusterslabelmat(:, 1, k)==1);
+    sp.stat   = s.stat(:, 1, k).*double(s.posclusterslabelmat(:, 1, k)==2);
+    %sp.stat   = s.stat(:, 1, k);
     sp.dimord = 'pos_time';
     sp.time   = times(k);
     sp.pos    = ctx.pos;
@@ -81,7 +82,7 @@ for k = 1:numel(times)
     
     t = [iv '-' freq '-' num2str(k)];
     view([90 0]); camlight; material dull; title(t);
-    figure13 = fullfile(resultdir, [iv sep freq sep num2str(k) sep 'L']);
+    figure13 = fullfile(resultdir, [iv sep freq sep num2str(k) sep 'L2']);
     export_fig(figure13, saveformat, pixdim)
     
     % medial side
@@ -89,7 +90,7 @@ for k = 1:numel(times)
     ft_sourceplot(cfg, sp);
     
     view([-90 0]); camlight; material dull; title(t)
-    figure14 = fullfile(resultdir, [iv sep freq sep num2str(k) sep 'M']);
+    figure14 = fullfile(resultdir, [iv sep freq sep num2str(k) sep 'M2']);
     export_fig(figure14, saveformat, pixdim)
     
 end
@@ -115,7 +116,7 @@ sp.time   = 0;
 sp.pos    = ctx.pos;
 sp.tri    = ctx.tri;
 
-% ft_sourceplot(cfg, sp);
+%ft_sourceplot(cfg, sp);
 
 % Medial
 % view([-90 0]); camlight; material dull;
@@ -137,6 +138,7 @@ for k = 1:numel(times)
     t = [iv '-' freq '-' num2str(k)];
     
     sp.stat   = s.stat(:, 1, k).*double(s.negclusterslabelmat(:, 1, k) == 1);
+    %sp.stat   = s.stat(:, 1, k);
     sp.dimord = 'pos_time';
     sp.time   = times(k);
     sp.pos    = ctx.pos;
@@ -180,7 +182,7 @@ sp.time   = 0;
 sp.pos    = ctx.pos;
 sp.tri    = ctx.tri;
 
-% ft_sourceplot(cfg, sp);
+%ft_sourceplot(cfg, sp);
 
 % Medial view
 % view([-90 0]); camlight; material dull;
@@ -243,7 +245,7 @@ sp.time   = 0;
 sp.pos    = ctx.pos;
 sp.tri    = ctx.tri;
 
-ft_sourceplot(cfg, sp);
+%ft_sourceplot(cfg, sp);
 
 % Medial view
 % view([-90 0]); camlight; material dull;
@@ -287,8 +289,9 @@ end
 
 if istrue(do_appendix)
 
-% perhaps include here code for generarting other figures if needed
+% include here code for generarting other figures if needed
     
 end
+
 
 end
