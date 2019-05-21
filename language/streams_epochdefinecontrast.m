@@ -14,8 +14,9 @@ audio_features    = ft_getopt(opt, 'audio_features');
 contrastvars      = ft_getopt(opt, 'contrastvars');
 removeonset       = ft_getopt(opt, 'removeonset', 0);
 shift             = ft_getopt(opt, 'shift', 0);          % in miliseconds
+epochtype         = ft_getopt(opt, 'epochtype'); 
 epochlength       = ft_getopt(opt, 'epochlength', 1);    % integer, seconds, the amount of semgent length
-overlap           = ft_getopt(opt, 'overlap', 0);        % 
+overlap           = ft_getopt(opt, 'overlap', 0);
 
 % some data structures do not have .fsample field, I reconstruct it for now from
 if ~isfield(data, 'fsample')    
@@ -91,9 +92,137 @@ end
 
 %% EPOCH FEATURE and MEG DATA
 
-cfg         = [];
-cfg.length  = epochlength;
-cfg.overlap = overlap;
+% Configure cfg based on type of desired epoching
+switch epochtype
+    
+    case 'onset-ignore'
+      % old behaviour: just torpedoeing the exhaust fumes of cortical
+      % computation
+      
+      cfg         = [];
+      cfg.length  = epochlength;
+      cfg.overlap = overlap;
+      
+    case 'onset-lock'
+      % identify the word onsets, and define the epochs to start at the word
+      % onset (resulting in overlapping data, but that's how it is)
+
+      for ii = 1:numel(featuredata.trial)
+        sel = match_str(featuredata.label, 'word_');  % take word index
+        tmp = featuredata.trial{ii}(sel,:);
+        tmp(~isfinite(tmp)) = 0;
+        dtmp = [0 diff(tmp)>0];                       % use non-negative diffs
+        delta{ii,1} = find(dtmp);
+      end
+
+      data = ft_checkdata(data, 'hassampleinfo', 'yes');
+      newtrl = zeros(0,3);
+      
+      for ii = 1:numel(data.trial)
+          
+        tmpdelta    = delta{ii}(:);
+        tmpdelta(tmpdelta+round(data.fsample.*epochlength)>size(data.trial{ii},2)) = [];
+        tmptrl(:,1) = tmpdelta+data.sampleinfo(ii,1)-1;
+        tmptrl(:,2) = tmptrl(:,1)+round(data.fsample.*epochlength)-1;
+        tmptrl(:,3) = 0;
+
+        newtrl = cat(1,newtrl,tmptrl);
+        clear tmptrl;
+      
+      end
+
+      cfg = [];
+      cfg.trl = newtrl;
+
+    case 'onset-lock-nooverlap'
+      % identify the word onsets, and define the epochs to start at the word
+      % onset (resulting in overlapping data, but that's how it is)
+
+      for ii = 1:numel(featuredata.trial)
+        sel = match_str(featuredata.label, 'word_');  % take word index
+        tmp = featuredata.trial{ii}(sel,:);
+        tmp(~isfinite(tmp)) = 0;
+        dtmp = [0 diff(tmp)>0];                       % use non-negative diffs
+        delta{ii,1} = find(dtmp);
+      end
+
+      data = ft_checkdata(data, 'hassampleinfo', 'yes');
+      newtrl = zeros(0,3);
+      
+      for ii = 1:numel(data.trial)
+          
+        tmpdelta    = delta{ii}(:);
+        keep = tmpdelta+round(data.fsample.*epochlength) < size(data.trial{ii},2);
+        if all(~keep)
+            continue
+        elseif any(keep)
+            
+            tmpdelta(~keep) = [];
+        
+            newtmpdelta = tmpdelta(1);
+            for iii = 2:numel(tmpdelta)
+              if tmpdelta(iii)>newtmpdelta(end)+round(epochlength.*data.fsample)
+                  newtmpdelta(end+1,1) = tmpdelta(iii);
+              end
+            end
+        
+            tmptrl(:,1) = newtmpdelta+data.sampleinfo(ii,1)-1;
+            tmptrl(:,2) = tmptrl(:,1)+round(data.fsample.*epochlength)-1;
+            tmptrl(:,3) = 0;
+
+            newtrl = cat(1,newtrl,tmptrl);
+            clear tmptrl;
+        end
+      end
+      
+      cfg = [];
+      cfg.trl = newtrl;
+      
+    case 'onset-lock-minoverlap'
+      % identify the word onsets, and define the epochs to start at the word
+      % onset and allow for 20 % overlap
+
+      for ii = 1:numel(featuredata.trial)
+        sel = match_str(featuredata.label, 'word_');  % take word index
+        tmp = featuredata.trial{ii}(sel,:);
+        tmp(~isfinite(tmp)) = 0;
+        dtmp = [0 diff(tmp)>0];                       % use non-negative diffs
+        delta{ii,1} = find(dtmp);
+      end
+
+      data = ft_checkdata(data, 'hassampleinfo', 'yes');
+      newtrl = zeros(0,3);
+      
+      for ii = 1:numel(data.trial)
+          
+        tmpdelta    = delta{ii}(:);
+        keep = tmpdelta+round(data.fsample.*epochlength) < size(data.trial{ii},2);
+        if all(~keep)
+            continue
+        elseif any(keep)
+            
+            tmpdelta(~keep) = [];
+        
+            newtmpdelta = tmpdelta(1);
+            for iii = 2:numel(tmpdelta)
+              if tmpdelta(iii)>newtmpdelta(end)+round(epochlength.*data.fsample)*0.8
+                  newtmpdelta(end+1,1) = tmpdelta(iii);
+              end
+            end
+        
+            tmptrl(:,1) = newtmpdelta+data.sampleinfo(ii,1)-1;
+            tmptrl(:,2) = tmptrl(:,1)+round(data.fsample.*epochlength)-1;
+            tmptrl(:,3) = 0;
+
+            newtrl = cat(1,newtrl,tmptrl);
+            clear tmptrl;
+        end
+      end
+      
+      cfg = [];
+      cfg.trl = newtrl;
+      
+end
 
 featuredata = ft_redefinetrial(cfg, featuredata);
 data        = ft_redefinetrial(cfg, data);
@@ -240,7 +369,7 @@ function split = streams_split(datain, indepvarsel, quantile_range)
     split.label2       = {'low2', 'high2'};
     split.trial2       = [trl_indx_low2, trl_indx_high2];
 
-end
+
 
 function dataout = streams_averagefeature(datain, selected_features)
 % streams_averagefeature() takes the output of
@@ -266,9 +395,21 @@ num_features_pre             = size(dataout.trialinfo, 2); % store the number of
        
         else % mean, weighted by word's duration
             
+            % switch epochtype
+            % case 'onset-ignore'
             dataout.trialinfo(:, num_features_pre + k)       = cellfun(@nanmean, tmp(:)); % take the mean, ignoring nans
             dataout.trialinfolabel{num_features_pre + k, 1} = feature;
-        
+                %case 'onset-lock'
+%                     t = cellfun(@(x) unique(x(:), 'stable'), tmp(:), 'UniformOutput', 0); % extract unique values in original order
+%                     t2 = cellfun(@(x) x(~isnan(x)), t(:), 'UniformOutput', 0);            % consider only non-nan values
+%                     for i = 1:numel(t2)
+%                        if isempty(t2{i})
+%                            t2{i} = nan;  % write back a NaN if there were no ~Nan values to begin with
+%                        end
+%                     end
+%                     dataout.trialinfo(:, num_features_pre + k) = cell2mat(cellfun(@(x) x(1), t2(:), 'UniformOutput', 0)); % grab the first value only
+%                     dataout.trialinfolabel{num_features_pre + k, 1} = feature;
+            %end
         end
         
     end
@@ -281,6 +422,3 @@ num_features_pre             = size(dataout.trialinfo, 2); % store the number of
     
     clear tmp
     
-end
-
-end
