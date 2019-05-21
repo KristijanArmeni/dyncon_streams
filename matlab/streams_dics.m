@@ -28,6 +28,7 @@ shift           = ft_getopt(inpcfg, 'shift'); % value for which to shif
 savewhat        = ft_getopt(inpcfg, 'savewhat', 'stat');
 freqband        = ft_getopt(inpcfg, 'freqband');
 word_selection  = ft_getopt(inpcfg, 'word_selection', 'all');
+epochtype       = ft_getopt(inpcfg, 'epochtype');
 epochlength     = ft_getopt(inpcfg, 'epochlength');
 
 % ft_diary('on', fullfile(dir, 'analysis', 'dics', 'firstlevel'));
@@ -94,6 +95,7 @@ for kk = 1:numel(shift)
            'contrastvars',      {indepvar}, ...
            'removeonset',       removeonset, ...
            'shift',             shift(kk), ...
+           'epochtype',         epochtype, ... 
            'epochlength',       epochlength, ...
            'overlap',           0};
 
@@ -247,16 +249,17 @@ if ~exist([pipelinefilename '.html'], 'file')
     ft_analysispipeline(cfgt, stat);
 end
 
-savename = fullfile(savedir, [subject '_' indepvar '_' dicsfreq]);
-if strcmp(savewhat, 'stat')
-    save(savename, 'stat', 'inpcfg');
-elseif strcmp(savewhat, 'source')
-    save(fullfile(savedir, 'source', [savename '_high']), 'source_high', 'inpcfg');
-    save(fullfile(savedir, 'source', [savename '_low']), 'source_low');
-else
-    save(savename, 'stat', 'inpcfg');
-    save(fullfile(savedir, 'source', [savename '_high']), 'source_high');
-    save(fullfile(savedir, 'source', [savename '_low']), 'source_low');
-end
+savename = [subject '_' indepvar '_' dicsfreq];
+%if strcmp(savewhat, 'stat')
+%save(fullfile(savedir, savename), 'stat', 'inpcfg'); TEMP, to recompute trl_indx below
+save(fullfile(savedir, [savename '-trlidx']), 'trl_indx_high', 'trl_indx_low'); 
+%elseif strcmp(savewhat, 'source')
+%    save(fullfile(savedir, 'source', [savename '_high']), 'source_high', 'inpcfg');
+%    save(fullfile(savedir, 'source', [savename '_low']), 'source_low');
+%else
+%    save(savename, 'stat', 'inpcfg');
+%    save(fullfile(savedir, 'source', [savename '_high']), 'source_high');
+%    save(fullfile(savedir, 'source', [savename '_low']), 'source_low');
+%end
 
 end
