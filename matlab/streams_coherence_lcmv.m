@@ -89,12 +89,12 @@ if strcmp(roi, 'dicsmax')
     load(dicsfile); 
     
     llable = atlas.parcellationlabel(contains(atlas.parcellationlabel, 'L_'));
-    llable = llable(~ismember(llable, {'R_MEDIAL.WALL_01'}));
+    llable = llable(~ismember(llable, {'R_MEDIAL.WALL_01', 'L_MEDIAL.WALL_01'}));
     lind = contains(atlas.parcellationlabel, llable);
     lparcind = ismember(atlas.parcellation, find(lind));
     
     rlable = atlas.parcellationlabel(contains(atlas.parcellationlabel, 'R_'));
-    rlable = rlable(~ismember(rlable, {'L_MEDIAL.WALL_01'}));
+    rlable = rlable(~ismember(rlable, {'L_MEDIAL.WALL_01', 'R_MEDIAL.WALL_01'}));
     rind   = contains(atlas.parcellationlabel, rlable);
     rparcind = ismember(atlas.parcellation, find(rind));
     
